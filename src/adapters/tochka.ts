@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import type { SourceAdapter, SyncOptions, SyncResult } from './types.js';
 import { loadConfig } from '../config.js';
+import type { SourceAdapter, SyncOptions, SyncResult } from './types.js';
 
 const TochkaTimelineResponseSchema = z.object({
   result: z
@@ -40,7 +40,8 @@ export class TochkaAdapter implements SourceAdapter {
         'x-csrf-token': csrfToken,
         'x-rpc-method': 'timeline_get_list',
         referer: 'https://i.tochka.com/bank/',
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
+        'user-agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
       },
       body: JSON.stringify({
         id: Math.random().toString(36).substring(7),
@@ -48,14 +49,16 @@ export class TochkaAdapter implements SourceAdapter {
         method: 'timeline_get_list',
         params: {
           customer_id: tochkaConfig.customerId,
-          filters: [{
-            types: [
-              { service: 'rs', type: 'PaymentIncome' },
-              { service: 'rs', type: 'PaymentWrittenOff' },
-            ],
-            accounts: [],
-            cards: [],
-          }],
+          filters: [
+            {
+              types: [
+                { service: 'rs', type: 'PaymentIncome' },
+                { service: 'rs', type: 'PaymentWrittenOff' },
+              ],
+              accounts: [],
+              cards: [],
+            },
+          ],
           start_date: options.from.includes('T') ? options.from : `${options.from}T00:00:00.000Z`,
           end_date: options.to.includes('T') ? options.to : `${options.to}T23:59:59.999Z`,
           page_count: 50,

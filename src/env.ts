@@ -12,7 +12,7 @@ const TochkaEnvSchema = z.object({
 export function validateTochkaEnv() {
   const result = TochkaEnvSchema.safeParse(process.env);
   if (!result.success) {
-    const missing = result.error.issues.map(i => i.path.join('.')).join(', ');
+    const missing = result.error.issues.map((i) => i.path.join('.')).join(', ');
     throw new Error(`Missing or invalid environment variables for Tochka: ${missing}`);
   }
   return result.data;

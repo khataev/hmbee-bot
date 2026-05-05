@@ -7,12 +7,18 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format .",
+    "format:fix": "biome format . --write",
+    "check": "npm run typecheck && npm run lint",
     "start": "node dist/index.js",
     "dev": "npx tsx src/index.ts"
   },
   "keywords": [],
   "author": "Andrey Khataev",
   "devDependencies": {
+    "@biomejs/biome": "2.4.14",
     "@types/node": "25.6.0",
     "ts-node": "10.9.2",
     "typescript": "6.0.3"

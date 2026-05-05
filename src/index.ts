@@ -1,7 +1,7 @@
 import { Command } from 'commander';
-import { loadEnv, validateTochkaEnv } from './env.js';
 import { TochkaAdapter } from './adapters/tochka.js';
 import type { SourceAdapter } from './adapters/types.js';
+import { loadEnv, validateTochkaEnv } from './env.js';
 import { writeOutput } from './output.js';
 
 loadEnv();

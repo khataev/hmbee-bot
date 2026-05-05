@@ -37,6 +37,16 @@ npx ts-node src/index.ts list
 npx ts-node src/index.ts sync tochka --from 2024-01-01 --to 2024-01-31 --out output.json
 ```
 
+## ✅ Качество кода
+
+В проекте используется единый инструмент качества: **Biome** (lint + format).
+
+- Быстрая проверка: `npm run lint`
+- Автоисправления: `npm run lint:fix`
+- Полный quality gate: `npm run check`
+
+Подробные соглашения команды описаны в `STYLEGUIDE.md`.
+
 ## 🗺 Дорожная карта (Roadmap)
 1. ✅ **Bootstrap CLI**: Базовая структура и адаптер Точки.
 2. 🗓 **Honey Money Integration**: Команды `preview` и `apply` для отправки данных в HM API.
