@@ -1,5 +1,28 @@
 schema: spec-driven
 
+context: |
+  Tech stack: TypeScript, Node.js CLI, Zod, Commander
+  Quality tooling: Biome for lint+format, TypeScript strict mode for type safety
+  Style baseline: Team Style Guide v1 in STYLEGUIDE.md (Google TypeScript + Effective TypeScript inspired)
+  Definition of Done requires npm run check to pass
+
+rules:
+  changes:
+    - "Every change must undergo code review via /opsx:review before completion."
+    - "Review results must be captured in openspec/changes/<name>/review.md"
+  proposal:
+    - Include non-functional constraints for code quality and maintainability.
+    - State how quality gates will be validated for the change.
+  design:
+    - Add an "Engineering Constraints" section with type safety, error handling, and module boundary rules.
+    - Mention style and lint impact when introducing new modules or patterns.
+  tasks:
+    - Include explicit tasks for quality tooling updates when scope changes coding conventions.
+    - Ensure each implementation task includes validation with npm run check.
+  spec:
+    - Capture quality-gate expectations when they are required for completion.
+    - Keep behavioral requirements separate from implementation details.
+
 # Project context (optional)
 # This is shown to AI when creating artifacts.
 # Add your tech stack, conventions, style guides, domain knowledge, etc.
