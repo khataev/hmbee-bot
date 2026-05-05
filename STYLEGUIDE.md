@@ -14,7 +14,8 @@ This project follows a pragmatic TypeScript style focused on readability and rel
 - Keep functions focused and small.
 - Preserve strong typing, avoid silent runtime assumptions.
 - Optimize for maintainability over micro-optimizations.
--  Avoid using one letter names for variables, eg in loops; be descriptive
+- Avoid using one letter names for variables, eg in loops; be descriptive.
+- When adding a new environment variable, ALWAYS update `.env.example` to ensure the project remains runnable for others.
 
 ## TypeScript rules
 

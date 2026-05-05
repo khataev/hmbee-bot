@@ -29,14 +29,19 @@ const TochkaTransactionSchema = z
     }),
     data: z
       .object({
-        title: z.string(),
-        sum: z.number(),
-        currency: z.string(),
+        title: z.string().optional().default('No title'),
+        sum: z.union([z.number(), z.string().transform((val) => Number(val.replace(/\s/g, '')))]),
+        currency: z.string().optional(),
+        sumCurrency: z.string().optional(),
         description: z.string().optional(),
-        incoming: z.boolean(),
+        incoming: z.boolean().optional().default(false),
         statusLabel: z.string().optional() // Derived or present in some variants
       })
       .passthrough()
+      .transform((data) => ({
+        ...data,
+        currency: data.currency ?? data.sumCurrency ?? 'RUB'
+      }))
   })
   .passthrough();
 
@@ -51,7 +56,7 @@ const TochkaTimelineResponseSchema = z.object({
 // Constants for Tochka API
 const TOCHKA_API_URL = 'https://i.tochka.com/api/v1/timeline';
 const TOCHKA_RPC_METHOD = 'timeline_get_list';
-const TOCHKA_PAGE_SIZE = 50;
+const TOCHKA_PAGE_SIZE = Number(process.env.TOCHKA_PAGE_SIZE) || 250;
 const TOCHKA_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36';
 
@@ -96,6 +101,58 @@ export class TochkaAdapter implements SourceAdapter {
     const config = loadConfig();
     const tochkaConfig = config.sources.tochka;
 
+    const allRecords: z.infer<typeof TochkaTransactionSchema>[] = [];
+    let rawData: unknown = null;
+
+    // First request: always without lastDate
+    const firstPage = await this.fetchPage(tochkaConfig, options, cookie, csrfToken);
+    allRecords.push(...firstPage.records);
+    rawData = firstPage.raw;
+
+    // Subsequent requests: only if first page was full
+    // Using >= to be safe in case API returns more than requested (rare but possible)
+    if (firstPage.records.length >= TOCHKA_PAGE_SIZE) {
+      const lastRec = firstPage.records[firstPage.records.length - 1];
+      if (lastRec) {
+        let lastDate = lastRec.meta_data.time_data.event_date;
+
+        while (true) {
+          const { records, raw } = await this.fetchPage(tochkaConfig, options, cookie, csrfToken, lastDate);
+          allRecords.push(...records);
+          rawData = raw;
+
+          if (records.length < TOCHKA_PAGE_SIZE) {
+            break;
+          }
+
+          const lastRecord = records[records.length - 1];
+          if (!lastRecord) {
+            break;
+          }
+          lastDate = lastRecord.meta_data.time_data.event_date;
+
+          // Safety break
+          if (allRecords.length >= TOCHKA_PAGE_SIZE * 100) {
+            break;
+          }
+        }
+      }
+    }
+
+    return {
+      source: this.name,
+      records: allRecords,
+      raw: rawData
+    };
+  }
+
+  private async fetchPage(
+    tochkaConfig: ReturnType<typeof loadConfig>['sources']['tochka'],
+    options: SyncOptions,
+    cookie: string,
+    csrfToken: string,
+    lastDate?: string
+  ): Promise<{ records: z.infer<typeof TochkaTransactionSchema>[]; raw: unknown }> {
     let response: Response;
     try {
       response = await fetch(TOCHKA_API_URL, {
@@ -117,16 +174,75 @@ export class TochkaAdapter implements SourceAdapter {
             filters: [
               {
                 types: [
+                  { service: 'billing', type: 'servicePayment' },
+                  { service: 'billing', type: 'BillingMobileAccepted' },
+                  { service: 'billing', type: 'BillingMobileRejected' },
+                  { service: 'billing', type: 'BillingMobileProcessed' },
+                  { service: 'cnv', type: 'CurrencyConversionOutgoing' },
+                  { service: 'cnv', type: 'CurrencyConversionIncoming' },
+                  { service: 'sbp', type: 'SbpPayment' },
+                  { service: 'nspk-sbp-core-c2b', type: 'SbpC2CPayment' },
+                  { service: 'nspk-sbp-core-c2b', type: 'SbpC2BPayment' },
+                  { service: 'nspk-sbp-core-c2b', type: 'SbpC2BRefund' },
+                  { service: 'nspk-sbp-core-c2b', type: 'SbpC2BCashbackRefundPayment' },
+                  { service: 'nspk-sbp-core-c2b', type: 'SbpB2BPayment' },
+                  { service: 'nspk-sbp-core-c2b', type: 'SbpB2CPayment' },
+                  { service: 'nspk-sbp-core-c2b', type: 'SbpB2CCashbackPayment' },
+                  { service: 'nspk-sbp-core-c2b', type: 'SbpC2CINTPayment' },
+                  { service: 'nspk-sbp-core-c2b', type: 'SbpC2GOUTPayment' },
+                  { service: 'nspk-sbp-core-c2b', type: 'SbpDisputePayment' },
+                  { service: 'sam', type: 'CardTransactionInfo' },
                   { service: 'rs', type: 'PaymentIncome' },
-                  { service: 'rs', type: 'PaymentWrittenOff' }
+                  { service: 'rs', type: 'PaymentWrittenOff' },
+                  { service: 'rs', type: 'CardTransactionWithdraw' },
+                  { service: 'rs', type: 'CardTransactionIncome' },
+                  { service: 'rs', type: 'CardTransactionRejected' },
+                  { service: 'rs', type: 'CardTransactionCancelled' },
+                  { service: 'rs', type: 'PaymentRegistry' },
+                  { service: 'rs', type: 'PaymentAccepted' },
+                  { service: 'rs', type: 'PaymentRejected' },
+                  { service: 'rs', type: 'PaymentValidated' },
+                  { service: 'rs', type: 'CurrencyPaymentIncome' },
+                  { service: 'noah', type: 'ReturnCurrencyIncome' },
+                  { service: 'noah', type: 'CurrencyPaymentValidated' },
+                  { service: 'noah', type: 'CurrencyPaymentAccepted' },
+                  { service: 'noah', type: 'CurrencyPaymentIncome' },
+                  { service: 'card-payment', type: 'paymentToCard' },
+                  { service: 'acquiring', type: 'CashboxOrderPaid' },
+                  { service: 'arrival', type: 'CurrencyIncome' },
+                  { service: 'arrival', type: 'VedPaymentIncome' },
+                  { service: 'special-account', type: 'SpecialAccountPayment' }
+
+                  // Other possible types to consider in the future:
+                  // { service: 'etp-gateway', type: 'SpecialAccountHoldCancelled' },
+                  // { service: 'etp-gateway', type: 'SpecialAccountHoldCreated' },
+                  // { service: 'special-account', type: 'SpecialAccountHoldCancelled' },
+                  // { service: 'special-account', type: 'SpecialAccountHoldCreated' },
+                  // { service: 'salary', type: 'PayRollValidated' },
+                  // { service: 'salary', type: 'PayRollAccepted' },
+                  // { service: 'salary', type: 'PayRollRevoked' },
+                  // { service: 'salary', type: 'PayRollRejected' },
+                  // { service: 'salary', type: 'PayRollProcessed' },
+                  // { service: 'edik', type: 'EdoInvoiceCreated' },
+                  // { service: 'blocker', type: 'CollectionOrder' },
+                  // { service: 'employees', type: 'PaymentTaskPaid' },
+                  // { service: 'employees', type: 'PaymentTaskProcessed' },
+                  // { service: 'employees', type: 'PaymentTaskRejected' },
+                  // { service: 'apparitor', type: 'SignClaim' },
+                  // { service: 'arrival', type: 'TransitWithdrawRejected' },
+                  // { service: 'arrival', type: 'DocsApproved' },
+                  // { service: 'arrival', type: 'DocsRejected' },
+                  // { service: 'arrival', type: 'DeadlineExpired' }
                 ],
                 accounts: [],
                 cards: []
               }
             ],
+            exclude_tags: ['биллинговый', 'legacy_card', 'legacy_inkass'],
             start_date: options.from.includes('T') ? options.from : `${options.from}T00:00:00.000Z`,
             end_date: options.to.includes('T') ? options.to : `${options.to}T23:59:59.999Z`,
-            page_count: TOCHKA_PAGE_SIZE
+            page_count: TOCHKA_PAGE_SIZE,
+            last_date: lastDate
           }
         })
       });
@@ -154,7 +270,7 @@ export class TochkaAdapter implements SourceAdapter {
 
     const result = TochkaTimelineResponseSchema.safeParse(data);
     if (!result.success) {
-      throw new TochkaError('Tochka timeline response does not match the expected schema', 'parsing', {
+      throw new TochkaError('Sync failed: Tochka timeline response does not match the expected schema', 'validation', {
         errors: result.error.format()
       });
     }
@@ -162,7 +278,6 @@ export class TochkaAdapter implements SourceAdapter {
     const records = result.data.result?.time_line_list ?? [];
 
     return {
-      source: this.name,
       records,
       raw: data
     };
