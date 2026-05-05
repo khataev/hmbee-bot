@@ -14,6 +14,7 @@ This project follows a pragmatic TypeScript style focused on readability and rel
 - Keep functions focused and small.
 - Preserve strong typing, avoid silent runtime assumptions.
 - Optimize for maintainability over micro-optimizations.
+-  Avoid using one letter names for variables, eg in loops; be descriptive
 
 ## TypeScript rules
 
