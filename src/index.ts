@@ -1,0 +1,65 @@
+import { Command } from 'commander';
+import { loadEnv, validateTochkaEnv } from './env.js';
+import { TochkaAdapter } from './adapters/tochka.js';
+import type { SourceAdapter } from './adapters/types.js';
+import { writeOutput } from './output.js';
+
+loadEnv();
+
+const program = new Command();
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+program
+  .name('hmbee-bot')
+  .description('HM Bee Bot CLI for source synchronization and Honey Money integration')
+  .version('0.1.0');
+
+program
+  .command('list')
+  .description('List supported data sources')
+  .action(() => {
+    console.log('Supported data sources:');
+    console.log('- tochka');
+  });
+
+program
+  .command('sync')
+  .description('Synchronize data from a source')
+  .argument('<source>', 'Source name (e.g., tochka)')
+  .requiredOption('--from <date>', 'From date (YYYY-MM-DD)')
+  .requiredOption('--to <date>', 'To date (YYYY-MM-DD)')
+  .option('--format <type>', 'Output format (adapted|raw)', 'adapted')
+  .option('--out <path>', 'Output file path')
+  .action(async (source, options) => {
+    let adapter: SourceAdapter;
+    if (source === 'tochka') {
+      try {
+        validateTochkaEnv();
+        adapter = new TochkaAdapter();
+      } catch (error: unknown) {
+        console.error(getErrorMessage(error));
+        process.exit(1);
+      }
+    } else {
+      console.error(`Unsupported source: ${source}`);
+      process.exit(1);
+    }
+
+    console.log(`Syncing from ${source}...`);
+    try {
+      const result = await adapter.sync({ from: options.from, to: options.to });
+
+      const outputData = options.format === 'raw' ? result.raw : result.records;
+      writeOutput(outputData, options.out);
+
+      console.log(`✓ Sync complete. Fetched ${result.records.length} records.`);
+    } catch (error: unknown) {
+      console.error(`Sync failed: ${getErrorMessage(error)}`);
+      process.exit(1);
+    }
+  });
+
+program.parse(process.argv);
