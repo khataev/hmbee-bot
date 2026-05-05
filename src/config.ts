@@ -5,9 +5,9 @@ import { z } from 'zod';
 const AppConfigSchema = z.object({
   sources: z.object({
     tochka: z.object({
-      customerId: z.string().min(1, 'config.sources.tochka.customerId is required'),
-    }),
-  }),
+      customerId: z.string().min(1, 'config.sources.tochka.customerId is required')
+    })
+  })
 });
 
 export type AppConfig = z.infer<typeof AppConfigSchema>;
