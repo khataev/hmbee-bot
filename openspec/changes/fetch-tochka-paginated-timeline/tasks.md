@@ -1,7 +1,7 @@
 ## 1. Refactor TochkaAdapter for Pagination
 
 - [x] 1.1 Update `TOCHKA_PAGE_SIZE` constant and make it configurable or set to 10 for initial testing.
-- [ ] 1.2 Refactor `sync` method in `src/adapters/tochka.ts` to use a loop for paginated fetching.
+- [x] 1.2 Refactor `sync` method in `src/adapters/tochka.ts` to use a loop for paginated fetching.
 - [x] 1.3 Implement `fetchPage` helper method to encapsulate the single request logic.
 - [x] 1.4 Implement logic to extract `event_date` from the last record to use as `last_date` in the subsequent request.
 - [x] 1.5 Add termination condition: stop if `records.length < TOCHKA_PAGE_SIZE`.
