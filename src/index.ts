@@ -33,7 +33,9 @@ program
   .requiredOption('--to <date>', 'To date (YYYY-MM-DD)')
   .option('--format <type>', 'Output format (adapted|raw)', 'adapted')
   .option('--out <path>', 'Output file path')
+  .option('--quiet', 'Suppress informational output')
   .action(async (source, options) => {
+    const isQuiet = options.quiet;
     let adapter: SourceAdapter;
     if (source === 'tochka') {
       try {
@@ -48,14 +50,14 @@ program
       process.exit(1);
     }
 
-    console.log(`Syncing from ${source}...`);
+    if (!isQuiet) console.log(`Syncing from ${source}...`);
     try {
       const result = await adapter.sync({ from: options.from, to: options.to });
 
       const outputData = options.format === 'raw' ? result.raw : result.records;
       writeOutput(outputData, options.out);
 
-      console.log(`✓ Sync complete. Fetched ${result.records.length} records.`);
+      if (!isQuiet) console.log(`✓ Sync complete. Fetched ${result.records.length} records.`);
     } catch (error: unknown) {
       console.error(`Sync failed: ${getErrorMessage(error)}`);
       process.exit(1);
