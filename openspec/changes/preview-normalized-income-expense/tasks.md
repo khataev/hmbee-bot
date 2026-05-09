@@ -1,6 +1,6 @@
 ## 1. Test Baseline
 
-- [ ] 1.1 Add `vitest` and the minimal project test configuration/scripts for focused preview tests
+- [x] 1.1 Add `vitest` and the minimal project test configuration/scripts for focused preview tests
 - [ ] 1.2 Add an initial fixture-driven test file covering the preview pipeline entry behavior
 - [ ] 1.3 Validate the test baseline with `npm run check`
 
