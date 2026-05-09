@@ -34,7 +34,7 @@ const TochkaTransactionSchema = z
         currency: z.string().optional(),
         sumCurrency: z.string().optional(),
         description: z.string().optional(),
-        incoming: z.boolean().optional().default(false),
+        incoming: z.boolean().optional(),
         statusLabel: z.string().optional() // Derived or present in some variants
       })
       .passthrough()
