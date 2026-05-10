@@ -19,12 +19,12 @@
 
 ## 4. Honey Money Preview Branch and Mapping
 
-- [ ] 4.1 Add the separate `hmbee` branch to preview output and populate the initial mapped category field
-- [ ] 4.2 Implement Tochka-specific category mapping configuration and mapping resolution for preview records
-- [ ] 4.3 Add focused tests for category mapping and preview output shaping
-- [ ] 4.4 Validate mapping and preview output changes with `npm run check`
+- [x] 4.1 Add the separate `hmbee` branch to preview output and populate the initial mapped category field
+- [x] 4.2 Implement Tochka-specific category mapping via MCC and Description in code (Technical Debt: move to config later)
+- [x] 4.3 Add focused tests for category mapping and preview output shaping
+- [x] 4.4 Validate mapping and preview output changes with `npm run check`
 
 ## 5. Documentation and Final Verification
 
-- [ ] 5.1 Document how to run `apply <source> --preview` against synchronized files and how preview output is structured
-- [ ] 5.2 Run final verification with `npm run check` and the focused preview test command
+- [x] 5.1 Document how to run `apply <source> --preview` against synchronized files and how preview output is structured
+- [x] 5.2 Run final verification with `npm run check` and the focused preview test command
