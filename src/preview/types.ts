@@ -13,6 +13,6 @@ export interface NormalizedRecord {
 export interface PreviewRecord {
   normalized: NormalizedRecord;
   hmbee: {
-    category?: string;
+    category?: string | null;
   };
 }

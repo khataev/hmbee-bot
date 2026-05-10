@@ -26,6 +26,17 @@ describe('Tochka Normalization', () => {
     expect(result.normalized.transactionId).toBe('4223584703');
     expect(result.normalized.amount).toBe(241.07);
     expect(result.normalized.status).toBe('InProgress');
+    // Task 4.1: Category mapping
+    expect(result.hmbee.category).toBe('Покупки / Продукты');
+  });
+
+  it('should map Yandex Taxi to Проезд / Такси', () => {
+    const record = {
+      ...mockBaseRecord,
+      data: { ...mockBaseRecord.data, title: 'YANDEX*4121*TAXI', description: undefined }
+    };
+    const result = normalizeTochkaRecord(record);
+    expect(result.hmbee.category).toBe('Проезд / Такси');
   });
 
   it('should identify supported Purchase with Withdraw status', () => {

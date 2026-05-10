@@ -23,15 +23,55 @@ export function normalizeTochkaRecord(sourceRecord: any): PreviewRecord {
     transactionId: String(data.tranId ?? ''),
     account: data.account ?? '',
     status: data.status,
-    date: timeData?.event_date || '',
+    date: timeData?.event_date,
     type: data.tranCode ?? '',
     amount: data.sum,
     currency: data.currency,
-    description: data.description || data.title || ''
+    description: data.title
   };
 
   return {
     normalized,
-    hmbee: {} // Branch 4.1 will populate this
+    hmbee: {
+      category: mapTochkaCategory(normalized.description)
+    }
   };
+}
+
+/**
+ * Maps Tochka description to Honey Money category.
+ */
+function mapTochkaCategory(description: string): string | null {
+  const desc = description.toUpperCase();
+  if (
+    desc.includes('PYATEROCHKA') ||
+    desc.includes('MAGNIT') ||
+    desc.includes('PEREKRESTOK') ||
+    desc.includes('VKUSVILL') ||
+    desc.includes('MAGAZIN')
+  ) {
+    return 'Покупки / Продукты';
+  }
+  if (/YANDEX.+TAXI/.test(desc)) {
+    return 'Проезд / Такси';
+  }
+  if (desc.includes('DUTY FREE')) {
+    return 'Путешествия / Покупки';
+  }
+  if (desc.includes('SHOKO VNUKOVO') || desc.includes('MEALTY')) {
+    return 'Еда вне дома';
+  }
+  if (desc.includes('MSKAPT')) {
+    return 'Покупки / Аптека и БАДы';
+  }
+  if (desc.includes('KLINIKA DOK EPIFANOVA')) {
+    return 'Услуги / Медицинские услуги / Андрей';
+  }
+  if (desc.includes('OZON')) {
+    return 'Покупки / Маркетплейсы';
+  }
+  if (desc.includes('ART-MOSKVA')) {
+    return 'Услуги / Коворкинг';
+  }
+  return null;
 }
