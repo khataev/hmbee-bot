@@ -3,6 +3,7 @@ import { TochkaAdapter } from './adapters/tochka.js';
 import type { SourceAdapter } from './adapters/types.js';
 import { loadEnv, validateTochkaEnv } from './env.js';
 import { writeOutput } from './output.js';
+import { loadSyncFiles } from './preview/loader.js';
 
 loadEnv();
 
@@ -85,8 +86,16 @@ program
 
     if (!isQuiet) console.log(`Applying ${source} with preview...`);
 
-    // Implementation for task 2.2 will be added here
-    console.log('Preview logic not yet implemented.');
+    try {
+      const records = await loadSyncFiles(source);
+      if (!isQuiet) console.log(`Loaded ${records.length} records from sync/${source}`);
+
+      // Implementation for normalization will be added in task 3.1
+      console.log('Preview normalization logic not yet implemented.');
+    } catch (error: unknown) {
+      console.error(`Apply failed: ${getErrorMessage(error)}`);
+      process.exit(1);
+    }
   });
 
 program.parse(process.argv);

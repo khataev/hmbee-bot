@@ -4,9 +4,13 @@
 The system SHALL provide an `apply <source> --preview` flow that reads synchronized source files from `sync/<source>` and emits operator-inspectable preview output without writing to Honey Money.
 
 #### Scenario: Preview synchronized records for a supported source
-- **WHEN** the operator runs the preview flow for a supported source with synchronized input files available under `sync/<source>`
-- **THEN** the system reads the synchronized source data from that directory
+- **WHEN** the operator runs the preview flow for a supported source with a single synchronized input file available under `sync/<source>`
+- **THEN** the system reads the synchronized source data from that file
 - **AND** the system emits preview output without sending any Honey Money write request
+
+#### Scenario: Fail if multiple synchronized files exist
+- **WHEN** the operator runs the preview flow for a source and `sync/<source>` contains more than one JSON file
+- **THEN** the system fails with an informative error message about multiple files
 
 ### Requirement: Preview output includes a normalized internal representation
 The system SHALL emit a normalized representation for each previewed record so that source-derived meaning is inspectable independently from Honey Money-specific mapping.
