@@ -8,7 +8,7 @@
 
 - [x] 2.1 Add the `apply <source> --preview` CLI command surface and source selection flow
 - [x] 2.2 Implement synchronized file discovery and loading from `sync/<source>` for preview input
-- [ ] 2.3 Validate preview command wiring and file-loading changes with `npm run check`
+- [x] 2.3 Validate preview command wiring and file-loading changes with `npm run check`
 
 ## 3. Normalized Preview Representation
 
