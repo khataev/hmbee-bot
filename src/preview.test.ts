@@ -15,7 +15,7 @@ describe('Tochka Normalization', () => {
       sum: 241.07,
       tranCode: 'Purchase',
       status: 'InProgress',
-      title: 'PYATEROCHKA',
+      title: 'ART-MOSKVA',
       description: '*0114'
     }
   };
@@ -27,13 +27,13 @@ describe('Tochka Normalization', () => {
     expect(result.normalized.amount).toBe(241.07);
     expect(result.normalized.status).toBe('InProgress');
     // Task 4.1: Category mapping
-    expect(result.hmbee.category).toBe('Покупки / Продукты');
+    expect(result.hmbee.category).toBe('Услуги / Коворкинг');
   });
 
   it('should map Yandex Taxi to Проезд / Такси', () => {
     const record = {
       ...mockBaseRecord,
-      data: { ...mockBaseRecord.data, title: 'YANDEX*4121*TAXI', description: undefined }
+      data: { ...mockBaseRecord.data, title: 'Yandex*4121*Taxi', description: undefined, mcc: '4121' }
     };
     const result = normalizeTochkaRecord(record);
     expect(result.hmbee.category).toBe('Проезд / Такси');

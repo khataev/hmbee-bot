@@ -27,49 +27,40 @@ export function normalizeTochkaRecord(sourceRecord: any): PreviewRecord {
     type: data.tranCode ?? '',
     amount: data.sum,
     currency: data.currency,
-    description: data.title
+    description: data.title,
+    mcc: data.mcc ? String(data.mcc) : undefined
   };
 
   return {
     normalized,
     hmbee: {
-      category: mapTochkaCategory(normalized.description)
+      category: mapTochkaCategory(normalized.description, normalized.mcc)
     }
   };
 }
 
 /**
- * Maps Tochka description to Honey Money category.
+ * Maps Tochka description or MCC to Honey Money category.
  */
-function mapTochkaCategory(description: string): string | null {
+function mapTochkaCategory(description: string, mcc?: string): string | null {
+  // 1. Try MCC first
+  if (mcc) {
+    const mccMap: Record<string, string> = {
+      '5411': 'Покупки / Продукты',
+      '5499': 'Покупки / Продукты',
+      '5300': 'Покупки / Маркетплейсы',
+      '5309': 'Путешествия / Покупки',
+      '5812': 'Еда вне дома',
+      '5814': 'Еда вне дома',
+      '5912': 'Покупки / Аптека и БАДы',
+      '8011': 'Услуги / Медицинские услуги',
+      '4121': 'Проезд / Такси'
+    };
+    if (mccMap[mcc]) return mccMap[mcc];
+  }
+
+  // 2. Fallback to description mapping (only for those without MCC mapping or with specific overrides)
   const desc = description.toUpperCase();
-  if (
-    desc.includes('PYATEROCHKA') ||
-    desc.includes('MAGNIT') ||
-    desc.includes('PEREKRESTOK') ||
-    desc.includes('VKUSVILL') ||
-    desc.includes('MAGAZIN')
-  ) {
-    return 'Покупки / Продукты';
-  }
-  if (/YANDEX.+TAXI/.test(desc)) {
-    return 'Проезд / Такси';
-  }
-  if (desc.includes('DUTY FREE')) {
-    return 'Путешествия / Покупки';
-  }
-  if (desc.includes('SHOKO VNUKOVO') || desc.includes('MEALTY')) {
-    return 'Еда вне дома';
-  }
-  if (desc.includes('MSKAPT')) {
-    return 'Покупки / Аптека и БАДы';
-  }
-  if (desc.includes('KLINIKA DOK EPIFANOVA')) {
-    return 'Услуги / Медицинские услуги / Андрей';
-  }
-  if (desc.includes('OZON')) {
-    return 'Покупки / Маркетплейсы';
-  }
   if (desc.includes('ART-MOSKVA')) {
     return 'Услуги / Коворкинг';
   }

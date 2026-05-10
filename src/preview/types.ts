@@ -8,6 +8,7 @@ export interface NormalizedRecord {
   amount: number;
   currency: string;
   description: string;
+  mcc?: string | undefined;
 }
 
 export interface PreviewRecord {
