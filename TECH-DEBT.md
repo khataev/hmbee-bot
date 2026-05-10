@@ -18,3 +18,8 @@ Tracking identified technical debt and planned simplifications.
     - Standardize output path to `sync/[source]/[from]_[to].json` by default.
 - **Why**: Ensures predictable file discovery for the `apply` command and reduces operator decision overhead.
 - **Status**: Added 2026-05-10.
+
+### 3. Use only absolute paths in imports
+ - **Context**: Biome checks currently allow relative imports.
+- **Goal**: Use only absolute paths in imports for consistency.
+- **Status**: Added 2026-05-10.

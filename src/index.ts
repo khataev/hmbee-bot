@@ -4,6 +4,7 @@ import type { SourceAdapter } from './adapters/types.js';
 import { loadEnv, validateTochkaEnv } from './env.js';
 import { writeOutput } from './output.js';
 import { loadSyncFiles } from './preview/loader.js';
+import { normalizeTochkaRecord } from './preview/tochka.js';
 
 loadEnv();
 
@@ -84,14 +85,17 @@ program
       process.exit(1);
     }
 
-    if (!isQuiet) console.log(`Applying ${source} with preview...`);
-
     try {
       const records = await loadSyncFiles(source);
-      if (!isQuiet) console.log(`Loaded ${records.length} records from sync/${source}`);
+      if (!isQuiet) {
+        console.error(`Applying ${source} with preview...`);
+        console.error(`Loaded ${records.length} records from sync/${source}`);
+      }
 
-      // Implementation for normalization will be added in task 3.1
-      console.log('Preview normalization logic not yet implemented.');
+      const previewRecords = records.map((r) => normalizeTochkaRecord(r));
+      writeOutput(previewRecords);
+
+      if (!isQuiet) console.error(`✓ Preview complete. Processed ${previewRecords.length} records.`);
     } catch (error: unknown) {
       console.error(`Apply failed: ${getErrorMessage(error)}`);
       process.exit(1);

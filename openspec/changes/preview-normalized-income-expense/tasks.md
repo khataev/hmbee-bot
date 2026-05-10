@@ -12,10 +12,10 @@
 
 ## 3. Normalized Preview Representation
 
-- [ ] 3.1 Implement Tochka preview parsing for income and expense records only, including supported status handling for `Withdraw` and `InProgress`
-- [ ] 3.2 Emit the normalized preview representation and preserve not-identified records for unsupported source shapes or statuses
-- [ ] 3.3 Add focused tests for normalization, identification, and status filtering behavior
-- [ ] 3.4 Validate normalized preview behavior with `npm run check`
+- [x] 3.1 Implement Tochka preview parsing for income and expense records only, including supported status handling for `Withdraw` and `InProgress`
+- [x] 3.2 Emit the normalized preview representation and preserve not-identified records for unsupported source shapes or statuses
+- [x] 3.3 Add focused tests for normalization, identification, and status filtering behavior
+- [x] 3.4 Validate normalized preview behavior with `npm run check`
 
 ## 4. Honey Money Preview Branch and Mapping
 
