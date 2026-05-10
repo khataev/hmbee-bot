@@ -64,4 +64,29 @@ program
     }
   });
 
+program
+  .command('apply')
+  .description('Process synchronized data for a source')
+  .argument('<source>', 'Source name (e.g., tochka)')
+  .option('--preview', 'Preview normalized records without writing to Honey Money')
+  .option('--quiet', 'Suppress informational output')
+  .action(async (source, options) => {
+    const isQuiet = options.quiet;
+
+    if (source !== 'tochka') {
+      console.error(`Unsupported source: ${source}`);
+      process.exit(1);
+    }
+
+    if (!options.preview) {
+      console.error('Only --preview mode is supported currently.');
+      process.exit(1);
+    }
+
+    if (!isQuiet) console.log(`Applying ${source} with preview...`);
+
+    // Implementation for task 2.2 will be added here
+    console.log('Preview logic not yet implemented.');
+  });
+
 program.parse(process.argv);
