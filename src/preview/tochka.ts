@@ -1,33 +1,54 @@
 import type { NormalizedRecord, PreviewRecord } from './types.js';
 
+export interface TochkaSyncRecord {
+  meta_data: {
+    time_data: {
+      event_date: string;
+    };
+  };
+  data: {
+    tranId: string | number;
+    account: string;
+    status: string;
+    tranCode: string;
+    sum: number;
+    currency: string;
+    title: string;
+    mcc: string;
+  };
+}
+
 /**
  * Normalizes a Tochka sync record into the internal preview representation.
  * Only supports income/expense flow with specific statuses.
  */
-export function normalizeTochkaRecord(sourceRecord: any): PreviewRecord {
-  const data = sourceRecord.data;
-  const timeData = sourceRecord.meta_data?.time_data;
+export function normalizeTochkaRecord(sourceRecord: TochkaSyncRecord): PreviewRecord {
+  const record = sourceRecord;
+  const data = record.data;
+  const timeData = record.meta_data?.time_data;
 
   // Supported statuses for identification
   const supportedStatuses = ['Withdraw', 'InProgress'];
-  const isSupportedStatus = supportedStatuses.includes(data.status);
+  const status = String(data.status ?? '');
+  const isSupportedStatus = supportedStatuses.includes(status);
 
   // Supported types for income/expense flow
   const supportedTypes = ['Purchase', 'Income'];
-  const isSupportedType = supportedTypes.includes(data.tranCode);
+  const tranCode = String(data.tranCode ?? '');
+  const isSupportedType = supportedTypes.includes(tranCode);
 
   const identified = isSupportedStatus && isSupportedType;
 
   const normalized: NormalizedRecord = {
     identified,
     transactionId: String(data.tranId ?? ''),
-    account: data.account ?? '',
-    status: data.status,
-    date: timeData?.event_date,
-    type: data.tranCode ?? '',
+    account: String(data.account ?? ''),
+    status: status,
+    date: String(timeData?.event_date ?? ''),
+    type: tranCode,
     amount: data.sum,
     currency: data.currency,
-    description: data.title,
+    description: String(data.title ?? ''),
     mcc: data.mcc ? String(data.mcc) : undefined
   };
 

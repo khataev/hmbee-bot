@@ -16,7 +16,8 @@ describe('Tochka Normalization', () => {
       tranCode: 'Purchase',
       status: 'InProgress',
       title: 'ART-MOSKVA',
-      description: '*0114'
+      description: '*0114',
+      mcc: '1234'
     }
   };
 

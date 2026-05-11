@@ -1,11 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import type { TochkaSyncRecord } from './tochka.js';
 
 /**
  * Loads all JSON files from the sync directory for a given source.
  * Expects files to be at sync/<source>/*.json
  */
-export async function loadSyncFiles(source: string): Promise<any[]> {
+export async function loadSyncFiles(source: string): Promise<TochkaSyncRecord[]> {
   const syncDir = path.join(process.cwd(), 'sync', source);
 
   if (!fs.existsSync(syncDir)) {
@@ -22,7 +23,10 @@ export async function loadSyncFiles(source: string): Promise<any[]> {
     throw new Error(`Multiple synchronized files found in ${syncDir}. Preview currently supports exactly one file.`);
   }
 
-  const file = files[0]!;
+  const file = files[0];
+  if (!file) {
+    throw new Error(`Critical error: sync file was not found in ${syncDir}`);
+  }
   const filePath = path.join(syncDir, file);
   const content = fs.readFileSync(filePath, 'utf-8');
 
