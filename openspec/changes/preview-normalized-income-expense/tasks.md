@@ -24,7 +24,13 @@
 - [x] 4.3 Add focused tests for category mapping and preview output shaping
 - [x] 4.4 Validate mapping and preview output changes with `npm run check`
 
-## 5. Documentation and Final Verification
+## 5. Robustness and Schema refinement
 
-- [x] 5.1 Document how to run `apply <source> --preview` against synchronized files and how preview output is structured
-- [x] 5.2 Run final verification with `npm run check` and the focused preview test command
+- [x] 5.1 Refactor `PreviewRecord` to move `identified` to the root and remove it from `NormalizedRecord`
+- [x] 5.2 Implement error-safe parsing with `try-catch` to avoid crashes on malformed data
+- [x] 5.3 Ensure `sourceRecord` is always preserved in the output regardless of identification success
+
+## 6. Documentation and Final Verification
+
+- [x] 6.1 Document how to run `apply <source> --preview` against synchronized files and how preview output is structured
+- [x] 6.2 Run final verification with `npm run check` and the focused preview test command

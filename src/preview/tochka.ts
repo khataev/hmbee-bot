@@ -22,42 +22,55 @@ export interface TochkaSyncRecord {
  * Normalizes a Tochka sync record into the internal preview representation.
  * Only supports income/expense flow with specific statuses.
  */
-export function normalizeTochkaRecord(sourceRecord: TochkaSyncRecord): PreviewRecord {
-  const record = sourceRecord;
-  const data = record.data;
-  const timeData = record.meta_data?.time_data;
+export function normalizeTochkaRecord(sourceRecord: unknown): PreviewRecord {
+  try {
+    const r = sourceRecord as TochkaSyncRecord;
+    const data = r.data;
+    const timeData = r.meta_data.time_data;
 
-  // Supported statuses for identification
-  const supportedStatuses = ['Withdraw', 'InProgress'];
-  const status = String(data.status ?? '');
-  const isSupportedStatus = supportedStatuses.includes(status);
+    // Supported statuses for identification
+    const status = String(data.status);
+    const supportedStatuses = ['Withdraw', 'InProgress'];
+    const isSupportedStatus = supportedStatuses.includes(status);
 
-  // Supported types for income/expense flow
-  const supportedTypes = ['Purchase', 'Income'];
-  const tranCode = String(data.tranCode ?? '');
-  const isSupportedType = supportedTypes.includes(tranCode);
+    // Supported types for income/expense flow
+    const tranCode = String(data.tranCode);
+    const supportedTypes = ['Purchase', 'Income'];
+    const isSupportedType = supportedTypes.includes(tranCode);
 
-  const identified = isSupportedStatus && isSupportedType;
+    const identified = !!(isSupportedStatus && isSupportedType);
 
-  const normalized: NormalizedRecord = {
-    identified,
-    transactionId: String(data.tranId ?? ''),
-    account: String(data.account ?? ''),
-    status: status,
-    date: String(timeData?.event_date ?? ''),
-    type: tranCode,
-    amount: data.sum,
-    currency: data.currency,
-    description: String(data.title ?? ''),
-    mcc: data.mcc ? String(data.mcc) : undefined
-  };
-
-  return {
-    normalized,
-    hmbee: {
-      category: mapTochkaCategory(normalized.description, normalized.mcc)
+    if (!identified) {
+      return { identified: false, sourceRecord };
     }
-  };
+
+    const normalized: NormalizedRecord = {
+      transactionId: String(data.tranId),
+      account: String(data.account),
+      status: status,
+      date: String(timeData.event_date),
+      type: tranCode,
+      amount: Number(data.sum),
+      currency: String(data.currency),
+      description: String(data.title),
+      mcc: data.mcc ? String(data.mcc) : undefined
+    };
+
+    return {
+      identified: true,
+      sourceRecord,
+      normalized,
+      hmbee: {
+        category: mapTochkaCategory(normalized.description, normalized.mcc)
+      }
+    };
+  } catch (error) {
+    return {
+      identified: false,
+      identificationError: error instanceof Error ? error.message : String(error),
+      sourceRecord
+    };
+  }
 }
 
 /**

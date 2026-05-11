@@ -1,5 +1,4 @@
 export interface NormalizedRecord {
-  identified: boolean;
   transactionId: string;
   account: string;
   status: string;
@@ -12,8 +11,11 @@ export interface NormalizedRecord {
 }
 
 export interface PreviewRecord {
-  normalized: NormalizedRecord;
-  hmbee: {
-    category?: string | null;
+  identified: boolean;
+  identificationError?: string;
+  sourceRecord: unknown;
+  normalized?: NormalizedRecord;
+  hmbee?: {
+    category: string | null;
   };
 }
