@@ -12,9 +12,3 @@ The system SHALL allow the operator to choose whether sync results are emitted a
 - **THEN** the system SHALL write the sync output to `sync/[source]/[from]_[to].json`
 - **AND** the system SHALL create the destination directory if it does not exist
 - **AND** the system SHALL NOT support a manual output path flag (`--out`)
-
-## REMOVED Requirements
-
-### Requirement: Write selected sync output to a file
-**Reason**: Replaced by mandatory standardized output path to ensure predictable discovery for the `apply` command.
-**Migration**: Remove usage of `--out` flag. Files are now saved to `sync/[source]/[from]_[to].json` automatically.

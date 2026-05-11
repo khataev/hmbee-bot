@@ -34,7 +34,6 @@ program
   .requiredOption('--from <date>', 'From date (YYYY-MM-DD)')
   .requiredOption('--to <date>', 'To date (YYYY-MM-DD)')
   .option('--format <type>', 'Output format (adapted|raw)', 'adapted')
-  .option('--out <path>', 'Output file path')
   .option('--quiet', 'Suppress informational output')
   .action(async (source, options) => {
     const isQuiet = options.quiet;
@@ -57,7 +56,8 @@ program
       const result = await adapter.sync({ from: options.from, to: options.to });
 
       const outputData = options.format === 'raw' ? result.raw : result.records;
-      writeOutput(outputData, options.out);
+      const outputPath = `sync/${source}/${options.from}_${options.to}.json`;
+      writeOutput(outputData, outputPath);
 
       if (!isQuiet) console.log(`✓ Sync complete. Fetched ${result.records.length} records.`);
     } catch (error: unknown) {

@@ -17,7 +17,7 @@ Tracking identified technical debt and planned simplifications.
     - Remove the `--out` flag.
     - Standardize output path to `sync/[source]/[from]_[to].json` by default.
 - **Why**: Ensures predictable file discovery for the `apply` command and reduces operator decision overhead.
-- **Status**: Added 2026-05-10.
+- **Status**: Completed 2026-05-11. (OpenSpec: sync-fiename-improvement)
 
 ### 3. Use only absolute paths in imports
  - **Context**: Biome checks currently allow relative imports.
