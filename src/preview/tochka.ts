@@ -73,30 +73,75 @@ export function normalizeTochkaRecord(sourceRecord: unknown): PreviewRecord {
   }
 }
 
+const MCC_MAP: Record<string, string> = {
+  '5411': 'Покупки / Продукты',
+  '5311': 'Покупки / Продукты',
+  '5499': 'Покупки / Продукты',
+  '5912': 'Покупки / Аптека и БАДы',
+  '4111': 'Проезд / Общественный транспорт',
+  '5300': 'Покупки / Маркетплейсы',
+  '5814': 'Еда вне дома',
+  '4131': 'Проезд / Общественный транспорт',
+  '4121': 'Проезд / Такси',
+  '5812': 'Еда вне дома',
+  '4814': 'Счета / Мобильная связь',
+  '5945': 'Покупки / Детские товары',
+  '8062': 'Услуги / Медицинские услуги',
+  '7221': 'Услуги',
+  '5999': 'Покупки',
+  '8999': 'Услуги',
+  '7338': 'Услуги',
+  '7996': 'Развлечения',
+  '7395': 'Услуги',
+  '5942': 'Покупки / Книги и Журналы',
+  '5541': 'Автомобиль / Бензин',
+  '7542': 'Автомобиль / Мойка',
+  '5719': 'Покупки / Хозтовары',
+  '8011': 'Услуги / Медицинские услуги',
+  '7922': 'Развлечения',
+  '7538': 'Автомобиль / Ремонт',
+  '5200': 'Покупки / Хозтовары',
+  '7349': 'Покупки / Хозтовары',
+  '7230': 'Услуги / Парикмахерская',
+  '5309': 'Путешествия / Покупки'
+};
+
+const TITLE_MAP: [string, string][] = [
+  ['PDLDK_AI_CLUB', 'Подписки и донаты'],
+  ['WHOOSH', 'Услуги / Аренда самокатов'],
+  ['TIMEWEB.CLOUD', 'Услуги / Хостинги и облака'],
+  ['GAZPROMBONUS', 'Подписки и донаты'],
+  ['LEONARDO', 'Покупки / Детские товары'],
+  ['ART-MOSKVA', 'Услуги / Коворкинг'],
+  ['YANDEX*5815*PLUS', 'Подписки и донаты / Яндекс Плюс'],
+  ['SHINSERVIS', 'Автомобиль / Шиномонтаж']
+];
+
+const TITLE_REGEX_MAP: [RegExp, string][] = [[/YANDEX.+PLUS/, 'Подписки и донаты / Яндекс Плюс']];
+
 /**
  * Maps Tochka description or MCC to Honey Money category.
  */
 function mapTochkaCategory(description: string, mcc?: string): string | null {
   // 1. Try MCC first
-  if (mcc) {
-    const mccMap: Record<string, string> = {
-      '5411': 'Покупки / Продукты',
-      '5499': 'Покупки / Продукты',
-      '5300': 'Покупки / Маркетплейсы',
-      '5309': 'Путешествия / Покупки',
-      '5812': 'Еда вне дома',
-      '5814': 'Еда вне дома',
-      '5912': 'Покупки / Аптека и БАДы',
-      '8011': 'Услуги / Медицинские услуги',
-      '4121': 'Проезд / Такси'
-    };
-    if (mccMap[mcc]) return mccMap[mcc];
+  if (mcc && MCC_MAP[mcc]) {
+    return MCC_MAP[mcc];
   }
 
-  // 2. Fallback to description mapping (only for those without MCC mapping or with specific overrides)
+  // 2. Try complete description match
   const desc = description.toUpperCase();
-  if (desc.includes('ART-MOSKVA')) {
-    return 'Услуги / Коворкинг';
+  for (const [pattern, category] of TITLE_MAP) {
+    if (desc.includes(pattern.toUpperCase())) {
+      return category;
+    }
   }
+
+  // 3. Try regex patterns
+  for (const [regex, category] of TITLE_REGEX_MAP) {
+    if (regex.test(desc)) {
+      return category;
+    }
+  }
+
   return null;
 }
