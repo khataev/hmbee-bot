@@ -29,12 +29,12 @@ export function normalizeTochkaRecord(sourceRecord: unknown): PreviewRecord {
     const timeData = r.meta_data.time_data;
 
     // Supported statuses for identification
-    const status = String(data.status);
+    const status = data.status;
     const supportedStatuses = ['Withdraw', 'InProgress'];
     const isSupportedStatus = supportedStatuses.includes(status);
 
     // Supported types for income/expense flow
-    const tranCode = String(data.tranCode);
+    const tranCode = data.tranCode;
     const supportedTypes = ['Purchase', 'Income'];
     const isSupportedType = supportedTypes.includes(tranCode);
 
@@ -46,14 +46,14 @@ export function normalizeTochkaRecord(sourceRecord: unknown): PreviewRecord {
 
     const normalized: NormalizedRecord = {
       transactionId: String(data.tranId),
-      account: String(data.account),
+      account: data.account,
       status: status,
-      date: String(timeData.event_date),
+      date: timeData.event_date,
       type: tranCode,
-      amount: Number(data.sum),
-      currency: String(data.currency),
-      description: String(data.title),
-      mcc: data.mcc ? String(data.mcc) : undefined
+      amount: data.sum,
+      currency: data.currency,
+      description: data.title,
+      mcc: data.mcc
     };
 
     return {
