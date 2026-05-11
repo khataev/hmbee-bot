@@ -1,6 +1,7 @@
 node_modules/
 dist/
 example-data/
+sync/
 .DS_Store
 .env
 .env.*

@@ -34,7 +34,13 @@ npx ts-node src/index.ts list
 ### Синхронизация данных
 Пример получения данных из Точки за январь 2024:
 ```bash
-npx ts-node src/index.ts sync tochka --from 2024-01-01 --to 2024-01-31 --out output.json
+npx ts-node src/index.ts sync tochka --from 2024-01-01 --to 2024-01-31 --out sync/tochka/data.json
+```
+
+### Предпросмотр нормализованных данных
+Команда `apply --preview` позволяет проверить, как транзакции будут выглядеть после нормализации и маппинга категорий:
+```bash
+npx ts-node src/index.ts apply tochka --preview
 ```
 
 ## ✅ Качество кода

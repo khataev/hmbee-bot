@@ -3,6 +3,8 @@ import { TochkaAdapter } from './adapters/tochka.js';
 import type { SourceAdapter } from './adapters/types.js';
 import { loadEnv, validateTochkaEnv } from './env.js';
 import { writeOutput } from './output.js';
+import { loadSyncFiles } from './preview/loader.js';
+import { normalizeTochkaRecord } from './preview/tochka.js';
 
 loadEnv();
 
@@ -60,6 +62,42 @@ program
       if (!isQuiet) console.log(`✓ Sync complete. Fetched ${result.records.length} records.`);
     } catch (error: unknown) {
       console.error(`Sync failed: ${getErrorMessage(error)}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('apply')
+  .description('Process synchronized data for a source')
+  .argument('<source>', 'Source name (e.g., tochka)')
+  .option('--preview', 'Preview normalized records without writing to Honey Money')
+  .option('--quiet', 'Suppress informational output')
+  .action(async (source, options) => {
+    const isQuiet = options.quiet;
+
+    if (source !== 'tochka') {
+      console.error(`Unsupported source: ${source}`);
+      process.exit(1);
+    }
+
+    if (!options.preview) {
+      console.error('Only --preview mode is supported currently.');
+      process.exit(1);
+    }
+
+    try {
+      const records = await loadSyncFiles(source);
+      if (!isQuiet) {
+        console.error(`Applying ${source} with preview...`);
+        console.error(`Loaded ${records.length} records from sync/${source}`);
+      }
+
+      const previewRecords = records.map((r) => normalizeTochkaRecord(r));
+      writeOutput(previewRecords);
+
+      if (!isQuiet) console.error(`✓ Preview complete. Processed ${previewRecords.length} records.`);
+    } catch (error: unknown) {
+      console.error(`Apply failed: ${getErrorMessage(error)}`);
       process.exit(1);
     }
   });

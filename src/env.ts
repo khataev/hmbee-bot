@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { z } from 'zod';
 
 export function loadEnv() {
-  dotenv.config();
+  dotenv.config({ quiet: true });
 }
 
 const TochkaEnvSchema = z.object({
