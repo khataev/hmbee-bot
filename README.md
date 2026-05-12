@@ -37,25 +37,31 @@ CLI-утилита на TypeScript для синхронизации финан�
 
 ### Список источников
 ```bash
-npx ts-node src/index.ts list
+npx tsx src/index.ts list
 ```
 
 ### Синхронизация данных
 Пример получения данных из Точки за январь 2024:
 ```bash
-npx ts-node src/index.ts sync tochka --from 2024-01-01 --to 2024-01-31 --out sync/tochka/data.json
+npx tsx src/index.ts sync tochka --from 2024-01-01 --to 2024-01-31
 ```
 
 ### Предпросмотр нормализованных данных
 Команда `apply --preview` позволяет проверить, как транзакции будут выглядеть после нормализации и маппинга категорий:
 ```bash
-npx ts-node src/index.ts apply tochka --preview
+npx tsx src/index.ts apply tochka --preview
 ```
 
 ### Отправка в Honey Money
 Команда `apply` отправляет идентифицированные записи в Honey Money и печатает пары source/Honey Money id в JSON:
 ```bash
-npx ts-node src/index.ts apply tochka
+npx tsx src/index.ts apply tochka
+```
+
+ОТправка только определенных транзакций
+
+```bash
+npx tsx src/index.ts apply tochka --only-id 4223584703,4223565341
 ```
 
 ## ✅ Качество кода
