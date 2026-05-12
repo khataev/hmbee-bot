@@ -85,4 +85,31 @@ describe('Tochka Normalization', () => {
     expect(result.sourceRecord).toEqual({ wrong: 'shape' });
     expect(result.normalized).toBeUndefined();
   });
+
+  it('should map category based on MCC', () => {
+    const record = {
+      ...mockBaseRecord,
+      data: { ...mockBaseRecord.data, mcc: '5411', title: 'Unknown Merchant' }
+    };
+    const result = normalizeTochkaRecord(record);
+    expect(result.hmbee?.category).toBe('Покупки / Продукты');
+  });
+
+  it('should map category based on merchant title keyword (exact-ish)', () => {
+    const record = {
+      ...mockBaseRecord,
+      data: { ...mockBaseRecord.data, mcc: '0000', title: 'WHOOSH' }
+    };
+    const result = normalizeTochkaRecord(record);
+    expect(result.hmbee?.category).toBe('Услуги / Аренда самокатов');
+  });
+
+  it('should map category based on merchant title keyword (partial match)', () => {
+    const record = {
+      ...mockBaseRecord,
+      data: { ...mockBaseRecord.data, mcc: '0000', title: 'CP* WHOOSH.BIKE' }
+    };
+    const result = normalizeTochkaRecord(record);
+    expect(result.hmbee?.category).toBe('Услуги / Аренда самокатов');
+  });
 });
