@@ -21,7 +21,10 @@ const TochkaTransactionSchema = z
   .object({
     meta_data: z.object({
       system_data: z.object({
-        document_code: z.string()
+        document_code: z.string(),
+        service_code: z.string(),
+        service_type_code: z.string(),
+        type_code: z.string()
       }),
       time_data: z.object({
         event_date: z.string()
@@ -42,8 +45,7 @@ const TochkaTransactionSchema = z
         ...data,
         currency: data.currency ?? data.sumCurrency ?? 'RUB'
       }))
-  })
-  .passthrough();
+  });
 
 const TochkaTimelineResponseSchema = z.object({
   result: z

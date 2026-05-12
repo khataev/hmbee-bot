@@ -35,8 +35,10 @@ program
   .requiredOption('--to <date>', 'To date (YYYY-MM-DD)')
   .option('--format <type>', 'Output format (adapted|raw)', 'adapted')
   .option('--quiet', 'Suppress informational output')
+  .option('--stdout', 'Write output to stdout instead of file')
   .action(async (source, options) => {
     const isQuiet = options.quiet;
+    const writeToStdout = options.stdout;
     let adapter: SourceAdapter;
     if (source === 'tochka') {
       try {
@@ -56,7 +58,7 @@ program
       const result = await adapter.sync({ from: options.from, to: options.to });
 
       const outputData = options.format === 'raw' ? result.raw : result.records;
-      const outputPath = `sync/${source}/${options.from}_${options.to}.json`;
+      const outputPath = writeToStdout ? undefined : `sync/${source}/${options.from}_${options.to}.json`;
       writeOutput(outputData, outputPath);
 
       if (!isQuiet) console.log(`✓ Sync complete. Fetched ${result.records.length} records.`);
