@@ -1,4 +1,8 @@
-import type { NormalizedRecord, PreviewRecord } from './types.js';
+import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from './types.js';
+
+export interface TochkaNormalizationOptions {
+  accountMappings: Record<string, number>;
+}
 
 export interface TochkaSyncRecord {
   meta_data: {
@@ -22,11 +26,13 @@ export interface TochkaSyncRecord {
  * Normalizes a Tochka sync record into the internal preview representation.
  * Only supports income/expense flow with specific statuses.
  */
-export function normalizeTochkaRecord(sourceRecord: unknown): PreviewRecord {
+export function normalizeTochkaRecord(
+  sourceRecord: TochkaSyncRecord,
+  options: TochkaNormalizationOptions
+): PreviewRecord {
   try {
-    const r = sourceRecord as TochkaSyncRecord;
-    const data = r.data;
-    const timeData = r.meta_data.time_data;
+    const data = sourceRecord.data;
+    const timeData = sourceRecord.meta_data.time_data;
 
     // Supported statuses for identification
     const status = data.status;
@@ -56,13 +62,16 @@ export function normalizeTochkaRecord(sourceRecord: unknown): PreviewRecord {
       mcc: data.mcc
     };
 
+    const tochkaAccountId = options.accountMappings[normalized.account];
+
+    if (!tochkaAccountId)
+      throw new Error(`No Honey Money account mapping found for Tochka account ${normalized.account}`);
+
     return {
       identified: true,
       sourceRecord,
       normalized,
-      hmbee: {
-        category: mapTochkaCategory(normalized.description, normalized.mcc)
-      }
+      hmbee: buildHoneyMoneyTransaction(normalized, tochkaAccountId)
     };
   } catch (error) {
     return {
@@ -71,6 +80,38 @@ export function normalizeTochkaRecord(sourceRecord: unknown): PreviewRecord {
       sourceRecord
     };
   }
+}
+
+function buildHoneyMoneyTransaction(normalized: NormalizedRecord, accountId: number): HoneyMoneyTransaction {
+  const category = mapTochkaCategory(normalized.description, normalized.mcc);
+  const subtype = normalized.type === 'Income' ? 'i' : 'e';
+  const normalizedAmount = normalizeHoneyMoneyAmount(normalized.amount, subtype);
+
+  return {
+    subtype,
+    date: normalized.date.slice(0, 10),
+    account_id: accountId,
+    currency: normalized.currency.toLowerCase(),
+    id: null,
+    type: 'unplanned',
+    virtual_id: -1,
+    category,
+    description: String(Math.abs(normalizedAmount)),
+    planned_repeat_days: 0,
+    planned_repeat_end: 'always',
+    planned_repeat_end_date: null,
+    transfer_to_amount: null,
+    transfer_type: 'a',
+    real_amount: normalizedAmount,
+    plan_amount: null,
+    common_id: null,
+    transfer_to_currency: null
+  };
+}
+
+export function normalizeHoneyMoneyAmount(amount: number, subtype: 'e' | 'i'): number {
+  const normalizedAmount = Math.round(Math.abs(amount));
+  return subtype === 'e' ? -normalizedAmount : normalizedAmount;
 }
 
 const MCC_MAP: Record<string, string> = {
