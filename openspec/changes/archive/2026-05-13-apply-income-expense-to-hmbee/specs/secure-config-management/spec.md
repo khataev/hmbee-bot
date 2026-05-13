@@ -1,16 +1,4 @@
-# secure-config-management
-
-## Purpose
-Management of sensitive configuration and credentials for source adapters and target system operations.
-
-## Requirements
-
-### Requirement: Secure Configuration Loading
-The system SHALL prioritize environment-based configuration for sensitive source identifiers like `customerId`.
-
-#### Scenario: Environment variable validation
-- **WHEN** `validateTochkaEnv()` is called
-- **THEN** it must ensure `TOCHKA_CUSTOMER_ID` is present and non-empty.
+## ADDED Requirements
 
 ### Requirement: Honey Money write operations require validated local secrets
 The system SHALL validate required Honey Money authentication and request settings from the local environment before attempting any write operation.

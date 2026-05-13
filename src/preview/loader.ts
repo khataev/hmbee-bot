@@ -6,7 +6,7 @@ import type { TochkaSyncRecord } from './tochka.js';
  * Loads all JSON files from the sync directory for a given source.
  * Expects files to be at sync/<source>/*.json
  */
-export async function loadSyncFiles(source: string): Promise<TochkaSyncRecord[]> {
+export function loadSyncFiles(source: string): TochkaSyncRecord[] {
   const syncDir = path.join(process.cwd(), 'sync', source);
 
   if (!fs.existsSync(syncDir)) {

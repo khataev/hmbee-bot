@@ -5,4 +5,5 @@ sync/
 .DS_Store
 .env
 .env.*
+config/sources.json
 !.env.example

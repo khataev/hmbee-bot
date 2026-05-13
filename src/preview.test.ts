@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeTochkaRecord } from './preview/tochka.js';
+import { normalizeHoneyMoneyAmount, normalizeTochkaRecord } from './preview/tochka.js';
 
 describe('Tochka Normalization', () => {
+  const normalizationOptions = {
+    accountMappings: {
+      '40802810309500012345': 67890
+    }
+  };
+
   const mockBaseRecord = {
     meta_data: {
       time_data: {
@@ -10,7 +16,7 @@ describe('Tochka Normalization', () => {
     },
     data: {
       tranId: 4223584703,
-      account: '40802810309500023530',
+      account: '40802810309500012345',
       currency: 'RUB',
       sum: 241.07,
       tranCode: 'Purchase',
@@ -22,13 +28,17 @@ describe('Tochka Normalization', () => {
   };
 
   it('should identify supported Purchase with InProgress status', () => {
-    const result = normalizeTochkaRecord(mockBaseRecord);
+    const result = normalizeTochkaRecord(mockBaseRecord, normalizationOptions);
     expect(result.identified).toBe(true);
     expect(result.normalized?.transactionId).toBe('4223584703');
     expect(result.normalized?.amount).toBe(241.07);
     expect(result.normalized?.status).toBe('InProgress');
-    // Task 4.1: Category mapping
     expect(result.hmbee?.category).toBe('Услуги / Коворкинг');
+    expect(result.hmbee?.subtype).toBe('e');
+    expect(result.hmbee?.date).toBe('2026-04-27');
+    expect(result.hmbee?.currency).toBe('rub');
+    expect(result.hmbee?.real_amount).toBe(-241);
+    expect(result.hmbee?.account_id).toBe(67890);
   });
 
   it('should map Yandex Taxi to Проезд / Такси', () => {
@@ -36,8 +46,27 @@ describe('Tochka Normalization', () => {
       ...mockBaseRecord,
       data: { ...mockBaseRecord.data, title: 'Yandex*4121*Taxi', description: undefined, mcc: '4121' }
     };
-    const result = normalizeTochkaRecord(record);
+    const result = normalizeTochkaRecord(record, normalizationOptions);
     expect(result.hmbee?.category).toBe('Проезд / Такси');
+  });
+
+  it('should build an income draft with a positive rounded amount', () => {
+    const record = {
+      ...mockBaseRecord,
+      data: {
+        ...mockBaseRecord.data,
+        tranCode: 'Income',
+        title: 'Incoming Payment',
+        sum: 1000.5,
+        mcc: ''
+      }
+    };
+
+    const result = normalizeTochkaRecord(record, normalizationOptions);
+
+    expect(result.hmbee?.subtype).toBe('i');
+    expect(result.hmbee?.real_amount).toBe(1001);
+    expect(result.hmbee?.category).toBeNull();
   });
 
   it('should identify supported Purchase with Withdraw status', () => {
@@ -45,7 +74,7 @@ describe('Tochka Normalization', () => {
       ...mockBaseRecord,
       data: { ...mockBaseRecord.data, status: 'Withdraw' }
     };
-    const result = normalizeTochkaRecord(record);
+    const result = normalizeTochkaRecord(record, normalizationOptions);
     expect(result.identified).toBe(true);
     expect(result.normalized?.status).toBe('Withdraw');
   });
@@ -55,7 +84,7 @@ describe('Tochka Normalization', () => {
       ...mockBaseRecord,
       data: { ...mockBaseRecord.data, status: 'Received' }
     };
-    const result = normalizeTochkaRecord(record);
+    const result = normalizeTochkaRecord(record, normalizationOptions);
     expect(result.identified).toBe(false);
     expect(result.normalized).toBeUndefined();
   });
@@ -65,7 +94,7 @@ describe('Tochka Normalization', () => {
       ...mockBaseRecord,
       data: { ...mockBaseRecord.data, tranCode: 'Transfer' }
     };
-    const result = normalizeTochkaRecord(record);
+    const result = normalizeTochkaRecord(record, normalizationOptions);
     expect(result.identified).toBe(false);
     expect(result.normalized).toBeUndefined();
   });
@@ -75,12 +104,12 @@ describe('Tochka Normalization', () => {
       ...mockBaseRecord,
       data: { ...mockBaseRecord.data, description: undefined, title: 'Fallback Title' }
     };
-    const result = normalizeTochkaRecord(record);
+    const result = normalizeTochkaRecord(record, normalizationOptions);
     expect(result.normalized?.description).toBe('Fallback Title');
   });
 
   it('should return identified: false on parsing error', () => {
-    const result = normalizeTochkaRecord({ wrong: 'shape' });
+    const result = normalizeTochkaRecord({ wrong: 'shape' } as never, normalizationOptions);
     expect(result.identified).toBe(false);
     expect(result.sourceRecord).toEqual({ wrong: 'shape' });
     expect(result.normalized).toBeUndefined();
@@ -91,7 +120,7 @@ describe('Tochka Normalization', () => {
       ...mockBaseRecord,
       data: { ...mockBaseRecord.data, mcc: '5411', title: 'Unknown Merchant' }
     };
-    const result = normalizeTochkaRecord(record);
+    const result = normalizeTochkaRecord(record, normalizationOptions);
     expect(result.hmbee?.category).toBe('Покупки / Продукты');
   });
 
@@ -100,7 +129,7 @@ describe('Tochka Normalization', () => {
       ...mockBaseRecord,
       data: { ...mockBaseRecord.data, mcc: '0000', title: 'WHOOSH' }
     };
-    const result = normalizeTochkaRecord(record);
+    const result = normalizeTochkaRecord(record, normalizationOptions);
     expect(result.hmbee?.category).toBe('Услуги / Аренда самокатов');
   });
 
@@ -109,7 +138,13 @@ describe('Tochka Normalization', () => {
       ...mockBaseRecord,
       data: { ...mockBaseRecord.data, mcc: '0000', title: 'CP* WHOOSH.BIKE' }
     };
-    const result = normalizeTochkaRecord(record);
+    const result = normalizeTochkaRecord(record, normalizationOptions);
     expect(result.hmbee?.category).toBe('Услуги / Аренда самокатов');
+  });
+
+  it('should normalize outgoing and incoming amounts for Honey Money', () => {
+    expect(normalizeHoneyMoneyAmount(241.07, 'e')).toBe(-241);
+    expect(normalizeHoneyMoneyAmount(169.99, 'e')).toBe(-170);
+    expect(normalizeHoneyMoneyAmount(241.07, 'i')).toBe(241);
   });
 });

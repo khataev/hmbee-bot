@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { loadConfig } from '../config.js';
+import { validateTochkaEnv } from '../env.js';
 import type { SourceAdapter, SyncOptions, SyncResult } from './types.js';
 
 /**
@@ -17,33 +17,34 @@ export class TochkaError extends Error {
   }
 }
 
-const TochkaTransactionSchema = z
-  .object({
-    meta_data: z.object({
-      system_data: z.object({
-        document_code: z.string()
-      }),
-      time_data: z.object({
-        event_date: z.string()
-      })
+const TochkaTransactionSchema = z.object({
+  meta_data: z.object({
+    system_data: z.object({
+      document_code: z.string(),
+      service_code: z.string(),
+      service_type_code: z.string(),
+      type_code: z.string()
     }),
-    data: z
-      .object({
-        title: z.string().optional().default('No title'),
-        sum: z.union([z.number(), z.string().transform((val) => Number(val.replace(/\s/g, '')))]),
-        currency: z.string().optional(),
-        sumCurrency: z.string().optional(),
-        description: z.string().optional(),
-        incoming: z.boolean().optional(),
-        statusLabel: z.string().optional() // Derived or present in some variants
-      })
-      .passthrough()
-      .transform((data) => ({
-        ...data,
-        currency: data.currency ?? data.sumCurrency ?? 'RUB'
-      }))
-  })
-  .passthrough();
+    time_data: z.object({
+      event_date: z.string()
+    })
+  }),
+  data: z
+    .object({
+      title: z.string().optional().default('No title'),
+      sum: z.union([z.number(), z.string().transform((val) => Number(val.replace(/\s/g, '')))]),
+      currency: z.string().optional(),
+      sumCurrency: z.string().optional(),
+      description: z.string().optional(),
+      incoming: z.boolean().optional(),
+      statusLabel: z.string().optional() // Derived or present in some variants
+    })
+    .passthrough()
+    .transform((data) => ({
+      ...data,
+      currency: data.currency ?? data.sumCurrency ?? 'RUB'
+    }))
+});
 
 const TochkaTimelineResponseSchema = z.object({
   result: z
@@ -80,13 +81,7 @@ export class TochkaAdapter implements SourceAdapter {
   name = 'tochka';
 
   async sync(options: SyncOptions): Promise<SyncResult> {
-    const cookie = process.env.TOCHKA_COOKIE;
-    if (!cookie) {
-      throw new TochkaError(
-        'TOCHKA_COOKIE environment variable is missing. Please add it to your .env file.',
-        'validation'
-      );
-    }
+    const { TOCHKA_COOKIE: cookie, TOCHKA_CUSTOMER_ID: customerId } = validateTochkaEnv();
 
     const cookies = parseCookies(cookie);
     const csrfToken = cookies['X-CSRF-TOKEN'];
@@ -98,14 +93,11 @@ export class TochkaAdapter implements SourceAdapter {
       );
     }
 
-    const config = loadConfig();
-    const tochkaConfig = config.sources.tochka;
-
     const allRecords: z.infer<typeof TochkaTransactionSchema>[] = [];
     let rawData: unknown = null;
 
     // First request: always without lastDate
-    const firstPage = await this.fetchPage(tochkaConfig, options, cookie, csrfToken);
+    const firstPage = await this.fetchPage(customerId, options, cookie, csrfToken);
     allRecords.push(...firstPage.records);
     rawData = firstPage.raw;
 
@@ -117,7 +109,7 @@ export class TochkaAdapter implements SourceAdapter {
         let lastDate = lastRec.meta_data.time_data.event_date;
 
         while (true) {
-          const { records, raw } = await this.fetchPage(tochkaConfig, options, cookie, csrfToken, lastDate);
+          const { records, raw } = await this.fetchPage(customerId, options, cookie, csrfToken, lastDate);
           allRecords.push(...records);
           rawData = raw;
 
@@ -147,7 +139,7 @@ export class TochkaAdapter implements SourceAdapter {
   }
 
   private async fetchPage(
-    tochkaConfig: ReturnType<typeof loadConfig>['sources']['tochka'],
+    customerId: string,
     options: SyncOptions,
     cookie: string,
     csrfToken: string,
@@ -170,7 +162,7 @@ export class TochkaAdapter implements SourceAdapter {
           jsonrpc: '2.0',
           method: TOCHKA_RPC_METHOD,
           params: {
-            customer_id: tochkaConfig.customerId,
+            customer_id: customerId,
             filters: [
               {
                 types: [

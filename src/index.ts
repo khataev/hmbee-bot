@@ -1,10 +1,14 @@
 import { Command } from 'commander';
 import { TochkaAdapter } from './adapters/tochka.js';
 import type { SourceAdapter } from './adapters/types.js';
-import { loadEnv, validateTochkaEnv } from './env.js';
+import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from './apply.js';
+import { loadConfig } from './config.js';
+import { loadEnv, validateHoneyMoneyEnv, validateTochkaEnv } from './env.js';
+import { HoneyMoneyClient } from './hmbee/client.js';
 import { writeOutput } from './output.js';
 import { loadSyncFiles } from './preview/loader.js';
 import { normalizeTochkaRecord } from './preview/tochka.js';
+import type { HoneyMoneyTransaction, PreviewRecord } from './preview/types.js';
 
 loadEnv();
 
@@ -12,6 +16,10 @@ const program = new Command();
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function isReadyForApply(record: PreviewRecord): record is ReadyApplyRecord {
+  return record.identified && record.normalized !== undefined && record.hmbee !== undefined;
 }
 
 program
@@ -35,8 +43,10 @@ program
   .requiredOption('--to <date>', 'To date (YYYY-MM-DD)')
   .option('--format <type>', 'Output format (adapted|raw)', 'adapted')
   .option('--quiet', 'Suppress informational output')
+  .option('--stdout', 'Write output to stdout instead of file')
   .action(async (source, options) => {
     const isQuiet = options.quiet;
+    const writeToStdout = options.stdout;
     let adapter: SourceAdapter;
     if (source === 'tochka') {
       try {
@@ -56,7 +66,7 @@ program
       const result = await adapter.sync({ from: options.from, to: options.to });
 
       const outputData = options.format === 'raw' ? result.raw : result.records;
-      const outputPath = `sync/${source}/${options.from}_${options.to}.json`;
+      const outputPath = writeToStdout ? undefined : `sync/${source}/${options.from}_${options.to}.json`;
       writeOutput(outputData, outputPath);
 
       if (!isQuiet) console.log(`✓ Sync complete. Fetched ${result.records.length} records.`);
@@ -71,6 +81,7 @@ program
   .description('Process synchronized data for a source')
   .argument('<source>', 'Source name (e.g., tochka)')
   .option('--preview', 'Preview normalized records without writing to Honey Money')
+  .option('--only-id <ids>', 'Only save the specified comma-separated source transaction ids')
   .option('--quiet', 'Suppress informational output')
   .action(async (source, options) => {
     const isQuiet = options.quiet;
@@ -80,22 +91,74 @@ program
       process.exit(1);
     }
 
-    if (!options.preview) {
-      console.error('Only --preview mode is supported currently.');
-      process.exit(1);
-    }
-
     try {
-      const records = await loadSyncFiles(source);
-      if (!isQuiet) {
-        console.error(`Applying ${source} with preview...`);
-        console.error(`Loaded ${records.length} records from sync/${source}`);
+      const config = loadConfig();
+      const records = loadSyncFiles(source);
+      const previewRecords = records.map((record) =>
+        normalizeTochkaRecord(record, { accountMappings: config.sources.tochka.accountMappings })
+      );
+
+      if (options.preview) {
+        if (!isQuiet) {
+          console.error(`Applying ${source} with preview...`);
+          console.error(`Loaded ${records.length} records from sync/${source}`);
+        }
+
+        writeOutput(previewRecords);
+
+        if (!isQuiet) console.error(`✓ Preview complete. Processed ${previewRecords.length} records.`);
+        return;
       }
 
-      const previewRecords = records.map((r) => normalizeTochkaRecord(r));
-      writeOutput(previewRecords);
+      const readyRecords = previewRecords.filter(isReadyForApply);
+      const onlyIds = parseOnlyIdsOption(options.onlyId);
+      const selectedRecords = filterApplyRecords(readyRecords, onlyIds);
+      const missingAccountMappings = selectedRecords.filter((record) => record.hmbee.account_id === null);
 
-      if (!isQuiet) console.error(`✓ Preview complete. Processed ${previewRecords.length} records.`);
+      if (missingAccountMappings.length > 0) {
+        const missingAccounts = [...new Set(missingAccountMappings.map((record) => record.normalized.account))].join(
+          ', '
+        );
+        throw new Error(`Missing Honey Money account mapping for Tochka accounts: ${missingAccounts}`);
+      }
+
+      const hmEnv = validateHoneyMoneyEnv();
+      const client = new HoneyMoneyClient(hmEnv);
+
+      if (!isQuiet) {
+        console.error(`Applying ${source} to Honey Money...`);
+        console.error(`Loaded ${records.length} records from sync/${source}`);
+        console.error(`Sending ${selectedRecords.length} identified income/expense records.`);
+      }
+
+      const createdTransactions = [] as Array<
+        HoneyMoneyTransaction & { sourceTransactionId: string; honeyMoneyTransactionId: number }
+      >;
+
+      for (const record of selectedRecords) {
+        const accountId = record.hmbee.account_id;
+        if (accountId === null) {
+          throw new Error(`Missing Honey Money account mapping for Tochka account ${record.normalized.account}`);
+        }
+
+        const honeyMoneyTransactionId = await client.createTransaction(record.hmbee);
+
+        createdTransactions.push({
+          sourceTransactionId: record.normalized.transactionId,
+          honeyMoneyTransactionId,
+          ...record.hmbee
+        });
+      }
+
+      writeOutput(createdTransactions);
+
+      if (!isQuiet) {
+        const skippedCount = previewRecords.length - selectedRecords.length;
+        console.error(
+          `✓ Apply complete. Created ${createdTransactions.length} Honey Money transactions.` +
+            (skippedCount > 0 ? ` Skipped ${skippedCount} unsupported records.` : '')
+        );
+      }
     } catch (error: unknown) {
       console.error(`Apply failed: ${getErrorMessage(error)}`);
       process.exit(1);
