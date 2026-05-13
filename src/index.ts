@@ -19,7 +19,7 @@ function getErrorMessage(error: unknown): string {
 }
 
 function isReadyForApply(record: PreviewRecord): record is ReadyApplyRecord {
-  return record.identified && record.normalized !== undefined;
+  return record.identified && record.normalized !== undefined && record.hmbee !== undefined;
 }
 
 program
@@ -93,7 +93,7 @@ program
 
     try {
       const config = loadConfig();
-      const records = await loadSyncFiles(source);
+      const records = loadSyncFiles(source);
       const previewRecords = records.map((record) =>
         normalizeTochkaRecord(record, { accountMappings: config.sources.tochka.accountMappings })
       );

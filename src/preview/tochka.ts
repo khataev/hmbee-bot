@@ -22,6 +22,9 @@ export interface TochkaSyncRecord {
   };
 }
 
+const SUPPORTED_STATUSES = ['Withdraw', 'InProgress'];
+const SUPPORTED_TYPES = ['Purchase', 'Income'];
+
 /**
  * Normalizes a Tochka sync record into the internal preview representation.
  * Only supports income/expense flow with specific statuses.
@@ -36,13 +39,11 @@ export function normalizeTochkaRecord(
 
     // Supported statuses for identification
     const status = data.status;
-    const supportedStatuses = ['Withdraw', 'InProgress'];
-    const isSupportedStatus = supportedStatuses.includes(status);
+    const isSupportedStatus = SUPPORTED_STATUSES.includes(status);
 
     // Supported types for income/expense flow
     const tranCode = data.tranCode;
-    const supportedTypes = ['Purchase', 'Income'];
-    const isSupportedType = supportedTypes.includes(tranCode);
+    const isSupportedType = SUPPORTED_TYPES.includes(tranCode);
 
     const identified = !!(isSupportedStatus && isSupportedType);
 
