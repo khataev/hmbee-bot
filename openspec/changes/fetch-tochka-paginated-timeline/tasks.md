@@ -15,4 +15,4 @@
 
 - [x] 3.1 Change `TOCHKA_PAGE_SIZE` to 250 for production mode and update documention/.env.example.
 - [x] 3.2 Verify implementation with `npm run check`.
-- [ ] 3.3 Test with a mocked or real response containing multiple pages (if possible).
+- [x] 3.3 Test with a mocked or real response containing multiple pages (if possible).

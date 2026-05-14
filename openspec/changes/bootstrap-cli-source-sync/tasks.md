@@ -1,6 +1,6 @@
 ## 1. CLI bootstrap
 
-- [ ] 1.1 Create the initial CLI entrypoint and command dispatch structure for local execution
+- [x] 1.1 Create the initial CLI entrypoint and command dispatch structure for local execution
 - [x] 1.2 Add the `list` command for supported data sources
 - [x] 1.3 Add the `sync` command interface with source selection and period input handling
 
