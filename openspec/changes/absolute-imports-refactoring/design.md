@@ -8,7 +8,7 @@ The proposal introduces one new capability (`absolute-imports-policy`) and modif
 
 **Goals:**
 - Establish a single absolute import convention for targeted TypeScript files.
-- Migrate existing relative imports to absolute alias-based imports.
+- Migrate existing relative imports to absolute imports without TypeScript path aliases.
 - Enforce the convention with Biome (`noRestrictedImports`) so relative imports fail lint checks.
 - Keep runtime behavior identical and preserve CLI/API contracts.
 
@@ -19,8 +19,8 @@ The proposal introduces one new capability (`absolute-imports-policy`) and modif
 
 ## Decisions
 
-1. Use TypeScript path aliases as the source of truth for absolute import resolution.
-- Rationale: Keeps compile-time resolution explicit and avoids brittle deep relative paths.
+1. Do not introduce TypeScript path aliases (`compilerOptions.paths`) for this refactor.
+- Rationale: Avoid extra resolution layer and keep project configuration minimal.
 - Alternative considered: Keep relative imports and enforce shallow path depth. Rejected because it still preserves path-fragility during file moves.
 
 2. Enforce relative-import prohibition through Biome `noRestrictedImports` patterns.
@@ -44,14 +44,14 @@ The proposal introduces one new capability (`absolute-imports-policy`) and modif
 
 ## Risks / Trade-offs
 
-- [Risk] Alias misconfiguration can break runtime/module resolution. → Mitigation: validate `tsconfig.json` alias coverage and run `npm run check`.
+- [Risk] Absolute import strategy without aliases may surface resolver edge cases. → Mitigation: run `npm run check` and validate runtime entrypoints.
 - [Risk] Overly broad restricted-import patterns may block valid same-folder local utilities. → Mitigation: scope rule to intended file set and refine exceptions only if justified.
 - [Risk] Large import churn may reduce review clarity. → Mitigation: keep refactor mechanical and avoid unrelated edits.
 
 ## Migration Plan
 
-1. Confirm or add stable alias mappings in TypeScript config.
-2. Convert existing relative imports in targeted source files to alias-based absolute imports.
+1. Confirm import strategy that does not depend on `tsconfig.json` path aliases.
+2. Convert existing relative imports in targeted source files to absolute imports based on the chosen non-alias strategy.
 3. Enable/adjust Biome `noRestrictedImports` rule for relative path bans.
 4. Run `npm run check` and fix any import-resolution or lint failures.
 5. If regressions appear, rollback by reverting import rewrite + rule change in a single commit.

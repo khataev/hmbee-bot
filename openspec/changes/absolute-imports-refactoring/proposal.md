@@ -5,7 +5,7 @@ Relative imports are currently used across the codebase, which makes refactors a
 ## What Changes
 
 - Introduce a project-level absolute import convention for runtime source files.
-- Refactor existing TypeScript source imports from relative paths to absolute alias-based paths.
+- Refactor existing TypeScript source imports from relative paths to absolute paths without TypeScript path aliases.
 - Configure and enforce a Biome rule (`noRestrictedImports`) that rejects relative imports (`./**`, `../**`) in the targeted source scope.
 - Document migration scope and validation criteria, including `npm run check` as a quality gate.
 
