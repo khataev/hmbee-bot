@@ -1,4 +1,4 @@
-import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from './preview/types.js';
+import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
 
 export type ReadyApplyRecord = PreviewRecord & {
   identified: true;

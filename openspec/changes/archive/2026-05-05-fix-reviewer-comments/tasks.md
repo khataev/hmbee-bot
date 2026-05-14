@@ -1,6 +1,6 @@
 ## 1. Security and Request Construction Hardening
 
-- [ ] 1.1 Replace regex CSRF extraction with deterministic cookie key/value parsing utility in Tochka adapter.
+- [x] 1.1 Replace regex CSRF extraction with deterministic cookie key/value parsing utility in Tochka adapter.
 - [x] 1.2 Prevent sensitive cookie/session data from appearing in thrown errors or operator-facing diagnostics.
 - [x] 1.3 Replace ad-hoc RPC ID generation with `crypto.randomUUID()` and move hardcoded request literals into named constants.
 - [x] 1.4 Run `npm run check` after request-construction changes and resolve all TypeScript/Biome issues.

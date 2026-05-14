@@ -36,7 +36,8 @@ This project follows a pragmatic TypeScript style focused on readability and rel
 - Keep source-specific logic inside adapters.
 - Keep command orchestration in the CLI entrypoint.
 - Prefer named exports unless a default export is clearly simpler.
--  Always pin exact version of installed package
+- Use **absolute imports** starting with `src/` for all project files (e.g., `import { ... } from 'src/env.js'`). **Relative imports (`./`, `../`) are forbidden.**
+- Always pin exact version of installed package
 
 ## Formatting and linting
 

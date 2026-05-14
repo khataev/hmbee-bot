@@ -1,5 +1,5 @@
+import { normalizeHoneyMoneyAmount, normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
 import { describe, expect, it } from 'vitest';
-import { normalizeHoneyMoneyAmount, normalizeTochkaRecord } from './apply/preview/tochka.js';
 
 describe('Tochka Normalization', () => {
   const normalizationOptions = {

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { TochkaSyncRecord } from './tochka.js';
+import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 
 /**
  * Loads all JSON files from the sync directory for a given source.

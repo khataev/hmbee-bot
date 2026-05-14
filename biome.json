@@ -35,6 +35,17 @@
         "noExplicitAny": "warn"
       },
       "style": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "patterns": [
+              {
+                "group": ["./**", "../**"],
+                "message": "Use absolute imports instead of relative paths."
+              }
+            ]
+          }
+        },
         "useConst": "error",
         "useTemplate": "warn"
       }

@@ -1,6 +1,6 @@
+import type { HoneyMoneyTransaction } from 'src/apply/preview/types.js';
+import type { THoneyMoneyEnvSchema } from 'src/env.js';
 import { z } from 'zod';
-import type { HoneyMoneyTransaction } from '../apply/preview/types.js';
-import type { THoneyMoneyEnvSchema } from '../env.js';
 
 const HoneyMoneyCreateTransactionResponseSchema = z.object({
   status: z.string(),
