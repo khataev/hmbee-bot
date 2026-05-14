@@ -1,14 +1,14 @@
 import { Command } from 'commander';
 import { TochkaAdapter } from './adapters/tochka.js';
 import type { SourceAdapter } from './adapters/types.js';
-import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from './apply.js';
+import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from './apply/index.js';
+import { loadSyncFiles } from './apply/preview/loader.js';
+import { normalizeTochkaRecord } from './apply/preview/tochka.js';
+import type { HoneyMoneyTransaction, PreviewRecord } from './apply/preview/types.js';
 import { loadConfig } from './config.js';
 import { loadEnv, validateHoneyMoneyEnv, validateTochkaEnv } from './env.js';
 import { HoneyMoneyClient } from './hmbee/client.js';
 import { writeOutput } from './output.js';
-import { loadSyncFiles } from './preview/loader.js';
-import { normalizeTochkaRecord } from './preview/tochka.js';
-import type { HoneyMoneyTransaction, PreviewRecord } from './preview/types.js';
 
 loadEnv();
 

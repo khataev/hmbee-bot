@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from './apply.js';
+import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from './apply/index.js';
 
 function createRecord(transactionId: string): ReadyApplyRecord {
   return {

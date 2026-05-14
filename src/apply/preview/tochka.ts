@@ -1,4 +1,4 @@
-import type { TypeCodeCondition, TypeCodeConditionsConfig, TypeCodeRule } from '../config.js';
+import type { TypeCodeCondition, TypeCodeConditionsConfig, TypeCodeRule } from '../../config.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from './types.js';
 
 export interface TochkaNormalizationOptions {
