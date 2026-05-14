@@ -1,11 +1,16 @@
+import type { TypeCodeCondition, TypeCodeConditionsConfig, TypeCodeRule } from '../../config.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from './types.js';
 
 export interface TochkaNormalizationOptions {
   accountMappings: Record<string, number>;
+  typeCodeRules: Record<string, TypeCodeRule>;
 }
 
 export interface TochkaSyncRecord {
   meta_data: {
+    system_data: {
+      type_code: string;
+    };
     time_data: {
       event_date: string;
     };
@@ -19,11 +24,59 @@ export interface TochkaSyncRecord {
     currency: string;
     title: string;
     mcc: string;
+    [key: string]: string | number | boolean | null | undefined;
   };
 }
 
-const SUPPORTED_STATUSES = ['Withdraw', 'InProgress'];
-const SUPPORTED_TYPES = ['Purchase', 'Income'];
+function conditionMatches(record: TochkaSyncRecord, condition: TypeCodeCondition): boolean {
+  return Object.entries(condition).every(([field, expectedValue]) => {
+    const valueFromData = record.data[field];
+    const actualValue = valueFromData !== undefined ? valueFromData : record[field as keyof TochkaSyncRecord];
+    return actualValue === expectedValue;
+  });
+}
+
+function classifyByRule(
+  record: TochkaSyncRecord,
+  rules: TypeCodeConditionsConfig
+): {
+  identified: boolean;
+  save: boolean;
+  reason: string | null;
+} {
+  const hasIncludedMatch = rules.included.some((condition) => conditionMatches(record, condition));
+  const hasExcludedMatch = rules.excluded.some((condition) => conditionMatches(record, condition));
+
+  if (hasIncludedMatch && hasExcludedMatch) {
+    return {
+      identified: false,
+      save: false,
+      reason: 'included/excluded ambiguity'
+    };
+  }
+
+  if (hasIncludedMatch) {
+    return {
+      identified: true,
+      save: true,
+      reason: null
+    };
+  }
+
+  if (hasExcludedMatch) {
+    return {
+      identified: true,
+      save: false,
+      reason: 'excluded'
+    };
+  }
+
+  return {
+    identified: false,
+    save: false,
+    reason: 'no matching included/excluded condition'
+  };
+}
 
 /**
  * Normalizes a Tochka sync record into the internal preview representation.
@@ -36,27 +89,35 @@ export function normalizeTochkaRecord(
   try {
     const data = sourceRecord.data;
     const timeData = sourceRecord.meta_data.time_data;
+    const typeCode = sourceRecord.meta_data.system_data.type_code;
+    const typeRules = options.typeCodeRules[typeCode];
 
-    // Supported statuses for identification
-    const status = data.status;
-    const isSupportedStatus = SUPPORTED_STATUSES.includes(status);
+    if (!typeRules) {
+      return {
+        identified: false,
+        save: false,
+        reason: `unsupported type_code: ${typeCode}`,
+        sourceRecord
+      };
+    }
 
-    // Supported types for income/expense flow
-    const tranCode = data.tranCode;
-    const isSupportedType = SUPPORTED_TYPES.includes(tranCode);
+    const classification = classifyByRule(sourceRecord, typeRules.conditions);
 
-    const identified = !!(isSupportedStatus && isSupportedType);
-
-    if (!identified) {
-      return { identified: false, sourceRecord };
+    if (!classification.identified || !classification.save) {
+      return {
+        identified: classification.identified,
+        save: classification.save,
+        reason: classification.reason,
+        sourceRecord
+      };
     }
 
     const normalized: NormalizedRecord = {
       transactionId: String(data.tranId),
       account: data.account,
-      status: status,
+      status: data.status,
       date: timeData.event_date,
-      type: tranCode,
+      type: data.tranCode,
       amount: data.sum,
       currency: data.currency,
       description: data.title,
@@ -70,6 +131,8 @@ export function normalizeTochkaRecord(
 
     return {
       identified: true,
+      save: true,
+      reason: null,
       sourceRecord,
       normalized,
       hmbee: buildHoneyMoneyTransaction(normalized, tochkaAccountId)
@@ -77,7 +140,8 @@ export function normalizeTochkaRecord(
   } catch (error) {
     return {
       identified: false,
-      identificationError: error instanceof Error ? error.message : String(error),
+      save: false,
+      reason: error instanceof Error ? error.message : String(error),
       sourceRecord
     };
   }

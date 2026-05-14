@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from './apply.js';
+import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from './apply/index.js';
 
 function createRecord(transactionId: string): ReadyApplyRecord {
   return {
     identified: true,
+    save: true,
+    reason: null,
     sourceRecord: { id: transactionId },
     normalized: {
       transactionId,

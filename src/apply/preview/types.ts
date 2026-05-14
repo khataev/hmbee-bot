@@ -33,7 +33,8 @@ export interface HoneyMoneyTransaction {
 
 export interface PreviewRecord {
   identified: boolean;
-  identificationError?: string;
+  save: boolean;
+  reason: string | null;
   sourceRecord: unknown;
   normalized?: NormalizedRecord;
   hmbee?: HoneyMoneyTransaction;
