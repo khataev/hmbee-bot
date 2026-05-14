@@ -1,5 +1,5 @@
-import type { TypeCodeCondition, TypeCodeConditionsConfig, TypeCodeRule } from '../../config.js';
-import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from './types.js';
+import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
+import type { TypeCodeCondition, TypeCodeConditionsConfig, TypeCodeRule } from 'src/config.js';
 
 export interface TochkaNormalizationOptions {
   accountMappings: Record<string, number>;

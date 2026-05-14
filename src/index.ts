@@ -1,14 +1,14 @@
 import { Command } from 'commander';
-import { TochkaAdapter } from './adapters/tochka.js';
-import type { SourceAdapter } from './adapters/types.js';
-import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from './apply/index.js';
-import { loadSyncFiles } from './apply/preview/loader.js';
-import { normalizeTochkaRecord } from './apply/preview/tochka.js';
-import type { HoneyMoneyTransaction, PreviewRecord } from './apply/preview/types.js';
-import { loadConfig } from './config.js';
-import { loadEnv, validateHoneyMoneyEnv, validateTochkaEnv } from './env.js';
-import { HoneyMoneyClient } from './hmbee/client.js';
-import { writeOutput } from './output.js';
+import { TochkaAdapter } from 'src/adapters/tochka.js';
+import type { SourceAdapter } from 'src/adapters/types.js';
+import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from 'src/apply/index.js';
+import { loadSyncFiles } from 'src/apply/preview/loader.js';
+import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
+import type { HoneyMoneyTransaction, PreviewRecord } from 'src/apply/preview/types.js';
+import { loadConfig } from 'src/config.js';
+import { loadEnv, validateHoneyMoneyEnv, validateTochkaEnv } from 'src/env.js';
+import { HoneyMoneyClient } from 'src/hmbee/client.js';
+import { writeOutput } from 'src/output.js';
 
 loadEnv();
 

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
+import type { SourceAdapter, SyncOptions, SyncResult } from 'src/adapters/types.js';
+import { validateTochkaEnv } from 'src/env.js';
 import { z } from 'zod';
-import { validateTochkaEnv } from '../env.js';
-import type { SourceAdapter, SyncOptions, SyncResult } from './types.js';
 
 /**
  * Custom error for Tochka adapter failures
