@@ -23,6 +23,7 @@ This project follows a pragmatic TypeScript style focused on readability and rel
 - Avoid `any`; temporary `any` is allowed only during active refactoring.
 - Prefer narrow types and explicit return types for exported functions.
 - Validate external input at boundaries (CLI args, env, HTTP payloads).
+- If a runtime schema already exists (for example, Zod), derive TypeScript types from that schema (`z.infer`) instead of duplicating shape definitions manually.
 
 ## Error handling
 

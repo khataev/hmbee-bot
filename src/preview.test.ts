@@ -5,11 +5,25 @@ describe('Tochka Normalization', () => {
   const normalizationOptions = {
     accountMappings: {
       '40802810309500012345': 67890
+    },
+    typeCodeRules: {
+      CardTransactionInfo: {
+        conditions: {
+          included: [
+            { tranCode: 'Purchase', status: 'InProgress' },
+            { tranCode: 'Purchase', status: 'Withdraw' }
+          ],
+          excluded: [{ tranCode: 'CheckCard' }, { tranCode: 'Purchase', status: 'Canceled' }]
+        }
+      }
     }
   };
 
   const mockBaseRecord = {
     meta_data: {
+      system_data: {
+        type_code: 'CardTransactionInfo'
+      },
       time_data: {
         event_date: '2026-04-27T11:48:03.000+05:00'
       }
@@ -30,6 +44,8 @@ describe('Tochka Normalization', () => {
   it('should identify supported Purchase with InProgress status', () => {
     const result = normalizeTochkaRecord(mockBaseRecord, normalizationOptions);
     expect(result.identified).toBe(true);
+    expect(result.save).toBe(true);
+    expect(result.reason).toBeNull();
     expect(result.normalized?.transactionId).toBe('4223584703');
     expect(result.normalized?.amount).toBe(241.07);
     expect(result.normalized?.status).toBe('InProgress');
@@ -50,23 +66,36 @@ describe('Tochka Normalization', () => {
     expect(result.hmbee?.category).toBe('Проезд / Такси');
   });
 
-  it('should build an income draft with a positive rounded amount', () => {
+  it('should mark CheckCard as identified but excluded', () => {
     const record = {
       ...mockBaseRecord,
       data: {
         ...mockBaseRecord.data,
-        tranCode: 'Income',
-        title: 'Incoming Payment',
-        sum: 1000.5,
-        mcc: ''
+        tranCode: 'CheckCard',
+        status: 'InProgress'
       }
     };
 
     const result = normalizeTochkaRecord(record, normalizationOptions);
 
-    expect(result.hmbee?.subtype).toBe('i');
-    expect(result.hmbee?.real_amount).toBe(1001);
-    expect(result.hmbee?.category).toBeNull();
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(false);
+    expect(result.reason).toBe('excluded');
+    expect(result.normalized).toBeUndefined();
+    expect(result.hmbee).toBeUndefined();
+  });
+
+  it('should mark canceled Purchase as identified but excluded', () => {
+    const record = {
+      ...mockBaseRecord,
+      data: { ...mockBaseRecord.data, status: 'Canceled' }
+    };
+
+    const result = normalizeTochkaRecord(record, normalizationOptions);
+
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(false);
+    expect(result.reason).toBe('excluded');
   });
 
   it('should identify supported Purchase with Withdraw status', () => {
@@ -74,43 +103,73 @@ describe('Tochka Normalization', () => {
       ...mockBaseRecord,
       data: { ...mockBaseRecord.data, status: 'Withdraw' }
     };
+
     const result = normalizeTochkaRecord(record, normalizationOptions);
+
     expect(result.identified).toBe(true);
+    expect(result.save).toBe(true);
+    expect(result.reason).toBeNull();
     expect(result.normalized?.status).toBe('Withdraw');
   });
 
-  it('should not identify record with unsupported status (e.g., Received)', () => {
+  it('should not identify record with no matching include or exclude rule', () => {
     const record = {
       ...mockBaseRecord,
       data: { ...mockBaseRecord.data, status: 'Received' }
     };
+
     const result = normalizeTochkaRecord(record, normalizationOptions);
+
     expect(result.identified).toBe(false);
+    expect(result.save).toBe(false);
+    expect(result.reason).toBe('no matching included/excluded condition');
     expect(result.normalized).toBeUndefined();
   });
 
-  it('should not identify record with unsupported type (e.g., Transfer)', () => {
-    const record = {
-      ...mockBaseRecord,
-      data: { ...mockBaseRecord.data, tranCode: 'Transfer' }
+  it('should fail identification on included/excluded ambiguity', () => {
+    const optionsWithAmbiguity = {
+      ...normalizationOptions,
+      typeCodeRules: {
+        CardTransactionInfo: {
+          conditions: {
+            included: [{ tranCode: 'Purchase' }],
+            excluded: [{ status: 'InProgress' }]
+          }
+        }
+      }
     };
-    const result = normalizeTochkaRecord(record, normalizationOptions);
+
+    const result = normalizeTochkaRecord(mockBaseRecord, optionsWithAmbiguity);
+
     expect(result.identified).toBe(false);
+    expect(result.save).toBe(false);
+    expect(result.reason).toBe('included/excluded ambiguity');
     expect(result.normalized).toBeUndefined();
   });
 
-  it('should handle missing description by falling back to title', () => {
+  it('should not identify unsupported type_code values', () => {
     const record = {
       ...mockBaseRecord,
-      data: { ...mockBaseRecord.data, description: undefined, title: 'Fallback Title' }
+      meta_data: {
+        ...mockBaseRecord.meta_data,
+        system_data: {
+          type_code: 'UnknownType'
+        }
+      }
     };
+
     const result = normalizeTochkaRecord(record, normalizationOptions);
-    expect(result.normalized?.description).toBe('Fallback Title');
+
+    expect(result.identified).toBe(false);
+    expect(result.save).toBe(false);
+    expect(result.reason).toBe('unsupported type_code: UnknownType');
   });
 
   it('should return identified: false on parsing error', () => {
     const result = normalizeTochkaRecord({ wrong: 'shape' } as never, normalizationOptions);
     expect(result.identified).toBe(false);
+    expect(result.save).toBe(false);
+    expect(result.reason).toBeTypeOf('string');
     expect(result.sourceRecord).toEqual({ wrong: 'shape' });
     expect(result.normalized).toBeUndefined();
   });

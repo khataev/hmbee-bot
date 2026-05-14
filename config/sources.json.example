@@ -25,6 +25,31 @@
       },
       "accountMappings": {
         "40802810309500023530": "tochka-ip-rub"
+      },
+      "typeCodes": {
+        "CardTransactionInfo": {
+          "conditions": {
+            "included": [
+              {
+                "tranCode": "Purchase",
+                "status": "InProgress"
+              },
+              {
+                "tranCode": "Purchase",
+                "status": "Withdraw"
+              }
+            ],
+            "excluded": [
+              {
+                "tranCode": "CheckCard"
+              },
+              {
+                "tranCode": "Purchase",
+                "status": "Canceled"
+              }
+            ]
+          }
+        }
       }
     }
   }

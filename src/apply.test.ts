@@ -4,6 +4,8 @@ import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from '.
 function createRecord(transactionId: string): ReadyApplyRecord {
   return {
     identified: true,
+    save: true,
+    reason: null,
     sourceRecord: { id: transactionId },
     normalized: {
       transactionId,
