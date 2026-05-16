@@ -1,5 +1,6 @@
+import { evaluateRule } from 'src/apply/preview/ruleEngine.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
-import type { TypeCodeCondition, TypeCodeConditionsConfig, TypeCodeRule } from 'src/config.js';
+import type { TypeCodeConditionsConfig, TypeCodeRule } from 'src/config.js';
 
 export interface TochkaNormalizationOptions {
   accountMappings: Record<string, number>;
@@ -28,14 +29,6 @@ export interface TochkaSyncRecord {
   };
 }
 
-function conditionMatches(record: TochkaSyncRecord, condition: TypeCodeCondition): boolean {
-  return Object.entries(condition).every(([field, expectedValue]) => {
-    const valueFromData = record.data[field];
-    const actualValue = valueFromData !== undefined ? valueFromData : record[field as keyof TochkaSyncRecord];
-    return actualValue === expectedValue;
-  });
-}
-
 function classifyByRule(
   record: TochkaSyncRecord,
   rules: TypeCodeConditionsConfig
@@ -44,8 +37,9 @@ function classifyByRule(
   save: boolean;
   reason: string | null;
 } {
-  const hasIncludedMatch = rules.included.some((condition) => conditionMatches(record, condition));
-  const hasExcludedMatch = rules.excluded.some((condition) => conditionMatches(record, condition));
+  const context = { record };
+  const hasIncludedMatch = evaluateRule(rules.included, context);
+  const hasExcludedMatch = evaluateRule(rules.excluded, context);
 
   if (hasIncludedMatch && hasExcludedMatch) {
     return {

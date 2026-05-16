@@ -9,11 +9,33 @@ describe('Tochka Normalization', () => {
     typeCodeRules: {
       CardTransactionInfo: {
         conditions: {
-          included: [
-            { tranCode: 'Purchase', status: 'InProgress' },
-            { tranCode: 'Purchase', status: 'Withdraw' }
-          ],
-          excluded: [{ tranCode: 'CheckCard' }, { tranCode: 'Purchase', status: 'Canceled' }]
+          included: {
+            or: [
+              {
+                and: [
+                  { '==': [{ var: 'record.data.tranCode' }, 'Purchase'] },
+                  { '==': [{ var: 'record.data.status' }, 'InProgress'] }
+                ]
+              },
+              {
+                and: [
+                  { '==': [{ var: 'record.data.tranCode' }, 'Purchase'] },
+                  { '==': [{ var: 'record.data.status' }, 'Withdraw'] }
+                ]
+              }
+            ]
+          },
+          excluded: {
+            or: [
+              { '==': [{ var: 'record.data.tranCode' }, 'CheckCard'] },
+              {
+                and: [
+                  { '==': [{ var: 'record.data.tranCode' }, 'Purchase'] },
+                  { '==': [{ var: 'record.data.status' }, 'Canceled'] }
+                ]
+              }
+            ]
+          }
         }
       }
     }
@@ -132,8 +154,8 @@ describe('Tochka Normalization', () => {
       typeCodeRules: {
         CardTransactionInfo: {
           conditions: {
-            included: [{ tranCode: 'Purchase' }],
-            excluded: [{ status: 'InProgress' }]
+            included: { '==': [{ var: 'record.data.tranCode' }, 'Purchase'] },
+            excluded: { '==': [{ var: 'record.data.status' }, 'InProgress'] }
           }
         }
       }
