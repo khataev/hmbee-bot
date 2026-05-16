@@ -39,3 +39,16 @@ Focus:
 Out of scope:
 - Transfer handling
 - Broader sync history/reporting beyond the import registry
+
+## Transfer Pairing Assumption
+
+Working assumption for a later transfer-focused change:
+- Tochka transfer-like flows can emit two records for the same movement: an outgoing leg with `incoming=false` and an incoming leg with `incoming=true`.
+- Both legs expose payer and payee account attributes, so transfer detection can rely on account ownership checks without a separate ownership model.
+- For transfer handling, the system is expected to classify transfers before income/expense classification.
+- For paired transfer records between my own accounts, the preferred draft policy is to keep the outgoing leg as the canonical transfer source and drop the mirrored incoming leg.
+
+Open questions to resolve in the later change:
+- Which Tochka type families actually follow this mirrored-leg pattern.
+- What fields reliably pair the outgoing and incoming legs.
+- What preview outcome should be produced when the expected mirrored leg is missing or ambiguous.
