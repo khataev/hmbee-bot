@@ -8,11 +8,11 @@ const HoneyMoneyAccountSchema = z.object({
   currency: z.string().min(1)
 });
 
-const TypeCodeConditionSchema = z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]));
+const JsonLogicRuleSchema = z.record(z.string(), z.any());
 
 const TypeCodeConditionsSchema = z.object({
-  included: z.array(TypeCodeConditionSchema),
-  excluded: z.array(TypeCodeConditionSchema)
+  included: JsonLogicRuleSchema,
+  excluded: JsonLogicRuleSchema
 });
 
 const TypeCodeRuleSchema = z.object({
@@ -45,7 +45,6 @@ const ResolvedAppConfigSchema = z.object({
 
 export type HoneyMoneyAccountConfig = z.infer<typeof HoneyMoneyAccountSchema>;
 
-export type TypeCodeCondition = z.infer<typeof TypeCodeConditionSchema>;
 export type TypeCodeRule = z.infer<typeof TypeCodeRuleSchema>;
 export type TypeCodeConditionsConfig = z.infer<typeof TypeCodeConditionsSchema>;
 export type AppConfig = z.infer<typeof ResolvedAppConfigSchema>;

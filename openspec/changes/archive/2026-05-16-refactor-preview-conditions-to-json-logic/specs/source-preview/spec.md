@@ -1,9 +1,4 @@
-# source-preview
-
-## Purpose
-Preview classification for Tochka source records before apply. TBD.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Preview classification exposes save intent separately from identification
 The system SHALL classify each preview record with explicit `identified`, `save`, and `reason` fields.
