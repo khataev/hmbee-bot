@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { normalizeHoneyMoneyAmount, normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
 import { describe, expect, it } from 'vitest';
 
@@ -227,5 +229,147 @@ describe('Tochka Normalization', () => {
     expect(normalizeHoneyMoneyAmount(241.07, 'e')).toBe(-241);
     expect(normalizeHoneyMoneyAmount(169.99, 'e')).toBe(-170);
     expect(normalizeHoneyMoneyAmount(241.07, 'i')).toBe(241);
+  });
+
+  describe('SBP fixture-backed classification', () => {
+    const sbpOptions = {
+      accountMappings: {
+        '40802810309500023530': 2053036,
+        '40817810438040158324': 26755
+      },
+      typeCodeRules: {
+        SbpC2BPayment: {
+          conditions: {
+            included: {
+              and: [
+                { '==': [{ var: 'record.data.status' }, 'ACCEPTED'] },
+                { '==': [{ var: 'record.data.incoming' }, false] }
+              ]
+            },
+            excluded: {
+              or: [
+                {
+                  or: [
+                    { '==': [{ var: 'record.data.status' }, 'CANCELED'] },
+                    { '==': [{ var: 'record.data.status' }, 'REJECTED'] }
+                  ]
+                },
+                { '==': [{ var: 'record.data.incoming' }, true] }
+              ]
+            }
+          }
+        },
+        SbpC2BRefund: {
+          conditions: {
+            included: {
+              and: [
+                { '==': [{ var: 'record.data.status' }, 'ACCEPTED'] },
+                { '==': [{ var: 'record.data.incoming' }, true] }
+              ]
+            },
+            excluded: {
+              or: [
+                {
+                  or: [
+                    { '==': [{ var: 'record.data.status' }, 'CANCELED'] },
+                    { '==': [{ var: 'record.data.status' }, 'REJECTED'] }
+                  ]
+                },
+                { '==': [{ var: 'record.data.incoming' }, false] }
+              ]
+            }
+          }
+        },
+        SbpB2CPayment: {
+          conditions: {
+            included: {
+              and: [
+                { '==': [{ var: 'record.data.status' }, 'ACCEPTED'] },
+                { '==': [{ var: 'record.data.incoming' }, false] },
+                { '==': [{ in: [{ var: 'record.data.payeeAccountId' }, { var: 'accountRegistry' }] }, false] }
+              ]
+            },
+            excluded: {
+              or: [
+                {
+                  or: [
+                    { '==': [{ var: 'record.data.status' }, 'CANCELED'] },
+                    { '==': [{ var: 'record.data.status' }, 'REJECTED'] }
+                  ]
+                },
+                { '==': [{ var: 'record.data.incoming' }, true] },
+                { in: [{ var: 'record.data.payeeAccountId' }, { var: 'accountRegistry' }] }
+              ]
+            }
+          }
+        }
+      }
+    };
+
+    function loadFixture(fileName: string): { sourceRecord: unknown }[] {
+      const filePath = resolve(process.cwd(), 'example-data', 'research', fileName);
+      const fileContents = readFileSync(filePath, 'utf8');
+      return JSON.parse(fileContents) as { sourceRecord: unknown }[];
+    }
+
+    it('classifies SbpC2BPayment fixtures as save-ready expenses', () => {
+      const fixtures = loadFixture('tochka-to-third-party(expense).json');
+      const c2bPayment = fixtures[0]?.sourceRecord;
+
+      const result = normalizeTochkaRecord(c2bPayment as never, sbpOptions);
+
+      expect(result.identified).toBe(true);
+      expect(result.save).toBe(true);
+      expect(result.reason).toBeNull();
+      expect(result.hmbee?.subtype).toBe('e');
+      expect(result.hmbee?.account_id).toBe(2053036);
+    });
+
+    it('classifies SbpC2BRefund fixtures as save-ready income', () => {
+      const fixtures = loadFixture('transfers.json');
+      const c2bRefund = fixtures.find(
+        (item) =>
+          (item.sourceRecord as { meta_data?: { system_data?: { type_code?: string } } })?.meta_data?.system_data
+            ?.type_code === 'SbpC2BRefund'
+      )?.sourceRecord;
+
+      const result = normalizeTochkaRecord(c2bRefund as never, sbpOptions);
+
+      expect(result.identified).toBe(true);
+      expect(result.save).toBe(true);
+      expect(result.reason).toBeNull();
+      expect(result.hmbee?.subtype).toBe('i');
+      expect(result.hmbee?.real_amount).toBeGreaterThan(0);
+    });
+
+    it('classifies non-transfer SbpB2CPayment as save-ready expense', () => {
+      const fixtures = loadFixture('tochka-to-third-party(expense).json');
+      const nonTransferB2C = fixtures.find(
+        (item) =>
+          (item.sourceRecord as { meta_data?: { system_data?: { type_code?: string } } })?.meta_data?.system_data
+            ?.type_code === 'SbpB2CPayment'
+      )?.sourceRecord;
+
+      const result = normalizeTochkaRecord(nonTransferB2C as never, sbpOptions);
+
+      expect(result.identified).toBe(true);
+      expect(result.save).toBe(true);
+      expect(result.reason).toBeNull();
+      expect(result.hmbee?.subtype).toBe('e');
+      expect(result.hmbee?.account_id).toBe(2053036);
+    });
+
+    it('identifies transfer-like SbpB2CPayment but excludes from save-ready flow', () => {
+      const fixtures = loadFixture('tochka-to-external-my-account-transfer.json');
+      const transferLikeB2C = fixtures[0]?.sourceRecord;
+
+      const result = normalizeTochkaRecord(transferLikeB2C as never, sbpOptions);
+
+      expect(result.identified).toBe(true);
+      expect(result.save).toBe(false);
+      expect(result.reason).toBe('excluded');
+      expect(result.normalized).toBeUndefined();
+      expect(result.hmbee).toBeUndefined();
+    });
   });
 });

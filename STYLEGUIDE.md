@@ -47,6 +47,13 @@ This project follows a pragmatic TypeScript style focused on readability and rel
   - `npm run lint`
   - `npm run check`
 
+## Preview Rule Authoring (JSON Logic)
+
+- In `excluded` rules, do not use inverse/negation expressions like `!=`.
+- `included` must explicitly enumerate statuses or states that are supported and save-ready.
+- `excluded` must explicitly enumerate statuses or states that are intentionally excluded.
+- Unknown statuses should remain unmatched (neither included nor excluded) so they surface as `no matching included/excluded condition` and are reviewed deliberately.
+
 ## OpenSpec Definition of Done (DoD)
 
 A change is not complete until:
