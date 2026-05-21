@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 import { normalizeHoneyMoneyAmount, normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
 import { describe, expect, it } from 'vitest';
 
@@ -190,7 +191,7 @@ describe('Tochka Normalization', () => {
   });
 
   it('should return identified: false on parsing error', () => {
-    const result = normalizeTochkaRecord({ wrong: 'shape' } as never, normalizationOptions);
+    const result = normalizeTochkaRecord({ wrong: 'shape' } as unknown as TochkaSyncRecord, normalizationOptions);
     expect(result.identified).toBe(false);
     expect(result.save).toBe(false);
     expect(result.reason).toBeTypeOf('string');
@@ -306,64 +307,55 @@ describe('Tochka Normalization', () => {
       }
     };
 
-    function loadFixture(fileName: string): { sourceRecord: unknown }[] {
-      const filePath = resolve(process.cwd(), 'example-data', 'research', fileName);
+    function loadFixture(fileName: string): unknown {
+      const filePath = resolve(process.cwd(), 'src', 'apply', 'preview', 'fixtures', fileName);
       const fileContents = readFileSync(filePath, 'utf8');
-      return JSON.parse(fileContents) as { sourceRecord: unknown }[];
+      return JSON.parse(fileContents) as unknown;
     }
 
     it('classifies SbpC2BPayment fixtures as save-ready expenses', () => {
-      const fixtures = loadFixture('tochka-to-third-party(expense).json');
-      const c2bPayment = fixtures[0]?.sourceRecord;
+      const c2bPayment = loadFixture('sbp-c2b-payment.json');
 
-      const result = normalizeTochkaRecord(c2bPayment as never, sbpOptions);
+      const result = normalizeTochkaRecord(c2bPayment as TochkaSyncRecord, sbpOptions);
 
       expect(result.identified).toBe(true);
       expect(result.save).toBe(true);
       expect(result.reason).toBeNull();
       expect(result.hmbee?.subtype).toBe('e');
+      expect(result.hmbee?.real_amount).toBe(-3392);
       expect(result.hmbee?.account_id).toBe(2053036);
     });
 
     it('classifies SbpC2BRefund fixtures as save-ready income', () => {
-      const fixtures = loadFixture('transfers.json');
-      const c2bRefund = fixtures.find(
-        (item) =>
-          (item.sourceRecord as { meta_data?: { system_data?: { type_code?: string } } })?.meta_data?.system_data
-            ?.type_code === 'SbpC2BRefund'
-      )?.sourceRecord;
+      const c2bRefund = loadFixture('sbp-c2b-refund.json');
 
-      const result = normalizeTochkaRecord(c2bRefund as never, sbpOptions);
+      const result = normalizeTochkaRecord(c2bRefund as TochkaSyncRecord, sbpOptions);
 
       expect(result.identified).toBe(true);
       expect(result.save).toBe(true);
       expect(result.reason).toBeNull();
       expect(result.hmbee?.subtype).toBe('i');
-      expect(result.hmbee?.real_amount).toBeGreaterThan(0);
+      expect(result.hmbee?.real_amount).toBe(439);
+      expect(result.hmbee?.account_id).toBe(2053036);
     });
 
     it('classifies non-transfer SbpB2CPayment as save-ready expense', () => {
-      const fixtures = loadFixture('tochka-to-third-party(expense).json');
-      const nonTransferB2C = fixtures.find(
-        (item) =>
-          (item.sourceRecord as { meta_data?: { system_data?: { type_code?: string } } })?.meta_data?.system_data
-            ?.type_code === 'SbpB2CPayment'
-      )?.sourceRecord;
+      const nonTransferB2C = loadFixture('sbp-b2c-payment-non-transfer.json');
 
-      const result = normalizeTochkaRecord(nonTransferB2C as never, sbpOptions);
+      const result = normalizeTochkaRecord(nonTransferB2C as TochkaSyncRecord, sbpOptions);
 
       expect(result.identified).toBe(true);
       expect(result.save).toBe(true);
       expect(result.reason).toBeNull();
       expect(result.hmbee?.subtype).toBe('e');
+      expect(result.hmbee?.real_amount).toBe(150);
       expect(result.hmbee?.account_id).toBe(2053036);
     });
 
     it('identifies transfer-like SbpB2CPayment but excludes from save-ready flow', () => {
-      const fixtures = loadFixture('tochka-to-external-my-account-transfer.json');
-      const transferLikeB2C = fixtures[0]?.sourceRecord;
+      const transferLikeB2C = loadFixture('sbp-b2c-payment-own-transfer.json');
 
-      const result = normalizeTochkaRecord(transferLikeB2C as never, sbpOptions);
+      const result = normalizeTochkaRecord(transferLikeB2C as TochkaSyncRecord, sbpOptions);
 
       expect(result.identified).toBe(true);
       expect(result.save).toBe(false);

@@ -1,0 +1,31 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "SbpC2BPayment"
+    },
+    "time_data": {
+      "event_date": "2026-05-04T21:38:51.955+05:00"
+    }
+  },
+  "data": {
+    "title": "Merchant payment",
+    "sum": 3391.5,
+    "sumCurrency": "RUB",
+    "incoming": false,
+    "payerAccountId": "40802810309500023530",
+    "payerBankBic": "044525104",
+    "payerBankName": "Tochka Bank",
+    "payerName": "Andrey K.",
+    "payeeAccountId": "47422810833203613201",
+    "payeeBankBic": "044525444",
+    "payeeBankName": "Yoomoney",
+    "status": "ACCEPTED",
+    "purpose": "Order #1546400294",
+    "operationId": "A61241638504430T0B10200011750703",
+    "transactionId": "dd738b9e04c5834d7394437d5fc6d4ab",
+    "formattedTitle": "Paid 3391.5 RUB",
+    "date": "2026-05-04T19:38:51.955+03:00",
+    "sourceName": "web",
+    "currency": "RUB"
+  }
+}

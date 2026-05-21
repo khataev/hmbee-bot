@@ -156,6 +156,7 @@ function getMcc(record: TochkaSyncRecord): string | undefined {
     return record.data.mcc;
   }
 
+  // SBP families do not provide MCC; category resolution falls back to title/description matching.
   return undefined;
 }
 
