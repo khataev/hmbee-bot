@@ -1,0 +1,32 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "SbpB2CPayment"
+    },
+    "time_data": {
+      "event_date": "2026-05-08T18:24:53.876+05:00"
+    }
+  },
+  "data": {
+    "title": "Third-party transfer",
+    "sum": 150,
+    "sumCurrency": "RUB",
+    "incoming": false,
+    "payerAccountId": "40802810309500023530",
+    "payerBankBic": "044525104",
+    "payerBankName": "Tochka Bank",
+    "payerName": "",
+    "payeeAccountId": "40817810340007193384",
+    "payeeBankBic": "044525225",
+    "payeeBankName": "Sberbank",
+    "payeeName": "Sara M.",
+    "phoneNumber": "+79030000000",
+    "status": "ACCEPTED",
+    "operationId": "B61281324453650Y0G10170011760501",
+    "transactionId": "376e01a07b4e6b8f481c0fd0a0f71fde",
+    "formattedTitle": "Paid 150 RUB via SBP",
+    "date": "2026-05-08T16:24:53.876+03:00",
+    "sourceName": "web",
+    "currency": "RUB"
+  }
+}

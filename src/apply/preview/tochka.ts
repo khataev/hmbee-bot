@@ -7,37 +7,208 @@ export interface TochkaNormalizationOptions {
   typeCodeRules: Record<string, TypeCodeRule>;
 }
 
-export interface TochkaSyncRecord {
+interface TochkaRecordMeta<TTypeCode extends string> {
   meta_data: {
     system_data: {
-      type_code: string;
+      type_code: TTypeCode;
     };
     time_data: {
       event_date: string;
     };
   };
-  data: {
-    tranId: string | number;
-    account: string;
-    status: string;
-    tranCode: string;
-    sum: number;
-    currency: string;
-    title: string;
-    mcc: string;
-    [key: string]: string | number | boolean | null | undefined;
-  };
+}
+
+interface CardTransactionData {
+  tranId: string | number;
+  account: string;
+  status: string;
+  tranCode: string;
+  sum: number;
+  currency: string;
+  title: string;
+  mcc: string;
+  [key: string]: string | number | boolean | null | undefined;
+}
+
+export interface CardTransactionInfoRecord extends TochkaRecordMeta<'CardTransactionInfo'> {
+  data: CardTransactionData;
+}
+
+type SbpTypeCode = 'SbpB2CPayment' | 'SbpC2BPayment' | 'SbpC2BRefund';
+type SupportedTochkaTypeCode = 'CardTransactionInfo' | SbpTypeCode;
+
+interface SbpBaseTransactionData {
+  transactionId: string;
+  status: string;
+  sum: number;
+  title: string;
+  incoming: boolean;
+  payerAccountId: string;
+  payeeAccountId: string;
+  operationId: string;
+  date: string;
+  formattedTitle: string;
+  sourceName: string;
+  payerBankBic: string;
+  payerBankName: string;
+  payerName: string;
+  payeeBankBic: string;
+  payeeBankName: string;
+  currency: string;
+  sumCurrency: string;
+  [key: string]: string | number | boolean | null | undefined;
+}
+
+interface SbpB2CPaymentData extends SbpBaseTransactionData {
+  payeeName: string;
+  phoneNumber: string;
+}
+
+interface SbpC2BPaymentData extends SbpBaseTransactionData {
+  purpose: string;
+}
+
+interface SbpC2BRefundData extends SbpBaseTransactionData {
+  payeeName: string;
+  refOperationId: string;
+}
+
+export interface SbpB2CPaymentRecord extends TochkaRecordMeta<'SbpB2CPayment'> {
+  data: SbpB2CPaymentData;
+}
+
+export interface SbpC2BPaymentRecord extends TochkaRecordMeta<'SbpC2BPayment'> {
+  data: SbpC2BPaymentData;
+}
+
+export interface SbpC2BRefundRecord extends TochkaRecordMeta<'SbpC2BRefund'> {
+  data: SbpC2BRefundData;
+}
+
+export type SbpTransactionRecord = SbpB2CPaymentRecord | SbpC2BPaymentRecord | SbpC2BRefundRecord;
+
+// TODO(HMB-13): Add dedicated families for remaining known type_code groups
+// - RS family: PaymentIncome | PaymentAccepted | PaymentWrittenOff
+// - VED family: VedPaymentIncome
+// - Any additional validated groups discovered in fixtures/sync data
+export interface UnsupportedTochkaRecord extends TochkaRecordMeta<string> {
+  data: unknown;
+}
+
+export type TochkaSyncRecord = CardTransactionInfoRecord | SbpTransactionRecord | UnsupportedTochkaRecord;
+
+function isSupportedTochkaTypeCode(typeCode: string): typeCode is SupportedTochkaTypeCode {
+  return (
+    typeCode === 'CardTransactionInfo' ||
+    typeCode === 'SbpB2CPayment' ||
+    typeCode === 'SbpC2BPayment' ||
+    typeCode === 'SbpC2BRefund'
+  );
+}
+
+function isCardTransactionInfoRecord(record: TochkaSyncRecord): record is CardTransactionInfoRecord {
+  return record.meta_data.system_data.type_code === 'CardTransactionInfo';
+}
+
+function isSbpTransactionRecord(record: TochkaSyncRecord): record is SbpTransactionRecord {
+  const typeCode = record.meta_data.system_data.type_code;
+  return typeCode === 'SbpB2CPayment' || typeCode === 'SbpC2BPayment' || typeCode === 'SbpC2BRefund';
+}
+
+function getTransactionId(record: TochkaSyncRecord): string | number | undefined {
+  if (isCardTransactionInfoRecord(record)) {
+    return record.data.tranId;
+  }
+
+  if (isSbpTransactionRecord(record)) {
+    return record.data.transactionId;
+  }
+
+  return undefined;
+}
+
+function getSourceAccount(record: TochkaSyncRecord): string | undefined {
+  if (isCardTransactionInfoRecord(record)) {
+    return record.data.account;
+  }
+
+  if (isSbpTransactionRecord(record)) {
+    return record.data.incoming ? record.data.payeeAccountId : record.data.payerAccountId;
+  }
+
+  return undefined;
+}
+
+function getSourceCurrency(record: TochkaSyncRecord): string | undefined {
+  if (isCardTransactionInfoRecord(record)) {
+    return record.data.currency;
+  }
+
+  if (isSbpTransactionRecord(record)) {
+    return record.data.currency;
+  }
+
+  return undefined;
+}
+
+function getMcc(record: TochkaSyncRecord): string | undefined {
+  if (isCardTransactionInfoRecord(record)) {
+    return record.data.mcc;
+  }
+
+  // SBP families do not provide MCC; category resolution falls back to title/description matching.
+  return undefined;
+}
+
+function getStatus(record: TochkaSyncRecord): string | undefined {
+  if (isCardTransactionInfoRecord(record) || isSbpTransactionRecord(record)) {
+    return record.data.status;
+  }
+
+  return undefined;
+}
+
+function getAmount(record: TochkaSyncRecord): number | undefined {
+  if (isCardTransactionInfoRecord(record) || isSbpTransactionRecord(record)) {
+    return record.data.sum;
+  }
+
+  return undefined;
+}
+
+function getDescription(record: TochkaSyncRecord): string | undefined {
+  if (isCardTransactionInfoRecord(record) || isSbpTransactionRecord(record)) {
+    return record.data.title;
+  }
+
+  return undefined;
+}
+
+function getNormalizedType(record: TochkaSyncRecord): string {
+  if (isCardTransactionInfoRecord(record)) {
+    return record.data.tranCode;
+  }
+
+  if (isSbpTransactionRecord(record)) {
+    return record.data.incoming ? 'Income' : 'Expense';
+  }
+
+  throw new Error('Unsupported record shape for normalized type derivation');
 }
 
 function classifyByRule(
   record: TochkaSyncRecord,
+  accountMappings: Record<string, number>,
   rules: TypeCodeConditionsConfig
 ): {
   identified: boolean;
   save: boolean;
   reason: string | null;
 } {
-  const context = { record };
+  const context = {
+    record,
+    accountRegistry: Object.keys(accountMappings)
+  };
   const hasIncludedMatch = evaluateRule(rules.included, context);
   const hasExcludedMatch = evaluateRule(rules.excluded, context);
 
@@ -81,9 +252,17 @@ export function normalizeTochkaRecord(
   options: TochkaNormalizationOptions
 ): PreviewRecord {
   try {
-    const data = sourceRecord.data;
-    const timeData = sourceRecord.meta_data.time_data;
     const typeCode = sourceRecord.meta_data.system_data.type_code;
+
+    if (!isSupportedTochkaTypeCode(typeCode)) {
+      return {
+        identified: false,
+        save: false,
+        reason: `unsupported type_code: ${typeCode}`,
+        sourceRecord
+      };
+    }
+
     const typeRules = options.typeCodeRules[typeCode];
 
     if (!typeRules) {
@@ -95,7 +274,39 @@ export function normalizeTochkaRecord(
       };
     }
 
-    const classification = classifyByRule(sourceRecord, typeRules.conditions);
+    const timeData = sourceRecord.meta_data.time_data;
+    const status = getStatus(sourceRecord);
+    const amount = getAmount(sourceRecord);
+    const description = getDescription(sourceRecord);
+    const transactionId = getTransactionId(sourceRecord);
+    const sourceAccount = getSourceAccount(sourceRecord);
+    const sourceCurrency = getSourceCurrency(sourceRecord);
+
+    if (transactionId === undefined) {
+      throw new Error('Missing source transaction id field (tranId or transactionId)');
+    }
+
+    if (!sourceAccount) {
+      throw new Error('Missing source account field (account or payer/payee account id)');
+    }
+
+    if (!sourceCurrency) {
+      throw new Error('Missing source currency field (currency or sumCurrency)');
+    }
+
+    if (!status) {
+      throw new Error('Missing source status field');
+    }
+
+    if (amount === undefined) {
+      throw new Error('Missing source amount field');
+    }
+
+    if (!description) {
+      throw new Error('Missing source title field');
+    }
+
+    const classification = classifyByRule(sourceRecord, options.accountMappings, typeRules.conditions);
 
     if (!classification.identified || !classification.save) {
       return {
@@ -107,15 +318,15 @@ export function normalizeTochkaRecord(
     }
 
     const normalized: NormalizedRecord = {
-      transactionId: String(data.tranId),
-      account: data.account,
-      status: data.status,
+      transactionId: String(transactionId),
+      account: sourceAccount,
+      status,
       date: timeData.event_date,
-      type: data.tranCode,
-      amount: data.sum,
-      currency: data.currency,
-      description: data.title,
-      mcc: data.mcc
+      type: getNormalizedType(sourceRecord),
+      amount,
+      currency: sourceCurrency,
+      description,
+      mcc: getMcc(sourceRecord)
     };
 
     const tochkaAccountId = options.accountMappings[normalized.account];
