@@ -1,0 +1,21 @@
+{
+  "meta_data": {
+    "system_data": {
+      "document_code": "arrival-4175757",
+      "service_code": "arrival",
+      "service_type_code": "arrival_VedPaymentIncome",
+      "type_code": "VedPaymentIncome"
+    },
+    "time_data": {
+      "event_date": "2026-04-08T13:08:48.058+05:00"
+    }
+  },
+  "data": {
+    "title": "Общество с ограниченной ответственностью \"ТАЛАНТЫ\"",
+    "sum": 498671.64,
+    "incomeId": 4175757,
+    "state": "UNDISTRIBUTED",
+    "recipientAccountId": "40802810309500023530",
+    "currency": "RUB"
+  }
+}

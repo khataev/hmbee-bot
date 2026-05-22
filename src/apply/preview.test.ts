@@ -348,7 +348,7 @@ describe('Tochka Normalization', () => {
       expect(result.save).toBe(true);
       expect(result.reason).toBeNull();
       expect(result.hmbee?.subtype).toBe('e');
-      expect(result.hmbee?.real_amount).toBe(150);
+      expect(result.hmbee?.real_amount).toBe(-150);
       expect(result.hmbee?.account_id).toBe(2053036);
     });
 
@@ -362,6 +362,134 @@ describe('Tochka Normalization', () => {
       expect(result.reason).toBe('excluded');
       expect(result.normalized).toBeUndefined();
       expect(result.hmbee).toBeUndefined();
+    });
+  });
+
+  describe('RS/Arrival fixture-backed classification', () => {
+    const rsOptions = {
+      accountMappings: {
+        '40802810309500023530': 2053036
+      },
+      typeCodeRules: {
+        PaymentWrittenOff: {
+          conditions: {
+            included: {
+              and: [
+                { '==': [{ var: 'record.data.incoming' }, false] },
+                { '==': [{ var: 'record.data.objectState' }, 'Processed'] },
+                { '==': [{ var: 'record.data.failed' }, false] },
+                { '==': [{ var: 'record.data.isComission' }, true] }
+              ]
+            },
+            excluded: {
+              and: [
+                { '==': [{ var: 'record.data.incoming' }, false] },
+                { '==': [{ var: 'record.data.categoryTypeName' }, 'TRANSFER'] }
+              ]
+            }
+          }
+        },
+        VedPaymentIncome: {
+          conditions: {
+            included: {
+              and: [
+                { '==': [{ var: 'record.data.state' }, 'UNDISTRIBUTED'] },
+                { in: [{ var: 'record.data.recipientAccountId' }, { var: 'accountRegistry' }] }
+              ]
+            },
+            excluded: { or: [] }
+          }
+        }
+      }
+    };
+
+    function loadFixture(fileName: string): unknown {
+      const filePath = resolve(process.cwd(), 'src', 'apply', 'preview', 'fixtures', fileName);
+      const fileContents = readFileSync(filePath, 'utf8');
+      return JSON.parse(fileContents) as unknown;
+    }
+
+    it('classifies PaymentWrittenOff commission as save-ready expense', () => {
+      const commission = loadFixture('payment-written-off-commission.json');
+
+      const result = normalizeTochkaRecord(commission as TochkaSyncRecord, rsOptions);
+
+      expect(result.identified).toBe(true);
+      expect(result.save).toBe(true);
+      expect(result.reason).toBeNull();
+      expect(result.hmbee?.subtype).toBe('e');
+      expect(result.hmbee?.real_amount).toBe(-100);
+    });
+
+    it('identifies transfer-like PaymentWrittenOff but excludes from save-ready flow', () => {
+      const transfer = loadFixture('payment-written-off-transfer.json');
+
+      const result = normalizeTochkaRecord(transfer as TochkaSyncRecord, rsOptions);
+
+      expect(result.identified).toBe(true);
+      expect(result.save).toBe(false);
+      expect(result.reason).toBe('excluded');
+    });
+
+    it('remains unmatched for unknown PaymentWrittenOff shapes', () => {
+      const unknownWrittenOff = {
+        meta_data: {
+          system_data: { type_code: 'PaymentWrittenOff' },
+          time_data: { event_date: '2026-05-04T10:53:12.465+05:00' }
+        },
+        data: {
+          incoming: false,
+          objectState: 'Processed',
+          failed: false,
+          isComission: false,
+          categoryTypeName: 'OTHERS',
+          sum: 100,
+          currency: 'RUB',
+          title: 'Unknown',
+          corebankingId: '92;123',
+          payerAccountId: '40802810309500023530'
+        }
+      };
+
+      const result = normalizeTochkaRecord(unknownWrittenOff as TochkaSyncRecord, rsOptions);
+
+      expect(result.identified).toBe(false);
+      expect(result.reason).toBe('no matching included/excluded condition');
+    });
+
+    it('classifies VedPaymentIncome as save-ready income', () => {
+      const income = loadFixture('ved-payment-income-undistributed.json');
+
+      const result = normalizeTochkaRecord(income as TochkaSyncRecord, rsOptions);
+
+      expect(result.identified).toBe(true);
+      expect(result.save).toBe(true);
+      expect(result.reason).toBeNull();
+      expect(result.hmbee?.subtype).toBe('i');
+      expect(result.hmbee?.real_amount).toBe(498672);
+      expect(result.hmbee?.account_id).toBe(2053036);
+    });
+
+    it('remains unmatched for non-undistributed VedPaymentIncome states', () => {
+      const processingIncome = {
+        meta_data: {
+          system_data: { type_code: 'VedPaymentIncome' },
+          time_data: { event_date: '2026-04-08T13:08:48.058+05:00' }
+        },
+        data: {
+          state: 'PROCESSING',
+          recipientAccountId: '40802810309500023530',
+          sum: 100,
+          currency: 'RUB',
+          title: 'Processing',
+          incomeId: 123
+        }
+      };
+
+      const result = normalizeTochkaRecord(processingIncome as TochkaSyncRecord, rsOptions);
+
+      expect(result.identified).toBe(false);
+      expect(result.reason).toBe('no matching included/excluded condition');
     });
   });
 });
