@@ -27,7 +27,6 @@ interface CardTransactionData {
   currency: string;
   title: string;
   mcc: string;
-  [key: string]: string | number | boolean | null | undefined;
 }
 
 export interface CardTransactionInfoRecord extends TochkaRecordMeta<'CardTransactionInfo'> {
@@ -53,7 +52,6 @@ interface SbpBaseTransactionData {
   payeeBankName: string;
   currency: string;
   sumCurrency: string;
-  [key: string]: string | number | boolean | null | undefined;
 }
 
 interface SbpB2CPaymentData extends SbpBaseTransactionData {
@@ -95,7 +93,6 @@ export interface PaymentWrittenOffData {
   failed: boolean;
   isComission: boolean;
   categoryTypeName: string;
-  [key: string]: string | number | boolean | null | undefined;
 }
 
 export interface PaymentWrittenOffRecord extends TochkaRecordMeta<'PaymentWrittenOff'> {
@@ -109,7 +106,6 @@ export interface VedPaymentIncomeData {
   sum: number;
   currency: string;
   title: string;
-  [key: string]: string | number | boolean | null | undefined;
 }
 
 export interface VedPaymentIncomeRecord extends TochkaRecordMeta<'VedPaymentIncome'> {

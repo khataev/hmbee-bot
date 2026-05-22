@@ -235,8 +235,8 @@ describe('Tochka Normalization', () => {
   describe('SBP fixture-backed classification', () => {
     const sbpOptions = {
       accountMappings: {
-        '40802810309500023530': 2053036,
-        '40817810438040158324': 26755
+        '40802810100000000001': 2053036,
+        '40817810000000000001': 26755
       },
       typeCodeRules: {
         SbpC2BPayment: {
@@ -368,7 +368,7 @@ describe('Tochka Normalization', () => {
   describe('RS/Arrival fixture-backed classification', () => {
     const rsOptions = {
       accountMappings: {
-        '40802810309500023530': 2053036
+        '40802810100000000001': 2053036
       },
       typeCodeRules: {
         PaymentWrittenOff: {
@@ -447,7 +447,7 @@ describe('Tochka Normalization', () => {
           currency: 'RUB',
           title: 'Unknown',
           corebankingId: '92;123',
-          payerAccountId: '40802810309500023530'
+          payerAccountId: '40802810100000000001'
         }
       };
 
@@ -457,7 +457,7 @@ describe('Tochka Normalization', () => {
       expect(result.reason).toBe('no matching included/excluded condition');
     });
 
-    it('classifies VedPaymentIncome as save-ready income', () => {
+    it('classifies VedPaymentIncome (UNDISTRIBUTED) as save-ready income', () => {
       const income = loadFixture('ved-payment-income-undistributed.json');
 
       const result = normalizeTochkaRecord(income as TochkaSyncRecord, rsOptions);
@@ -478,7 +478,7 @@ describe('Tochka Normalization', () => {
         },
         data: {
           state: 'PROCESSING',
-          recipientAccountId: '40802810309500023530',
+          recipientAccountId: '40802810100000000001',
           sum: 100,
           currency: 'RUB',
           title: 'Processing',
