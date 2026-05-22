@@ -27,15 +27,11 @@ interface CardTransactionData {
   currency: string;
   title: string;
   mcc: string;
-  [key: string]: string | number | boolean | null | undefined;
 }
 
 export interface CardTransactionInfoRecord extends TochkaRecordMeta<'CardTransactionInfo'> {
   data: CardTransactionData;
 }
-
-type SbpTypeCode = 'SbpB2CPayment' | 'SbpC2BPayment' | 'SbpC2BRefund';
-type SupportedTochkaTypeCode = 'CardTransactionInfo' | SbpTypeCode;
 
 interface SbpBaseTransactionData {
   transactionId: string;
@@ -56,7 +52,6 @@ interface SbpBaseTransactionData {
   payeeBankName: string;
   currency: string;
   sumCurrency: string;
-  [key: string]: string | number | boolean | null | undefined;
 }
 
 interface SbpB2CPaymentData extends SbpBaseTransactionData {
@@ -87,6 +82,36 @@ export interface SbpC2BRefundRecord extends TochkaRecordMeta<'SbpC2BRefund'> {
 
 export type SbpTransactionRecord = SbpB2CPaymentRecord | SbpC2BPaymentRecord | SbpC2BRefundRecord;
 
+export interface PaymentWrittenOffData {
+  corebankingId: string;
+  payerAccountId: string;
+  objectState: string;
+  sum: number;
+  currency: string;
+  title: string;
+  incoming: boolean;
+  failed: boolean;
+  isComission: boolean;
+  categoryTypeName: string;
+}
+
+export interface PaymentWrittenOffRecord extends TochkaRecordMeta<'PaymentWrittenOff'> {
+  data: PaymentWrittenOffData;
+}
+
+export interface VedPaymentIncomeData {
+  incomeId: string | number;
+  recipientAccountId: string;
+  state: string;
+  sum: number;
+  currency: string;
+  title: string;
+}
+
+export interface VedPaymentIncomeRecord extends TochkaRecordMeta<'VedPaymentIncome'> {
+  data: VedPaymentIncomeData;
+}
+
 // TODO(HMB-13): Add dedicated families for remaining known type_code groups
 // - RS family: PaymentIncome | PaymentAccepted | PaymentWrittenOff
 // - VED family: VedPaymentIncome
@@ -95,14 +120,24 @@ export interface UnsupportedTochkaRecord extends TochkaRecordMeta<string> {
   data: unknown;
 }
 
-export type TochkaSyncRecord = CardTransactionInfoRecord | SbpTransactionRecord | UnsupportedTochkaRecord;
+export type TochkaSyncRecord =
+  | CardTransactionInfoRecord
+  | SbpTransactionRecord
+  | PaymentWrittenOffRecord
+  | VedPaymentIncomeRecord
+  | UnsupportedTochkaRecord;
+
+type SbpTypeCode = 'SbpB2CPayment' | 'SbpC2BPayment' | 'SbpC2BRefund';
+type SupportedTochkaTypeCode = 'CardTransactionInfo' | SbpTypeCode | 'PaymentWrittenOff' | 'VedPaymentIncome';
 
 function isSupportedTochkaTypeCode(typeCode: string): typeCode is SupportedTochkaTypeCode {
   return (
     typeCode === 'CardTransactionInfo' ||
     typeCode === 'SbpB2CPayment' ||
     typeCode === 'SbpC2BPayment' ||
-    typeCode === 'SbpC2BRefund'
+    typeCode === 'SbpC2BRefund' ||
+    typeCode === 'PaymentWrittenOff' ||
+    typeCode === 'VedPaymentIncome'
   );
 }
 
@@ -115,6 +150,14 @@ function isSbpTransactionRecord(record: TochkaSyncRecord): record is SbpTransact
   return typeCode === 'SbpB2CPayment' || typeCode === 'SbpC2BPayment' || typeCode === 'SbpC2BRefund';
 }
 
+function isPaymentWrittenOffRecord(record: TochkaSyncRecord): record is PaymentWrittenOffRecord {
+  return record.meta_data.system_data.type_code === 'PaymentWrittenOff';
+}
+
+function isVedPaymentIncomeRecord(record: TochkaSyncRecord): record is VedPaymentIncomeRecord {
+  return record.meta_data.system_data.type_code === 'VedPaymentIncome';
+}
+
 function getTransactionId(record: TochkaSyncRecord): string | number | undefined {
   if (isCardTransactionInfoRecord(record)) {
     return record.data.tranId;
@@ -122,6 +165,14 @@ function getTransactionId(record: TochkaSyncRecord): string | number | undefined
 
   if (isSbpTransactionRecord(record)) {
     return record.data.transactionId;
+  }
+
+  if (isPaymentWrittenOffRecord(record)) {
+    return record.data.corebankingId;
+  }
+
+  if (isVedPaymentIncomeRecord(record)) {
+    return record.data.incomeId;
   }
 
   return undefined;
@@ -136,6 +187,14 @@ function getSourceAccount(record: TochkaSyncRecord): string | undefined {
     return record.data.incoming ? record.data.payeeAccountId : record.data.payerAccountId;
   }
 
+  if (isPaymentWrittenOffRecord(record)) {
+    return record.data.payerAccountId;
+  }
+
+  if (isVedPaymentIncomeRecord(record)) {
+    return record.data.recipientAccountId;
+  }
+
   return undefined;
 }
 
@@ -144,7 +203,7 @@ function getSourceCurrency(record: TochkaSyncRecord): string | undefined {
     return record.data.currency;
   }
 
-  if (isSbpTransactionRecord(record)) {
+  if (isSbpTransactionRecord(record) || isPaymentWrittenOffRecord(record) || isVedPaymentIncomeRecord(record)) {
     return record.data.currency;
   }
 
@@ -156,7 +215,7 @@ function getMcc(record: TochkaSyncRecord): string | undefined {
     return record.data.mcc;
   }
 
-  // SBP families do not provide MCC; category resolution falls back to title/description matching.
+  // SBP, RS, and Arrival families do not provide MCC; category resolution falls back to title/description matching.
   return undefined;
 }
 
@@ -165,11 +224,24 @@ function getStatus(record: TochkaSyncRecord): string | undefined {
     return record.data.status;
   }
 
+  if (isPaymentWrittenOffRecord(record)) {
+    return record.data.objectState;
+  }
+
+  if (isVedPaymentIncomeRecord(record)) {
+    return record.data.state;
+  }
+
   return undefined;
 }
 
 function getAmount(record: TochkaSyncRecord): number | undefined {
-  if (isCardTransactionInfoRecord(record) || isSbpTransactionRecord(record)) {
+  if (
+    isCardTransactionInfoRecord(record) ||
+    isSbpTransactionRecord(record) ||
+    isPaymentWrittenOffRecord(record) ||
+    isVedPaymentIncomeRecord(record)
+  ) {
     return record.data.sum;
   }
 
@@ -177,7 +249,12 @@ function getAmount(record: TochkaSyncRecord): number | undefined {
 }
 
 function getDescription(record: TochkaSyncRecord): string | undefined {
-  if (isCardTransactionInfoRecord(record) || isSbpTransactionRecord(record)) {
+  if (
+    isCardTransactionInfoRecord(record) ||
+    isSbpTransactionRecord(record) ||
+    isPaymentWrittenOffRecord(record) ||
+    isVedPaymentIncomeRecord(record)
+  ) {
     return record.data.title;
   }
 
@@ -191,6 +268,14 @@ function getNormalizedType(record: TochkaSyncRecord): string {
 
   if (isSbpTransactionRecord(record)) {
     return record.data.incoming ? 'Income' : 'Expense';
+  }
+
+  if (isPaymentWrittenOffRecord(record)) {
+    return 'Expense';
+  }
+
+  if (isVedPaymentIncomeRecord(record)) {
+    return 'Income';
   }
 
   throw new Error('Unsupported record shape for normalized type derivation');

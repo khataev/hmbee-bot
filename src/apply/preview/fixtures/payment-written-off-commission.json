@@ -1,0 +1,26 @@
+{
+  "meta_data": {
+    "system_data": {
+      "document_code": "RS_TL_outgoing_92;4317680616",
+      "service_code": "rs",
+      "service_type_code": "rs_PaymentWrittenOff",
+      "type_code": "PaymentWrittenOff"
+    },
+    "time_data": {
+      "event_date": "2026-05-04T10:53:12.465+05:00"
+    }
+  },
+  "data": {
+    "title": "АКЦИОНЕРНОЕ ОБЩЕСТВО \"ТОЧКА\"",
+    "sum": 100,
+    "sumCurrency": "RUB",
+    "incoming": false,
+    "objectState": "Processed",
+    "failed": false,
+    "isComission": true,
+    "categoryTypeName": "OTHERS",
+    "corebankingId": "92;4317680616",
+    "currency": "RUB",
+    "payerAccountId": "40802810100000000001"
+  }
+}
