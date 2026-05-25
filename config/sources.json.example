@@ -173,13 +173,7 @@
                 }
               ]
             },
-            "excluded": {
-              "and": [
-                { "==": [{ "var": "record.data.incoming" }, false] },
-                { "==": [{ "var": "record.data.categoryTypeName" }, "TRANSFER"] },
-                { "==": [{ "var": "record.data.isComission" }, false] }
-              ]
-            }
+            "excluded": { "or": [] }
           }
         },
         "VedPaymentIncome": {
@@ -190,7 +184,7 @@
                 { "is_owned": [{ "var": "record.data.recipientAccountId" }, null, { "var": "accountRegistry" }] }
               ]
             },
-            "excluded": {}
+            "excluded": { "or": [] }
           }
         },
         "PaymentAccepted": {
