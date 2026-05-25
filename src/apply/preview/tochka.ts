@@ -507,10 +507,10 @@ export function normalizeTochkaRecord(
 
     const classification = classifyByRule(sourceRecord, options);
 
-    if (!classification.identified || !classification.save) {
+    if (!classification.identified) {
       return {
-        identified: classification.identified,
-        save: classification.save,
+        identified: false,
+        save: false,
         reason: classification.reason,
         sourceRecord
       };
@@ -543,8 +543,8 @@ export function normalizeTochkaRecord(
 
     return {
       identified: true,
-      save: true,
-      reason: null,
+      save: classification.save,
+      reason: classification.reason,
       sourceRecord,
       normalized,
       hmbee: buildHoneyMoneyTransaction(normalized, tochkaAccountId)

@@ -114,8 +114,8 @@ describe('Tochka Normalization', () => {
     expect(result.identified).toBe(true);
     expect(result.save).toBe(false);
     expect(result.reason).toBe('excluded');
-    expect(result.normalized).toBeUndefined();
-    expect(result.hmbee).toBeUndefined();
+    expect(result.normalized).toBeDefined();
+    expect(result.hmbee).toBeDefined();
   });
 
   it('should mark canceled Purchase as identified but excluded', () => {

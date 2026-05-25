@@ -116,8 +116,8 @@ describe('Tochka Normalization', () => {
     expect(result.identified).toBe(true);
     expect(result.save).toBe(false);
     expect(result.reason).toBe('excluded');
-    expect(result.normalized).toBeUndefined();
-    expect(result.hmbee).toBeUndefined();
+    expect(result.normalized).toBeDefined();
+    expect(result.hmbee).toBeDefined();
   });
 
   it('should mark canceled Purchase as identified but excluded', () => {
@@ -387,6 +387,7 @@ describe('Tochka Normalization', () => {
 
   describe('RS/Arrival fixture-backed classification', () => {
     const rsMappings = {
+      '40802810100000000002': 2053036,
       '40802810100000000001': 2053036
     };
     const rsOptions = {

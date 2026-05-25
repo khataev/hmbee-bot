@@ -120,6 +120,8 @@ The system SHALL treat deposit interest payout as income rather than transfer du
 
 #### Scenario: Deposit interest remains save-ready income
 - **WHEN** a synchronized Tochka source record has `type_code = PaymentIncome`
+- **AND** the record has `incoming = true`
+- **AND** the record has `isComission = false`
 - **AND** the destination account is an owned account
 - **AND** the payer account is neither an owned account nor a Tochka deposit-like account
 - **THEN** the preview record has `identified = true`
