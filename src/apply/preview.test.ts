@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 import { normalizeHoneyMoneyAmount, normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
+import type { AppConfig } from 'src/config.js';
+import { createAccountRegistry } from 'src/config.js';
 import { describe, expect, it } from 'vitest';
 
 describe('Tochka Normalization', () => {
@@ -9,10 +11,15 @@ describe('Tochka Normalization', () => {
     accountMappings: {
       '40802810309500012345': 67890
     },
-    ownedAccountRegistry: {
-      isOwned: (acc: string) => acc === '40802810309500012345',
-      getHmAccountId: (acc: string) => (acc === '40802810309500012345' ? 67890 : undefined)
-    },
+    accountRegistry: createAccountRegistry({
+      sources: {
+        tochka: {
+          accountMappings: { '40802810309500012345': 67890 },
+          hmAccounts: {},
+          typeCodes: {}
+        }
+      }
+    } as AppConfig),
     typeCodeRules: {
       CardTransactionInfo: {
         conditions: {
@@ -237,16 +244,21 @@ describe('Tochka Normalization', () => {
   });
 
   describe('SBP fixture-backed classification', () => {
+    const sbpMappings = {
+      '40802810100000000001': 2053036,
+      '40817810000000000001': 26755
+    };
     const sbpOptions = {
-      accountMappings: {
-        '40802810100000000001': 2053036,
-        '40817810000000000001': 26755
-      },
-      ownedAccountRegistry: {
-        isOwned: (acc: string) => acc === '40802810100000000001' || acc === '40817810000000000001',
-        getHmAccountId: (acc: string) =>
-          acc === '40802810100000000001' ? 2053036 : acc === '40817810000000000001' ? 26755 : undefined
-      },
+      accountMappings: sbpMappings,
+      accountRegistry: createAccountRegistry({
+        sources: {
+          tochka: {
+            accountMappings: sbpMappings,
+            hmAccounts: {},
+            typeCodes: {}
+          }
+        }
+      } as AppConfig),
       typeCodeRules: {
         SbpC2BPayment: {
           conditions: {
@@ -300,7 +312,7 @@ describe('Tochka Normalization', () => {
                   is_owned: [
                     { var: 'record.data.payerAccountId' },
                     { var: 'record.data.payerBankBic' },
-                    { var: 'ownedAccountRegistry' }
+                    { var: 'accountRegistry' }
                   ]
                 }
               ]
@@ -381,14 +393,20 @@ describe('Tochka Normalization', () => {
   });
 
   describe('RS/Arrival fixture-backed classification', () => {
+    const rsMappings = {
+      '40802810100000000001': 2053036
+    };
     const rsOptions = {
-      accountMappings: {
-        '40802810100000000001': 2053036
-      },
-      ownedAccountRegistry: {
-        isOwned: (acc: string) => acc === '40802810100000000001',
-        getHmAccountId: (acc: string) => (acc === '40802810100000000001' ? 2053036 : undefined)
-      },
+      accountMappings: rsMappings,
+      accountRegistry: createAccountRegistry({
+        sources: {
+          tochka: {
+            accountMappings: rsMappings,
+            hmAccounts: {},
+            typeCodes: {}
+          }
+        }
+      } as AppConfig),
       typeCodeRules: {
         PaymentWrittenOff: {
           conditions: {
@@ -410,14 +428,14 @@ describe('Tochka Normalization', () => {
                       is_owned: [
                         { var: 'record.data.payerAccountId' },
                         { var: 'record.data.payerBankBic' },
-                        { var: 'ownedAccountRegistry' }
+                        { var: 'accountRegistry' }
                       ]
                     },
                     {
                       is_owned: [
                         { var: 'record.data.payeeAccountId' },
                         { var: 'record.data.payeeBankBic' },
-                        { var: 'ownedAccountRegistry' }
+                        { var: 'accountRegistry' }
                       ]
                     }
                   ]
@@ -438,7 +456,9 @@ describe('Tochka Normalization', () => {
             included: {
               and: [
                 { '==': [{ var: 'record.data.state' }, 'UNDISTRIBUTED'] },
-                { in: [{ var: 'record.data.recipientAccountId' }, { var: 'accountRegistry' }] }
+                {
+                  is_owned: [{ var: 'record.data.recipientAccountId' }, null, { var: 'accountRegistry' }]
+                }
               ]
             },
             excluded: { or: [] }

@@ -49,7 +49,7 @@ export type TypeCodeRule = z.infer<typeof TypeCodeRuleSchema>;
 export type TypeCodeConditionsConfig = z.infer<typeof TypeCodeConditionsSchema>;
 export type AppConfig = z.infer<typeof ResolvedAppConfigSchema>;
 
-export interface OwnedAccountRegistry {
+export interface AccountRegistry {
   isOwned(account: string, bic?: string): boolean;
   getHmAccountId(account: string): number | undefined;
 }
@@ -84,7 +84,7 @@ export function loadConfig(): AppConfig {
   });
 }
 
-export function createOwnedAccountRegistry(config: AppConfig): OwnedAccountRegistry {
+export function createAccountRegistry(config: AppConfig): AccountRegistry {
   const tochkaMappings = config.sources.tochka.accountMappings;
   const TOCHKA_BIC = '044525104';
 

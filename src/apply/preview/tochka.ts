@@ -1,11 +1,11 @@
 import { evaluateRule } from 'src/apply/preview/ruleEngine.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
-import type { OwnedAccountRegistry, TypeCodeRule } from 'src/config.js';
+import type { AccountRegistry, TypeCodeRule } from 'src/config.js';
 
 export interface TochkaNormalizationOptions {
   accountMappings: Record<string, number>;
   typeCodeRules: Record<string, TypeCodeRule>;
-  ownedAccountRegistry: OwnedAccountRegistry;
+  accountRegistry: AccountRegistry;
 }
 
 interface TochkaRecordMeta<TTypeCode extends string> {
@@ -349,7 +349,7 @@ function getDescription(record: TochkaSyncRecord): string | undefined {
   return undefined;
 }
 
-function getNormalizedType(sourceRecord: TochkaSyncRecord, registry: OwnedAccountRegistry): string {
+function getNormalizedType(sourceRecord: TochkaSyncRecord, registry: AccountRegistry): string {
   if (isCardTransactionInfoRecord(sourceRecord)) {
     return sourceRecord.data.tranCode;
   }
@@ -406,8 +406,7 @@ function classifyByRule(
 
   const context = {
     record,
-    accountRegistry: Object.keys(options.accountMappings),
-    ownedAccountRegistry: options.ownedAccountRegistry
+    accountRegistry: options.accountRegistry
   };
   const hasIncludedMatch = evaluateRule(rules.included, context);
   const hasExcludedMatch = evaluateRule(rules.excluded, context);
@@ -517,7 +516,7 @@ export function normalizeTochkaRecord(
       };
     }
 
-    const normalizedType = getNormalizedType(sourceRecord, options.ownedAccountRegistry);
+    const normalizedType = getNormalizedType(sourceRecord, options.accountRegistry);
     const counterpartyAccount = getCounterpartyAccount(sourceRecord);
 
     const normalized: NormalizedRecord = {

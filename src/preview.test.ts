@@ -1,4 +1,6 @@
 import { normalizeHoneyMoneyAmount, normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
+import type { AppConfig } from 'src/config.js';
+import { createAccountRegistry } from 'src/config.js';
 import { describe, expect, it } from 'vitest';
 
 describe('Tochka Normalization', () => {
@@ -6,10 +8,15 @@ describe('Tochka Normalization', () => {
     accountMappings: {
       '40802810309500012345': 67890
     },
-    ownedAccountRegistry: {
-      isOwned: (acc: string) => acc === '40802810309500012345',
-      getHmAccountId: (acc: string) => (acc === '40802810309500012345' ? 67890 : undefined)
-    },
+    accountRegistry: createAccountRegistry({
+      sources: {
+        tochka: {
+          accountMappings: { '40802810309500012345': 67890 },
+          hmAccounts: {},
+          typeCodes: {}
+        }
+      }
+    } as AppConfig),
     typeCodeRules: {
       CardTransactionInfo: {
         conditions: {

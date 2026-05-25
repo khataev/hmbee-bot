@@ -1,5 +1,5 @@
 import jsonLogic from 'json-logic-js';
-import type { OwnedAccountRegistry } from 'src/config.js';
+import type { AccountRegistry } from 'src/config.js';
 
 /**
  * Interface for evaluating preview rules using JSON Logic.
@@ -10,13 +10,16 @@ import type { OwnedAccountRegistry } from 'src/config.js';
 
 export interface RuleEvaluationContext {
   record: unknown;
-  ownedAccountRegistry: OwnedAccountRegistry;
+  /**
+   * Registry for checking owned accounts.
+   */
+  accountRegistry: AccountRegistry;
 }
 
 /**
  * Custom JSON logic operations
  */
-jsonLogic.add_operation('is_owned', (account: string, bic: string | undefined, registry: OwnedAccountRegistry) => {
+jsonLogic.add_operation('is_owned', (account: string, bic: string | undefined, registry: AccountRegistry) => {
   return registry?.isOwned(account, bic);
 });
 
