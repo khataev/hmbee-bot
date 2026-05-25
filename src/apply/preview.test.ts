@@ -1,5 +1,4 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { loadFixture } from 'src/apply/preview/test-helpers.js';
 import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 import { normalizeHoneyMoneyAmount, normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
 import type { AppConfig } from 'src/config.js';
@@ -333,12 +332,6 @@ describe('Tochka Normalization', () => {
       }
     };
 
-    function loadFixture(fileName: string): unknown {
-      const filePath = resolve(process.cwd(), 'src', 'apply', 'preview', 'fixtures', fileName);
-      const fileContents = readFileSync(filePath, 'utf8');
-      return JSON.parse(fileContents) as unknown;
-    }
-
     it('classifies SbpC2BPayment fixtures as save-ready expenses', () => {
       const c2bPayment = loadFixture('sbp-c2b-payment.json');
 
@@ -466,12 +459,6 @@ describe('Tochka Normalization', () => {
         }
       }
     };
-
-    function loadFixture(fileName: string): unknown {
-      const filePath = resolve(process.cwd(), 'src', 'apply', 'preview', 'fixtures', fileName);
-      const fileContents = readFileSync(filePath, 'utf8');
-      return JSON.parse(fileContents) as unknown;
-    }
 
     it('classifies PaymentWrittenOff commission as save-ready expense', () => {
       const commission = loadFixture('payment-written-off-commission.json');
