@@ -6,6 +6,10 @@ describe('Tochka Normalization', () => {
     accountMappings: {
       '40802810309500012345': 67890
     },
+    ownedAccountRegistry: {
+      isOwned: (acc: string) => acc === '40802810309500012345',
+      getHmAccountId: (acc: string) => (acc === '40802810309500012345' ? 67890 : undefined)
+    },
     typeCodeRules: {
       CardTransactionInfo: {
         conditions: {

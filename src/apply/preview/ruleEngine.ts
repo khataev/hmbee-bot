@@ -1,4 +1,5 @@
 import jsonLogic from 'json-logic-js';
+import type { OwnedAccountRegistry } from 'src/config.js';
 
 /**
  * Interface for evaluating preview rules using JSON Logic.
@@ -9,7 +10,15 @@ import jsonLogic from 'json-logic-js';
 
 export interface RuleEvaluationContext {
   record: unknown;
+  ownedAccountRegistry: OwnedAccountRegistry;
 }
+
+/**
+ * Custom JSON logic operations
+ */
+jsonLogic.add_operation('is_owned', (account: string, bic: string | undefined, registry: OwnedAccountRegistry) => {
+  return registry?.isOwned(account, bic);
+});
 
 /**
  * Evaluates a JSON Logic expression against a given context and returns a boolean result.
@@ -27,8 +36,6 @@ export function evaluateRule(rule: unknown, context: RuleEvaluationContext): boo
     const result = jsonLogic.apply(rule as jsonLogic.RulesLogic, context);
     return !!result;
   } catch (_error) {
-    // In production, we might want more robust logging,
-    // but for now we'll just return false for malformed rules.
     return false;
   }
 }

@@ -1,10 +1,11 @@
 import { evaluateRule } from 'src/apply/preview/ruleEngine.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
-import type { TypeCodeConditionsConfig, TypeCodeRule } from 'src/config.js';
+import type { OwnedAccountRegistry, TypeCodeRule } from 'src/config.js';
 
 export interface TochkaNormalizationOptions {
   accountMappings: Record<string, number>;
   typeCodeRules: Record<string, TypeCodeRule>;
+  ownedAccountRegistry: OwnedAccountRegistry;
 }
 
 interface TochkaRecordMeta<TTypeCode extends string> {
@@ -85,6 +86,7 @@ export type SbpTransactionRecord = SbpB2CPaymentRecord | SbpC2BPaymentRecord | S
 export interface PaymentWrittenOffData {
   corebankingId: string;
   payerAccountId: string;
+  payeeAccountId: string;
   objectState: string;
   sum: number;
   currency: string;
@@ -97,6 +99,44 @@ export interface PaymentWrittenOffData {
 
 export interface PaymentWrittenOffRecord extends TochkaRecordMeta<'PaymentWrittenOff'> {
   data: PaymentWrittenOffData;
+}
+
+export interface PaymentIncomeData {
+  corebankingId: string;
+  payerAccountId: string;
+  payeeAccountId: string;
+  objectState: string;
+  sum: number;
+  currency: string;
+  title: string;
+  incoming: boolean;
+  failed: boolean;
+  isComission: boolean;
+  payerBankBic: string;
+  payeeBankBic: string;
+}
+
+export interface PaymentIncomeRecord extends TochkaRecordMeta<'PaymentIncome'> {
+  data: PaymentIncomeData;
+}
+
+export interface PaymentAcceptedData {
+  corebankingId: string;
+  payerAccountId: string;
+  payeeAccountId: string;
+  objectState: string;
+  sum: number;
+  currency: string;
+  title: string;
+  incoming: boolean;
+  failed: boolean;
+  isComission: boolean;
+  payerBankBic: string;
+  payeeBankBic: string;
+}
+
+export interface PaymentAcceptedRecord extends TochkaRecordMeta<'PaymentAccepted'> {
+  data: PaymentAcceptedData;
 }
 
 export interface VedPaymentIncomeData {
@@ -124,11 +164,19 @@ export type TochkaSyncRecord =
   | CardTransactionInfoRecord
   | SbpTransactionRecord
   | PaymentWrittenOffRecord
+  | PaymentIncomeRecord
+  | PaymentAcceptedRecord
   | VedPaymentIncomeRecord
   | UnsupportedTochkaRecord;
 
 type SbpTypeCode = 'SbpB2CPayment' | 'SbpC2BPayment' | 'SbpC2BRefund';
-type SupportedTochkaTypeCode = 'CardTransactionInfo' | SbpTypeCode | 'PaymentWrittenOff' | 'VedPaymentIncome';
+type SupportedTochkaTypeCode =
+  | 'CardTransactionInfo'
+  | SbpTypeCode
+  | 'PaymentWrittenOff'
+  | 'PaymentIncome'
+  | 'PaymentAccepted'
+  | 'VedPaymentIncome';
 
 function isSupportedTochkaTypeCode(typeCode: string): typeCode is SupportedTochkaTypeCode {
   return (
@@ -137,6 +185,8 @@ function isSupportedTochkaTypeCode(typeCode: string): typeCode is SupportedTochk
     typeCode === 'SbpC2BPayment' ||
     typeCode === 'SbpC2BRefund' ||
     typeCode === 'PaymentWrittenOff' ||
+    typeCode === 'PaymentIncome' ||
+    typeCode === 'PaymentAccepted' ||
     typeCode === 'VedPaymentIncome'
   );
 }
@@ -154,6 +204,14 @@ function isPaymentWrittenOffRecord(record: TochkaSyncRecord): record is PaymentW
   return record.meta_data.system_data.type_code === 'PaymentWrittenOff';
 }
 
+function isPaymentIncomeRecord(record: TochkaSyncRecord): record is PaymentIncomeRecord {
+  return record.meta_data.system_data.type_code === 'PaymentIncome';
+}
+
+function isPaymentAcceptedRecord(record: TochkaSyncRecord): record is PaymentAcceptedRecord {
+  return record.meta_data.system_data.type_code === 'PaymentAccepted';
+}
+
 function isVedPaymentIncomeRecord(record: TochkaSyncRecord): record is VedPaymentIncomeRecord {
   return record.meta_data.system_data.type_code === 'VedPaymentIncome';
 }
@@ -167,7 +225,7 @@ function getTransactionId(record: TochkaSyncRecord): string | number | undefined
     return record.data.transactionId;
   }
 
-  if (isPaymentWrittenOffRecord(record)) {
+  if (isPaymentWrittenOffRecord(record) || isPaymentIncomeRecord(record) || isPaymentAcceptedRecord(record)) {
     return record.data.corebankingId;
   }
 
@@ -191,8 +249,28 @@ function getSourceAccount(record: TochkaSyncRecord): string | undefined {
     return record.data.payerAccountId;
   }
 
+  if (isPaymentIncomeRecord(record)) {
+    return record.data.payeeAccountId;
+  }
+
+  if (isPaymentAcceptedRecord(record)) {
+    return record.data.payerAccountId;
+  }
+
   if (isVedPaymentIncomeRecord(record)) {
     return record.data.recipientAccountId;
+  }
+
+  return undefined;
+}
+
+function getCounterpartyAccount(record: TochkaSyncRecord): string | undefined {
+  if (isSbpTransactionRecord(record)) {
+    return record.data.incoming ? record.data.payerAccountId : record.data.payeeAccountId;
+  }
+
+  if (isPaymentIncomeRecord(record) || isPaymentAcceptedRecord(record) || isPaymentWrittenOffRecord(record)) {
+    return record.data.incoming ? record.data.payerAccountId : record.data.payeeAccountId;
   }
 
   return undefined;
@@ -203,7 +281,13 @@ function getSourceCurrency(record: TochkaSyncRecord): string | undefined {
     return record.data.currency;
   }
 
-  if (isSbpTransactionRecord(record) || isPaymentWrittenOffRecord(record) || isVedPaymentIncomeRecord(record)) {
+  if (
+    isSbpTransactionRecord(record) ||
+    isPaymentWrittenOffRecord(record) ||
+    isPaymentIncomeRecord(record) ||
+    isPaymentAcceptedRecord(record) ||
+    isVedPaymentIncomeRecord(record)
+  ) {
     return record.data.currency;
   }
 
@@ -224,7 +308,7 @@ function getStatus(record: TochkaSyncRecord): string | undefined {
     return record.data.status;
   }
 
-  if (isPaymentWrittenOffRecord(record)) {
+  if (isPaymentWrittenOffRecord(record) || isPaymentIncomeRecord(record) || isPaymentAcceptedRecord(record)) {
     return record.data.objectState;
   }
 
@@ -240,6 +324,8 @@ function getAmount(record: TochkaSyncRecord): number | undefined {
     isCardTransactionInfoRecord(record) ||
     isSbpTransactionRecord(record) ||
     isPaymentWrittenOffRecord(record) ||
+    isPaymentIncomeRecord(record) ||
+    isPaymentAcceptedRecord(record) ||
     isVedPaymentIncomeRecord(record)
   ) {
     return record.data.sum;
@@ -253,6 +339,8 @@ function getDescription(record: TochkaSyncRecord): string | undefined {
     isCardTransactionInfoRecord(record) ||
     isSbpTransactionRecord(record) ||
     isPaymentWrittenOffRecord(record) ||
+    isPaymentIncomeRecord(record) ||
+    isPaymentAcceptedRecord(record) ||
     isVedPaymentIncomeRecord(record)
   ) {
     return record.data.title;
@@ -261,20 +349,41 @@ function getDescription(record: TochkaSyncRecord): string | undefined {
   return undefined;
 }
 
-function getNormalizedType(record: TochkaSyncRecord): string {
-  if (isCardTransactionInfoRecord(record)) {
-    return record.data.tranCode;
+function getNormalizedType(sourceRecord: TochkaSyncRecord, registry: OwnedAccountRegistry): string {
+  if (isCardTransactionInfoRecord(sourceRecord)) {
+    return sourceRecord.data.tranCode;
   }
 
-  if (isSbpTransactionRecord(record)) {
-    return record.data.incoming ? 'Income' : 'Expense';
+  // By transfer we mean transaction between two accounts that belong to me and are registered as such in honey money.
+  const isTransferMatched =
+    (isSbpTransactionRecord(sourceRecord) ||
+      isPaymentWrittenOffRecord(sourceRecord) ||
+      isPaymentIncomeRecord(sourceRecord) ||
+      isPaymentAcceptedRecord(sourceRecord)) &&
+    registry.isOwned(sourceRecord.data.payerAccountId, (sourceRecord.data as SbpBaseTransactionData).payerBankBic) &&
+    registry.isOwned(sourceRecord.data.payeeAccountId, (sourceRecord.data as SbpBaseTransactionData).payeeBankBic);
+
+  if (isTransferMatched) {
+    return 'transfer';
   }
 
-  if (isPaymentWrittenOffRecord(record)) {
+  if (isSbpTransactionRecord(sourceRecord)) {
+    return sourceRecord.data.incoming ? 'Income' : 'Expense';
+  }
+
+  if (isPaymentWrittenOffRecord(sourceRecord)) {
     return 'Expense';
   }
 
-  if (isVedPaymentIncomeRecord(record)) {
+  if (isPaymentIncomeRecord(sourceRecord)) {
+    return 'Income';
+  }
+
+  if (isPaymentAcceptedRecord(sourceRecord)) {
+    return 'Expense';
+  }
+
+  if (isVedPaymentIncomeRecord(sourceRecord)) {
     return 'Income';
   }
 
@@ -283,16 +392,22 @@ function getNormalizedType(record: TochkaSyncRecord): string {
 
 function classifyByRule(
   record: TochkaSyncRecord,
-  accountMappings: Record<string, number>,
-  rules: TypeCodeConditionsConfig
+  options: TochkaNormalizationOptions
 ): {
   identified: boolean;
   save: boolean;
   reason: string | null;
 } {
+  const typeCode = record.meta_data.system_data.type_code;
+  const rules = options.typeCodeRules[typeCode]?.conditions;
+  if (!rules) {
+    return { identified: false, save: false, reason: `no rules for type_code: ${typeCode}` };
+  }
+
   const context = {
     record,
-    accountRegistry: Object.keys(accountMappings)
+    accountRegistry: Object.keys(options.accountMappings),
+    ownedAccountRegistry: options.ownedAccountRegistry
   };
   const hasIncludedMatch = evaluateRule(rules.included, context);
   const hasExcludedMatch = evaluateRule(rules.excluded, context);
@@ -391,7 +506,7 @@ export function normalizeTochkaRecord(
       throw new Error('Missing source title field');
     }
 
-    const classification = classifyByRule(sourceRecord, options.accountMappings, typeRules.conditions);
+    const classification = classifyByRule(sourceRecord, options);
 
     if (!classification.identified || !classification.save) {
       return {
@@ -402,17 +517,25 @@ export function normalizeTochkaRecord(
       };
     }
 
+    const normalizedType = getNormalizedType(sourceRecord, options.ownedAccountRegistry);
+    const counterpartyAccount = getCounterpartyAccount(sourceRecord);
+
     const normalized: NormalizedRecord = {
       transactionId: String(transactionId),
       account: sourceAccount,
       status,
       date: timeData.event_date,
-      type: getNormalizedType(sourceRecord),
+      type: normalizedType,
       amount,
       currency: sourceCurrency,
       description,
-      mcc: getMcc(sourceRecord)
+      mcc: getMcc(sourceRecord),
+      counterpartyAccountId: counterpartyAccount
     };
+
+    if (normalized.type === 'transfer' && !normalized.counterpartyAccountId) {
+      throw new Error('Normalized transfer record missing counterpartyAccountId');
+    }
 
     const tochkaAccountId = options.accountMappings[normalized.account];
 

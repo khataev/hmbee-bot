@@ -5,7 +5,7 @@ import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from 's
 import { loadSyncFiles } from 'src/apply/preview/loader.js';
 import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
 import type { HoneyMoneyTransaction, PreviewRecord } from 'src/apply/preview/types.js';
-import { loadConfig } from 'src/config.js';
+import { createOwnedAccountRegistry, loadConfig } from 'src/config.js';
 import { loadEnv, validateHoneyMoneyEnv, validateTochkaEnv } from 'src/env.js';
 import { HoneyMoneyClient } from 'src/hmbee/client.js';
 import { writeOutput } from 'src/output.js';
@@ -93,11 +93,13 @@ program
 
     try {
       const config = loadConfig();
+      const ownedAccountRegistry = createOwnedAccountRegistry(config);
       const records = loadSyncFiles(source);
       const previewRecords = records.map((record) =>
         normalizeTochkaRecord(record, {
           accountMappings: config.sources.tochka.accountMappings,
-          typeCodeRules: config.sources.tochka.typeCodes
+          typeCodeRules: config.sources.tochka.typeCodes,
+          ownedAccountRegistry
         })
       );
 

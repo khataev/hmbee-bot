@@ -8,6 +8,7 @@ export interface NormalizedRecord {
   currency: string;
   description: string;
   mcc?: string | undefined;
+  counterpartyAccountId?: string | undefined;
 }
 
 export interface HoneyMoneyTransaction {

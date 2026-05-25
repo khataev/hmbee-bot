@@ -49,6 +49,11 @@ export type TypeCodeRule = z.infer<typeof TypeCodeRuleSchema>;
 export type TypeCodeConditionsConfig = z.infer<typeof TypeCodeConditionsSchema>;
 export type AppConfig = z.infer<typeof ResolvedAppConfigSchema>;
 
+export interface OwnedAccountRegistry {
+  isOwned(account: string, bic?: string): boolean;
+  getHmAccountId(account: string): number | undefined;
+}
+
 const CONFIG_PATH = resolve(process.cwd(), 'config', 'sources.json');
 
 export function loadConfig(): AppConfig {
@@ -77,4 +82,20 @@ export function loadConfig(): AppConfig {
       }
     }
   });
+}
+
+export function createOwnedAccountRegistry(config: AppConfig): OwnedAccountRegistry {
+  const tochkaMappings = config.sources.tochka.accountMappings;
+  const TOCHKA_BIC = '044525104';
+
+  return {
+    isOwned(account: string, bic?: string): boolean {
+      if (account in tochkaMappings) return true;
+      if (bic === TOCHKA_BIC && account.startsWith('421')) return true;
+      return false;
+    },
+    getHmAccountId(account: string): number | undefined {
+      return tochkaMappings[account];
+    }
+  };
 }

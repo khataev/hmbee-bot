@@ -9,6 +9,10 @@ describe('Tochka Normalization', () => {
     accountMappings: {
       '40802810309500012345': 67890
     },
+    ownedAccountRegistry: {
+      isOwned: (acc: string) => acc === '40802810309500012345',
+      getHmAccountId: (acc: string) => (acc === '40802810309500012345' ? 67890 : undefined)
+    },
     typeCodeRules: {
       CardTransactionInfo: {
         conditions: {
@@ -238,6 +242,11 @@ describe('Tochka Normalization', () => {
         '40802810100000000001': 2053036,
         '40817810000000000001': 26755
       },
+      ownedAccountRegistry: {
+        isOwned: (acc: string) => acc === '40802810100000000001' || acc === '40817810000000000001',
+        getHmAccountId: (acc: string) =>
+          acc === '40802810100000000001' ? 2053036 : acc === '40817810000000000001' ? 26755 : undefined
+      },
       typeCodeRules: {
         SbpC2BPayment: {
           conditions: {
@@ -287,7 +296,13 @@ describe('Tochka Normalization', () => {
               and: [
                 { '==': [{ var: 'record.data.status' }, 'ACCEPTED'] },
                 { '==': [{ var: 'record.data.incoming' }, false] },
-                { '==': [{ in: [{ var: 'record.data.payeeAccountId' }, { var: 'accountRegistry' }] }, false] }
+                {
+                  is_owned: [
+                    { var: 'record.data.payerAccountId' },
+                    { var: 'record.data.payerBankBic' },
+                    { var: 'ownedAccountRegistry' }
+                  ]
+                }
               ]
             },
             excluded: {
@@ -298,8 +313,7 @@ describe('Tochka Normalization', () => {
                     { '==': [{ var: 'record.data.status' }, 'REJECTED'] }
                   ]
                 },
-                { '==': [{ var: 'record.data.incoming' }, true] },
-                { in: [{ var: 'record.data.payeeAccountId' }, { var: 'accountRegistry' }] }
+                { '==': [{ var: 'record.data.incoming' }, true] }
               ]
             }
           }
@@ -352,16 +366,17 @@ describe('Tochka Normalization', () => {
       expect(result.hmbee?.account_id).toBe(2053036);
     });
 
-    it('identifies transfer-like SbpB2CPayment but excludes from save-ready flow', () => {
+    it('identifies transfer-like SbpB2CPayment as save-ready canonical transfer', () => {
       const transferLikeB2C = loadFixture('sbp-b2c-payment-own-transfer.json');
 
       const result = normalizeTochkaRecord(transferLikeB2C as TochkaSyncRecord, sbpOptions);
 
       expect(result.identified).toBe(true);
-      expect(result.save).toBe(false);
-      expect(result.reason).toBe('excluded');
-      expect(result.normalized).toBeUndefined();
-      expect(result.hmbee).toBeUndefined();
+      expect(result.save).toBe(true);
+      expect(result.reason).toBeNull();
+      expect(result.normalized?.type).toBe('transfer');
+      expect(result.normalized?.counterpartyAccountId).toBe('40817810000000000001');
+      expect(result.hmbee?.subtype).toBe('e');
     });
   });
 
@@ -370,21 +385,50 @@ describe('Tochka Normalization', () => {
       accountMappings: {
         '40802810100000000001': 2053036
       },
+      ownedAccountRegistry: {
+        isOwned: (acc: string) => acc === '40802810100000000001',
+        getHmAccountId: (acc: string) => (acc === '40802810100000000001' ? 2053036 : undefined)
+      },
       typeCodeRules: {
         PaymentWrittenOff: {
           conditions: {
             included: {
-              and: [
-                { '==': [{ var: 'record.data.incoming' }, false] },
-                { '==': [{ var: 'record.data.objectState' }, 'Processed'] },
-                { '==': [{ var: 'record.data.failed' }, false] },
-                { '==': [{ var: 'record.data.isComission' }, true] }
+              or: [
+                {
+                  and: [
+                    { '==': [{ var: 'record.data.incoming' }, false] },
+                    { '==': [{ var: 'record.data.objectState' }, 'Processed'] },
+                    { '==': [{ var: 'record.data.failed' }, false] },
+                    { '==': [{ var: 'record.data.isComission' }, true] }
+                  ]
+                },
+                {
+                  and: [
+                    { '==': [{ var: 'record.data.incoming' }, false] },
+                    { '==': [{ var: 'record.data.isComission' }, false] },
+                    {
+                      is_owned: [
+                        { var: 'record.data.payerAccountId' },
+                        { var: 'record.data.payerBankBic' },
+                        { var: 'ownedAccountRegistry' }
+                      ]
+                    },
+                    {
+                      is_owned: [
+                        { var: 'record.data.payeeAccountId' },
+                        { var: 'record.data.payeeBankBic' },
+                        { var: 'ownedAccountRegistry' }
+                      ]
+                    }
+                  ]
+                }
               ]
             },
             excluded: {
               and: [
                 { '==': [{ var: 'record.data.incoming' }, false] },
-                { '==': [{ var: 'record.data.categoryTypeName' }, 'TRANSFER'] }
+                { '==': [{ var: 'record.data.categoryTypeName' }, 'TRANSFER'] },
+                { '==': [{ var: 'record.data.isComission' }, false] }
               ]
             }
           }
