@@ -541,13 +541,20 @@ export function normalizeTochkaRecord(
     if (!tochkaAccountId)
       throw new Error(`No Honey Money account mapping found for Tochka account ${normalized.account}`);
 
+    const incoming =
+      (isSbpTransactionRecord(sourceRecord) ||
+        isPaymentWrittenOffRecord(sourceRecord) ||
+        isPaymentIncomeRecord(sourceRecord) ||
+        isPaymentAcceptedRecord(sourceRecord)) &&
+      sourceRecord.data.incoming;
+
     return {
       identified: true,
       save: classification.save,
       reason: classification.reason,
       sourceRecord,
       normalized,
-      hmbee: buildHoneyMoneyTransaction(normalized, tochkaAccountId)
+      hmbee: buildHoneyMoneyTransaction(normalized, tochkaAccountId, incoming || normalized.type === 'Income')
     };
   } catch (error) {
     return {
@@ -559,9 +566,13 @@ export function normalizeTochkaRecord(
   }
 }
 
-function buildHoneyMoneyTransaction(normalized: NormalizedRecord, accountId: number): HoneyMoneyTransaction {
+function buildHoneyMoneyTransaction(
+  normalized: NormalizedRecord,
+  accountId: number,
+  incoming: boolean
+): HoneyMoneyTransaction {
   const category = mapTochkaCategory(normalized.description, normalized.mcc);
-  const subtype = normalized.type === 'Income' ? 'i' : 'e';
+  const subtype = incoming ? 'i' : 'e';
   const normalizedAmount = normalizeHoneyMoneyAmount(normalized.amount, subtype);
 
   return {

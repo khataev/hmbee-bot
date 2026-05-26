@@ -383,10 +383,60 @@ describe('Tochka Normalization', () => {
       expect(result.normalized?.counterpartyAccountId).toBe('40817810000000000001');
       expect(result.hmbee?.subtype).toBe('e');
     });
+
+    it('uses shared account-registry heuristic for deposit-like SbpB2CPayment transfer handling', () => {
+      const registryHeuristicOptions = {
+        ...sbpOptions,
+        accountRegistry: createAccountRegistry({
+          sources: {
+            tochka: {
+              accountMappings: {
+                '40802810100000000001': 2053036
+              },
+              hmAccounts: {},
+              typeCodes: {}
+            }
+          }
+        } as AppConfig)
+      };
+
+      const transferToDepositLikeAccount = {
+        meta_data: {
+          system_data: {
+            type_code: 'SbpB2CPayment'
+          },
+          time_data: {
+            event_date: '2026-05-09T10:00:00.000+05:00'
+          }
+        },
+        data: {
+          transactionId: 'sber-shared-registry-transfer',
+          status: 'ACCEPTED',
+          incoming: false,
+          sum: 500,
+          currency: 'RUB',
+          title: 'Owned external transfer',
+          payerAccountId: '40802810100000000001',
+          payerBankBic: '044525104',
+          payeeAccountId: '42109810620003872464',
+          payeeBankBic: '044525104'
+        }
+      };
+
+      const result = normalizeTochkaRecord(transferToDepositLikeAccount as TochkaSyncRecord, registryHeuristicOptions);
+
+      expect(result.identified).toBe(true);
+      expect(result.save).toBe(true);
+      expect(result.reason).toBeNull();
+      expect(result.normalized?.type).toBe('transfer');
+      expect(result.normalized?.counterpartyAccountId).toBe('42109810620003872464');
+      expect(result.hmbee?.subtype).toBe('e');
+    });
   });
 
   describe('RS/Arrival fixture-backed classification', () => {
     const rsMappings = {
+      '40802810901500303852': 2053036,
       '40802810100000000002': 2053036,
       '40802810100000000001': 2053036
     };
@@ -445,6 +495,72 @@ describe('Tochka Normalization', () => {
             }
           }
         },
+        PaymentIncome: {
+          conditions: {
+            included: {
+              and: [
+                { '==': [{ var: 'record.data.incoming' }, true] },
+                { '==': [{ var: 'record.data.isComission' }, false] },
+                {
+                  is_owned: [
+                    { var: 'record.data.payeeAccountId' },
+                    { var: 'record.data.payeeBankBic' },
+                    { var: 'accountRegistry' }
+                  ]
+                },
+                {
+                  '!': {
+                    and: [
+                      {
+                        is_owned: [
+                          { var: 'record.data.payerAccountId' },
+                          { var: 'record.data.payerBankBic' },
+                          { var: 'accountRegistry' }
+                        ]
+                      },
+                      {
+                        '!': {
+                          or: [
+                            {
+                              is_deposit: [{ var: 'record.data.payerAccountId' }, { var: 'record.data.payerBankBic' }]
+                            },
+                            {
+                              is_deposit: [{ var: 'record.data.payeeAccountId' }, { var: 'record.data.payeeBankBic' }]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            excluded: {
+              and: [
+                { '==': [{ var: 'record.data.incoming' }, true] },
+                {
+                  is_owned: [
+                    { var: 'record.data.payerAccountId' },
+                    { var: 'record.data.payerBankBic' },
+                    { var: 'accountRegistry' }
+                  ]
+                },
+                {
+                  '!': {
+                    or: [
+                      {
+                        is_deposit: [{ var: 'record.data.payerAccountId' }, { var: 'record.data.payerBankBic' }]
+                      },
+                      {
+                        is_deposit: [{ var: 'record.data.payeeAccountId' }, { var: 'record.data.payeeBankBic' }]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
         VedPaymentIncome: {
           conditions: {
             included: {
@@ -481,6 +597,149 @@ describe('Tochka Normalization', () => {
       expect(result.identified).toBe(true);
       expect(result.save).toBe(false);
       expect(result.reason).toBe('excluded');
+    });
+
+    it('canonicalizes deposit opening as a save-ready transfer with counterparty account', () => {
+      const depositOpen = {
+        meta_data: {
+          system_data: {
+            type_code: 'PaymentWrittenOff'
+          },
+          time_data: {
+            event_date: '2026-03-31T16:42:51.815+05:00'
+          }
+        },
+        data: {
+          incoming: false,
+          objectState: 'Processed',
+          failed: false,
+          isComission: false,
+          categoryTypeName: 'DEPOSIT',
+          sum: 173000,
+          currency: 'RUB',
+          title: 'Deposit opening',
+          corebankingId: '92;4142283029',
+          payerAccountId: '40802810901500303852',
+          payerBankBic: '044525104',
+          payeeAccountId: '42109810620003872464',
+          payeeBankBic: '044525104'
+        }
+      };
+
+      const result = normalizeTochkaRecord(depositOpen as TochkaSyncRecord, rsOptions);
+
+      expect(result.identified).toBe(true);
+      expect(result.save).toBe(true);
+      expect(result.reason).toBeNull();
+      expect(result.normalized?.type).toBe('transfer');
+      expect(result.normalized?.counterpartyAccountId).toBe('42109810620003872464');
+      expect(result.hmbee?.subtype).toBe('e');
+      expect(result.hmbee?.real_amount).toBe(-173000);
+    });
+
+    it('marks mirrored PaymentIncome transfer as identified but excluded', () => {
+      const mirroredIncome = {
+        meta_data: {
+          system_data: {
+            type_code: 'PaymentIncome'
+          },
+          time_data: {
+            event_date: '2026-05-07T09:15:42.861+05:00'
+          }
+        },
+        data: {
+          incoming: true,
+          objectState: 'Processed',
+          failed: false,
+          isComission: false,
+          sum: 98000,
+          currency: 'RUB',
+          title: 'Mirrored transfer',
+          corebankingId: '92;4335251007',
+          payerAccountId: '40802810100000000001',
+          payerBankBic: '044525104',
+          payeeAccountId: '40802810901500303852',
+          payeeBankBic: '044525104'
+        }
+      };
+
+      const result = normalizeTochkaRecord(mirroredIncome as TochkaSyncRecord, rsOptions);
+
+      expect(result.identified).toBe(true);
+      expect(result.save).toBe(false);
+      expect(result.reason).toBe('excluded');
+      expect(result.normalized?.type).toBe('transfer');
+      expect(result.normalized?.counterpartyAccountId).toBe('40802810100000000001');
+    });
+
+    it('keeps deposit principal return as save-ready income', () => {
+      const depositReturn = {
+        meta_data: {
+          system_data: {
+            type_code: 'PaymentIncome'
+          },
+          time_data: {
+            event_date: '2026-04-30T07:10:10.501+05:00'
+          }
+        },
+        data: {
+          incoming: true,
+          objectState: 'Processed',
+          failed: false,
+          isComission: false,
+          sum: 173000,
+          currency: 'RUB',
+          title: 'Deposit principal return',
+          corebankingId: '92;4299076045',
+          payerAccountId: '42109810620003872464',
+          payerBankBic: '044525104',
+          payeeAccountId: '40802810901500303852',
+          payeeBankBic: '044525104'
+        }
+      };
+
+      const result = normalizeTochkaRecord(depositReturn as TochkaSyncRecord, rsOptions);
+
+      expect(result.identified).toBe(true);
+      expect(result.save).toBe(true);
+      expect(result.reason).toBeNull();
+      expect(result.hmbee?.subtype).toBe('i');
+      expect(result.hmbee?.real_amount).toBe(173000);
+    });
+
+    it('keeps deposit interest as ordinary save-ready income', () => {
+      const depositInterest = {
+        meta_data: {
+          system_data: {
+            type_code: 'PaymentIncome'
+          },
+          time_data: {
+            event_date: '2026-05-01T10:00:00.000+05:00'
+          }
+        },
+        data: {
+          incoming: true,
+          objectState: 'Processed',
+          failed: false,
+          isComission: false,
+          sum: 1500,
+          currency: 'RUB',
+          title: 'Deposit interest',
+          corebankingId: '92;DEPOSIT_INTEREST',
+          payerAccountId: 'InterestPayment',
+          payerBankBic: '044525104',
+          payeeAccountId: '40802810901500303852',
+          payeeBankBic: '044525104'
+        }
+      };
+
+      const result = normalizeTochkaRecord(depositInterest as TochkaSyncRecord, rsOptions);
+
+      expect(result.identified).toBe(true);
+      expect(result.save).toBe(true);
+      expect(result.reason).toBeNull();
+      expect(result.hmbee?.subtype).toBe('i');
+      expect(result.hmbee?.real_amount).toBe(1500);
     });
 
     it('remains unmatched for unknown PaymentWrittenOff shapes', () => {

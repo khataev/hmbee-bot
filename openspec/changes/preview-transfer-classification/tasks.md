@@ -12,6 +12,6 @@
 
 ## 3. Verification
 
-- [ ] 3.1 Add focused preview tests for internal transfer canonicalization, excluded mirrored `PaymentIncome`, deposit opening, deposit principal return, deposit interest, normalized `transfer` type, and `counterpartyAccountId`, then validate with `npm run check`.
-- [ ] 3.2 Add or update focused preview tests for owned-external `SbpB2CPayment` transfer handling and shared owned-account registry behavior, then validate with `npm run check`.
-- [ ] 3.3 Run the full repository quality gate with `npm run check` and confirm the transfer-preview change passes without introducing unrelated regressions.
+- [x] 3.1 Add focused preview tests for internal transfer canonicalization, excluded mirrored `PaymentIncome`, deposit opening, deposit principal return, deposit interest, normalized `transfer` type, and `counterpartyAccountId`, then validate with `npm run check`.
+- [x] 3.2 Add or update focused preview tests for owned-external `SbpB2CPayment` transfer handling and shared owned-account registry behavior, then validate with `npm run check`.
+- [x] 3.3 Run the full repository quality gate with `npm run check` and confirm the transfer-preview change passes without introducing unrelated regressions.
