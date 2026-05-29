@@ -371,6 +371,23 @@ describe('Tochka Normalization', () => {
       expect(result.hmbee?.account_id).toBe(2053036);
     });
 
+    it('marks SbpC2BRefund invalid forms as identified but excluded (CANCELED/REJECTED/incoming=false)', () => {
+      const invalidFixtures = [
+        'sbp-c2b-refund-canceled.json',
+        'sbp-c2b-refund-rejected.json',
+        'sbp-c2b-refund-outgoing.json'
+      ];
+
+      for (const fixtureName of invalidFixtures) {
+        const fixture = loadFixture(fixtureName);
+        const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, sbpOptions);
+
+        expect(result.identified).toBe(true);
+        expect(result.save).toBe(false);
+        expect(result.reason).toBe('excluded');
+      }
+    });
+
     it('classifies non-transfer SbpB2CPayment as save-ready expense', () => {
       const nonTransferB2C = loadFixture('sbp-b2c-payment-non-transfer.json');
 
