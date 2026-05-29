@@ -82,12 +82,8 @@
             },
             "excluded": {
               "or": [
-                {
-                  "or": [
-                    { "==": [{ "var": "record.data.status" }, "CANCELED"] },
-                    { "==": [{ "var": "record.data.status" }, "REJECTED"] }
-                  ]
-                },
+                { "==": [{ "var": "record.data.status" }, "CANCELED"] },
+                { "==": [{ "var": "record.data.status" }, "REJECTED"] },
                 { "==": [{ "var": "record.data.incoming" }, true] }
               ]
             }
