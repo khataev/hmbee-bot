@@ -414,6 +414,23 @@ describe('Tochka Normalization', () => {
       expect(result.hmbee?.subtype).toBe('e');
     });
 
+    it('marks SbpB2CPayment invalid forms as identified but excluded (CANCELED/REJECTED/incoming=true)', () => {
+      const invalidFixtures = [
+        'sbp-b2c-payment-canceled.json',
+        'sbp-b2c-payment-rejected.json',
+        'sbp-b2c-payment-incoming.json'
+      ];
+
+      for (const fixtureName of invalidFixtures) {
+        const fixture = loadFixture(fixtureName);
+        const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, sbpOptions);
+
+        expect(result.identified).toBe(true);
+        expect(result.save).toBe(false);
+        expect(result.reason).toBe('excluded');
+      }
+    });
+
     it('uses shared account-registry heuristic for deposit-like SbpB2CPayment transfer handling', () => {
       const registryHeuristicOptions = {
         ...sbpOptions,
