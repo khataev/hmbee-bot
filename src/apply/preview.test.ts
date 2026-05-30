@@ -387,30 +387,6 @@ describe('Tochka Normalization', () => {
       }
     };
 
-    it('identifies transfer-like PaymentWrittenOff but excludes from save-ready flow', () => {
-      const transfer = loadFixture('payment-written-off-transfer.json');
-
-      const result = normalizeTochkaRecord(transfer as TochkaSyncRecord, rsOptions);
-
-      expect(result.identified).toBe(true);
-      expect(result.save).toBe(false);
-      expect(result.reason).toBe('excluded');
-    });
-
-    it('canonicalizes deposit opening as a save-ready transfer with counterparty account', () => {
-      const depositOpen = loadFixture('payment-written-off-deposit-open-transfer.json');
-
-      const result = normalizeTochkaRecord(depositOpen as TochkaSyncRecord, rsOptions);
-
-      expect(result.identified).toBe(true);
-      expect(result.save).toBe(true);
-      expect(result.reason).toBeNull();
-      expect(result.normalized?.type).toBe('transfer');
-      expect(result.normalized?.counterpartyAccountId).toBe('42109810000000000033');
-      expect(result.hmbee?.subtype).toBe('e');
-      expect(result.hmbee?.real_amount).toBe(-173000);
-    });
-
     it('marks mirrored PaymentIncome transfer as identified but excluded', () => {
       const mirroredIncome = {
         meta_data: {
@@ -493,31 +469,6 @@ describe('Tochka Normalization', () => {
       expect(result.hmbee?.real_amount).toBe(1500);
     });
 
-    it('remains unmatched for unknown PaymentWrittenOff shapes', () => {
-      const unknownWrittenOff = {
-        meta_data: {
-          system_data: { type_code: 'PaymentWrittenOff' },
-          time_data: { event_date: '2026-05-04T10:53:12.465+05:00' }
-        },
-        data: {
-          incoming: false,
-          objectState: 'Processed',
-          failed: false,
-          isComission: false,
-          categoryTypeName: 'OTHERS',
-          sum: 100,
-          currency: 'RUB',
-          title: 'Unknown',
-          corebankingId: '92;123',
-          payerAccountId: '40802810100000000001'
-        }
-      };
-
-      const result = normalizeTochkaRecord(unknownWrittenOff as TochkaSyncRecord, rsOptions);
-
-      expect(result.identified).toBe(false);
-      expect(result.reason).toBe('no matching included/excluded condition');
-    });
 
     it('classifies VedPaymentIncome (UNDISTRIBUTED) as save-ready income', () => {
       const income = loadFixture('ved-payment-income-undistributed.json');

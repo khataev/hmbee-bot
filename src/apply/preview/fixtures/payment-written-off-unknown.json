@@ -1,0 +1,22 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "PaymentWrittenOff"
+    },
+    "time_data": {
+      "event_date": "2026-05-04T10:53:12.465+05:00"
+    }
+  },
+  "data": {
+    "incoming": false,
+    "objectState": "Processed",
+    "failed": false,
+    "isComission": false,
+    "categoryTypeName": "OTHERS",
+    "sum": 100,
+    "currency": "RUB",
+    "title": "Unknown",
+    "corebankingId": "92;0000000099",
+    "payerAccountId": "40802810100000000001"
+  }
+}

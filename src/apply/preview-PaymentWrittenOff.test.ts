@@ -77,4 +77,26 @@ describe('PaymentWrittenOff classification', () => {
     expect(result.hmbee?.subtype).toBe('e');
     expect(result.hmbee?.real_amount).toBe(-100);
   });
+
+  it('canonicalizes deposit opening as a save-ready transfer with counterparty account', () => {
+    const fixture = loadFixture('payment-written-off-deposit-open-transfer.json');
+
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(true);
+    expect(result.reason).toBeNull();
+    expect(result.normalized?.type).toBe('transfer');
+    expect(result.normalized?.counterpartyAccountId).toBe('42109810000000000033');
+    expect(result.hmbee?.subtype).toBe('e');
+    expect(result.hmbee?.real_amount).toBe(-173000);
+  });
+
+  it('remains unmatched for unknown PaymentWrittenOff shapes', () => {
+    const fixture = loadFixture('payment-written-off-unknown.json');
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+
+    expect(result.identified).toBe(false);
+    expect(result.reason).toBe('no matching included/excluded condition');
+  });
 });
