@@ -1,0 +1,24 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "PaymentWrittenOff"
+    },
+    "time_data": {
+      "event_date": "2026-03-31T16:42:51.815+05:00"
+    }
+  },
+  "data": {
+    "incoming": false,
+    "objectState": "Processed",
+    "failed": false,
+    "isComission": false,
+    "sum": 173000,
+    "currency": "RUB",
+    "title": "ИП Ивнов Иван Иванович",
+    "corebankingId": "92;4142283029",
+    "payerAccountId": "40802810901500303852",
+    "payerBankBic": "044525104",
+    "payeeAccountId": "42109810620003872464",
+    "payeeBankBic": "044525104"
+  }
+}

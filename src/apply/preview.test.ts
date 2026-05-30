@@ -647,31 +647,7 @@ describe('Tochka Normalization', () => {
     });
 
     it('canonicalizes deposit opening as a save-ready transfer with counterparty account', () => {
-      const depositOpen = {
-        meta_data: {
-          system_data: {
-            type_code: 'PaymentWrittenOff'
-          },
-          time_data: {
-            event_date: '2026-03-31T16:42:51.815+05:00'
-          }
-        },
-        data: {
-          incoming: false,
-          objectState: 'Processed',
-          failed: false,
-          isComission: false,
-          categoryTypeName: 'DEPOSIT',
-          sum: 173000,
-          currency: 'RUB',
-          title: 'Deposit opening',
-          corebankingId: '92;4142283029',
-          payerAccountId: '40802810901500303852',
-          payerBankBic: '044525104',
-          payeeAccountId: '42109810620003872464',
-          payeeBankBic: '044525104'
-        }
-      };
+      const depositOpen = loadFixture('payment-written-off-deposit-open-transfer.json');
 
       const result = normalizeTochkaRecord(depositOpen as TochkaSyncRecord, rsOptions);
 
@@ -720,30 +696,7 @@ describe('Tochka Normalization', () => {
     });
 
     it('keeps deposit principal return as save-ready income', () => {
-      const depositReturn = {
-        meta_data: {
-          system_data: {
-            type_code: 'PaymentIncome'
-          },
-          time_data: {
-            event_date: '2026-04-30T07:10:10.501+05:00'
-          }
-        },
-        data: {
-          incoming: true,
-          objectState: 'Processed',
-          failed: false,
-          isComission: false,
-          sum: 173000,
-          currency: 'RUB',
-          title: 'Deposit principal return',
-          corebankingId: '92;4299076045',
-          payerAccountId: '42109810620003872464',
-          payerBankBic: '044525104',
-          payeeAccountId: '40802810901500303852',
-          payeeBankBic: '044525104'
-        }
-      };
+      const depositReturn = loadFixture('payment-income-deposit-return.json');
 
       const result = normalizeTochkaRecord(depositReturn as TochkaSyncRecord, rsOptions);
 

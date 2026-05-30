@@ -1,0 +1,24 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "PaymentIncome"
+    },
+    "time_data": {
+      "event_date": "2026-04-30T07:10:10.501+05:00"
+    }
+  },
+  "data": {
+    "incoming": true,
+    "objectState": "Processed",
+    "failed": false,
+    "isComission": false,
+    "sum": 173000,
+    "currency": "RUB",
+    "title": "ИП Иванов Иван Иванович",
+    "corebankingId": "92;4299076045",
+    "payerAccountId": "42109810620003872464",
+    "payerBankBic": "044525104",
+    "payeeAccountId": "40802810901500303852",
+    "payeeBankBic": "044525104"
+  }
+}
