@@ -1,9 +1,6 @@
 {
   "meta_data": {
     "system_data": {
-      "document_code": "RS_TL_outgoing_92;4317680616",
-      "service_code": "rs",
-      "service_type_code": "rs_PaymentWrittenOff",
       "type_code": "PaymentWrittenOff"
     },
     "time_data": {
@@ -11,7 +8,7 @@
     }
   },
   "data": {
-    "title": "АКЦИОНЕРНОЕ ОБЩЕСТВО \"ТОЧКА\"",
+    "title": "Test Commission",
     "sum": 100,
     "sumCurrency": "RUB",
     "incoming": false,
@@ -19,7 +16,7 @@
     "failed": false,
     "isComission": true,
     "categoryTypeName": "OTHERS",
-    "corebankingId": "92;4317680616",
+    "corebankingId": "92;0000000001",
     "currency": "RUB",
     "payerAccountId": "40802810100000000001"
   }

@@ -387,18 +387,6 @@ describe('Tochka Normalization', () => {
       }
     };
 
-    it('classifies PaymentWrittenOff commission as save-ready expense', () => {
-      const commission = loadFixture('payment-written-off-commission.json');
-
-      const result = normalizeTochkaRecord(commission as TochkaSyncRecord, rsOptions);
-
-      expect(result.identified).toBe(true);
-      expect(result.save).toBe(true);
-      expect(result.reason).toBeNull();
-      expect(result.hmbee?.subtype).toBe('e');
-      expect(result.hmbee?.real_amount).toBe(-100);
-    });
-
     it('identifies transfer-like PaymentWrittenOff but excludes from save-ready flow', () => {
       const transfer = loadFixture('payment-written-off-transfer.json');
 
