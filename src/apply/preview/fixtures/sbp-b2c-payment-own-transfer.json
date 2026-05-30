@@ -4,11 +4,11 @@
       "type_code": "SbpB2CPayment"
     },
     "time_data": {
-      "event_date": "2026-05-04T22:01:08.375+05:00"
+      "event_date": "2026-05-25T17:38:13.504+05:00"
     }
   },
   "data": {
-    "title": "Own account transfer",
+    "title": "Test Person P.",
     "sum": 3000,
     "sumCurrency": "RUB",
     "incoming": false,
@@ -19,13 +19,13 @@
     "payeeAccountId": "40817810000000000001",
     "payeeBankBic": "044525225",
     "payeeBankName": "Sberbank",
-    "payeeName": "Ivan I.",
-    "phoneNumber": "+79090000000",
+    "payeeName": "Test Person P.",
+    "phoneNumber": "+79000000000",
     "status": "ACCEPTED",
-    "operationId": "B61241701006790T0B10160011750703",
-    "transactionId": "9e00a1df4e572b9ecf0fa7d5fd730154",
+    "operationId": "B00000000000000T0B00000000000004",
+    "transactionId": "b2c00000000000000000000000000004",
     "formattedTitle": "Paid 3000 RUB via SBP",
-    "date": "2026-05-04T20:01:08.375+03:00",
+    "date": "2026-05-25T15:38:13.504+03:00",
     "sourceName": "web",
     "currency": "RUB"
   }
