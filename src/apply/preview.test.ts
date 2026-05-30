@@ -483,6 +483,8 @@ describe('Tochka Normalization', () => {
 
   describe('RS/Arrival fixture-backed classification', () => {
     const rsMappings = {
+      '40802810000000000011': 2053036,
+      '42109810000000000033': 26755,
       '40802810901500303852': 2053036,
       '40802810100000000002': 2053036,
       '40802810100000000001': 2053036
@@ -655,7 +657,7 @@ describe('Tochka Normalization', () => {
       expect(result.save).toBe(true);
       expect(result.reason).toBeNull();
       expect(result.normalized?.type).toBe('transfer');
-      expect(result.normalized?.counterpartyAccountId).toBe('42109810620003872464');
+      expect(result.normalized?.counterpartyAccountId).toBe('42109810000000000033');
       expect(result.hmbee?.subtype).toBe('e');
       expect(result.hmbee?.real_amount).toBe(-173000);
     });

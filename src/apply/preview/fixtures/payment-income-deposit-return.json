@@ -16,9 +16,9 @@
     "currency": "RUB",
     "title": "ИП Иванов Иван Иванович",
     "corebankingId": "92;4299076045",
-    "payerAccountId": "42109810620003872464",
+    "payerAccountId": "42109810000000000033",
     "payerBankBic": "044525104",
-    "payeeAccountId": "40802810901500303852",
+    "payeeAccountId": "40802810000000000011",
     "payeeBankBic": "044525104"
   }
 }
