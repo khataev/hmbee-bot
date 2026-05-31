@@ -228,28 +228,71 @@
         "PaymentIncome": {
           "conditions": {
             "included": {
-              "and": [
-                { "==": [{ "var": "record.data.incoming" }, true] },
-                { "==": [{ "var": "record.data.isComission" }, false] },
+              "or": [
                 {
-                  "is_owned": [
-                    { "var": "record.data.payeeAccountId" },
-                    { "var": "record.data.payeeBankBic" },
-                    { "var": "accountRegistry" }
+                  "and": [
+                    { "==": [{ "var": "record.data.incoming" }, true] },
+                    { "==": [{ "var": "record.data.isComission" }, false] },
+                    {
+                      "is_owned": [
+                        { "var": "record.data.payeeAccountId" },
+                        { "var": "record.data.payeeBankBic" },
+                        { "var": "accountRegistry" }
+                      ]
+                    },
+                    {
+                      "is_deposit": [
+                        { "var": "record.data.payerAccountId" },
+                        { "var": "record.data.payerBankBic" }
+                      ]
+                    }
                   ]
                 },
                 {
-                  "!": {
-                    "and": [
-                      {
+                  "and": [
+                    { "==": [{ "var": "record.data.incoming" }, true] },
+                    { "==": [{ "var": "record.data.isComission" }, false] },
+                    {
+                      "is_owned": [
+                        { "var": "record.data.payeeAccountId" },
+                        { "var": "record.data.payeeBankBic" },
+                        { "var": "accountRegistry" }
+                      ]
+                    },
+                    {
+                      "!": {
                         "is_owned": [
                           { "var": "record.data.payerAccountId" },
                           { "var": "record.data.payerBankBic" },
                           { "var": "accountRegistry" }
                         ]
                       }
-                    ]
-                  }
+                    },
+                    { "==": [{ "var": "record.data.payerBankBic" }, "044525104"] }
+                  ]
+                },
+                {
+                  "and": [
+                    { "==": [{ "var": "record.data.incoming" }, true] },
+                    { "==": [{ "var": "record.data.isComission" }, false] },
+                    {
+                      "is_owned": [
+                        { "var": "record.data.payeeAccountId" },
+                        { "var": "record.data.payeeBankBic" },
+                        { "var": "accountRegistry" }
+                      ]
+                    },
+                    {
+                      "!": {
+                        "is_owned": [
+                          { "var": "record.data.payerAccountId" },
+                          { "var": "record.data.payerBankBic" },
+                          { "var": "accountRegistry" }
+                        ]
+                      }
+                    },
+                    { "!": { "==": [{ "var": "record.data.payerBankBic" }, "044525104"] } }
+                  ]
                 }
               ]
             },
@@ -262,6 +305,14 @@
                     { "var": "record.data.payerBankBic" },
                     { "var": "accountRegistry" }
                   ]
+                },
+                {
+                  "!": {
+                    "is_deposit": [
+                      { "var": "record.data.payerAccountId" },
+                      { "var": "record.data.payerBankBic" }
+                    ]
+                  }
                 }
               ]
             }

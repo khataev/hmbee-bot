@@ -1,0 +1,24 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "PaymentIncome"
+    },
+    "time_data": {
+      "event_date": "2026-04-30T02:09:29.118+05:00"
+    }
+  },
+  "data": {
+    "incoming": true,
+    "objectState": "Processed",
+    "failed": false,
+    "isComission": false,
+    "sum": 1507.23,
+    "currency": "RUB",
+    "title": "ООО \"Тест Банк\"",
+    "corebankingId": "92;0000000006",
+    "payerAccountId": "47426810000000000001",
+    "payerBankBic": "044525104",
+    "payeeAccountId": "40802810901500303852",
+    "payeeBankBic": "044525104"
+  }
+}

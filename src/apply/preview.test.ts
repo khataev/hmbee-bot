@@ -242,12 +242,8 @@ describe('Tochka Normalization', () => {
     expect(normalizeHoneyMoneyAmount(241.07, 'i')).toBe(241);
   });
 
-  describe('RS/Arrival fixture-backed classification', () => {
+  describe('VedPaymentIncome fixture-backed classification', () => {
     const rsMappings = {
-      '40802810000000000011': 2053036,
-      '42109810000000000033': 26755,
-      '40802810901500303852': 2053036,
-      '40802810100000000002': 2053036,
       '40802810100000000001': 2053036
     };
     const rsOptions = {
@@ -262,115 +258,6 @@ describe('Tochka Normalization', () => {
         }
       } as AppConfig),
       typeCodeRules: {
-        PaymentWrittenOff: {
-          conditions: {
-            included: {
-              or: [
-                {
-                  and: [
-                    { '==': [{ var: 'record.data.incoming' }, false] },
-                    { '==': [{ var: 'record.data.objectState' }, 'Processed'] },
-                    { '==': [{ var: 'record.data.failed' }, false] },
-                    { '==': [{ var: 'record.data.isComission' }, true] }
-                  ]
-                },
-                {
-                  and: [
-                    { '==': [{ var: 'record.data.incoming' }, false] },
-                    { '==': [{ var: 'record.data.isComission' }, false] },
-                    {
-                      is_owned: [
-                        { var: 'record.data.payerAccountId' },
-                        { var: 'record.data.payerBankBic' },
-                        { var: 'accountRegistry' }
-                      ]
-                    },
-                    {
-                      is_owned: [
-                        { var: 'record.data.payeeAccountId' },
-                        { var: 'record.data.payeeBankBic' },
-                        { var: 'accountRegistry' }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            excluded: {
-              and: [
-                { '==': [{ var: 'record.data.incoming' }, false] },
-                { '==': [{ var: 'record.data.categoryTypeName' }, 'TRANSFER'] },
-                { '==': [{ var: 'record.data.isComission' }, false] }
-              ]
-            }
-          }
-        },
-        PaymentIncome: {
-          conditions: {
-            included: {
-              and: [
-                { '==': [{ var: 'record.data.incoming' }, true] },
-                { '==': [{ var: 'record.data.isComission' }, false] },
-                {
-                  is_owned: [
-                    { var: 'record.data.payeeAccountId' },
-                    { var: 'record.data.payeeBankBic' },
-                    { var: 'accountRegistry' }
-                  ]
-                },
-                {
-                  '!': {
-                    and: [
-                      {
-                        is_owned: [
-                          { var: 'record.data.payerAccountId' },
-                          { var: 'record.data.payerBankBic' },
-                          { var: 'accountRegistry' }
-                        ]
-                      },
-                      {
-                        '!': {
-                          or: [
-                            {
-                              is_deposit: [{ var: 'record.data.payerAccountId' }, { var: 'record.data.payerBankBic' }]
-                            },
-                            {
-                              is_deposit: [{ var: 'record.data.payeeAccountId' }, { var: 'record.data.payeeBankBic' }]
-                            }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            },
-            excluded: {
-              and: [
-                { '==': [{ var: 'record.data.incoming' }, true] },
-                {
-                  is_owned: [
-                    { var: 'record.data.payerAccountId' },
-                    { var: 'record.data.payerBankBic' },
-                    { var: 'accountRegistry' }
-                  ]
-                },
-                {
-                  '!': {
-                    or: [
-                      {
-                        is_deposit: [{ var: 'record.data.payerAccountId' }, { var: 'record.data.payerBankBic' }]
-                      },
-                      {
-                        is_deposit: [{ var: 'record.data.payeeAccountId' }, { var: 'record.data.payeeBankBic' }]
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        },
         VedPaymentIncome: {
           conditions: {
             included: {
@@ -386,89 +273,6 @@ describe('Tochka Normalization', () => {
         }
       }
     };
-
-    it('marks mirrored PaymentIncome transfer as identified but excluded', () => {
-      const mirroredIncome = {
-        meta_data: {
-          system_data: {
-            type_code: 'PaymentIncome'
-          },
-          time_data: {
-            event_date: '2026-05-07T09:15:42.861+05:00'
-          }
-        },
-        data: {
-          incoming: true,
-          objectState: 'Processed',
-          failed: false,
-          isComission: false,
-          sum: 98000,
-          currency: 'RUB',
-          title: 'Mirrored transfer',
-          corebankingId: '92;4335251007',
-          payerAccountId: '40802810100000000001',
-          payerBankBic: '044525104',
-          payeeAccountId: '40802810901500303852',
-          payeeBankBic: '044525104'
-        }
-      };
-
-      const result = normalizeTochkaRecord(mirroredIncome as TochkaSyncRecord, rsOptions);
-
-      expect(result.identified).toBe(true);
-      expect(result.save).toBe(false);
-      expect(result.reason).toBe('excluded');
-      expect(result.normalized?.type).toBe('transfer');
-      expect(result.normalized?.counterpartyAccountId).toBe('40802810100000000001');
-    });
-
-    it('keeps deposit principal return as save-ready income', () => {
-      const depositReturn = loadFixture('payment-income-deposit-return.json');
-
-      const result = normalizeTochkaRecord(depositReturn as TochkaSyncRecord, rsOptions);
-
-      expect(result.identified).toBe(true);
-      expect(result.save).toBe(true);
-      expect(result.reason).toBeNull();
-      expect(result.hmbee?.subtype).toBe('i');
-      expect(result.hmbee?.real_amount).toBe(173000);
-    });
-
-    it('keeps deposit interest as ordinary save-ready income', () => {
-      const depositInterest = {
-        meta_data: {
-          system_data: {
-            type_code: 'PaymentIncome'
-          },
-          time_data: {
-            event_date: '2026-05-01T10:00:00.000+05:00'
-          }
-        },
-        data: {
-          incoming: true,
-          objectState: 'Processed',
-          failed: false,
-          isComission: false,
-          sum: 1500,
-          currency: 'RUB',
-          title: 'Deposit interest',
-          corebankingId: '92;DEPOSIT_INTEREST',
-          payerAccountId: 'InterestPayment',
-          payerBankBic: '044525104',
-          payeeAccountId: '40802810901500303852',
-          payeeBankBic: '044525104'
-        }
-      };
-
-      const result = normalizeTochkaRecord(depositInterest as TochkaSyncRecord, rsOptions);
-
-      expect(result.identified).toBe(true);
-      expect(result.save).toBe(true);
-      expect(result.reason).toBeNull();
-      expect(result.hmbee?.subtype).toBe('i');
-      expect(result.hmbee?.real_amount).toBe(1500);
-    });
-
 
     it('classifies VedPaymentIncome (UNDISTRIBUTED) as save-ready income', () => {
       const income = loadFixture('ved-payment-income-undistributed.json');

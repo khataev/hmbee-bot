@@ -96,5 +96,4 @@ describe('SbpB2CPayment classification', () => {
       expect(result.reason).toBe('excluded');
     }
   });
-
 });
