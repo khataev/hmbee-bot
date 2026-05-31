@@ -185,14 +185,39 @@
         "PaymentAccepted": {
           "conditions": {
             "included": {
-              "and": [
-                { "==": [{ "var": "record.data.incoming" }, false] },
-                { "==": [{ "var": "record.data.isComission" }, false] },
+              "or": [
                 {
-                  "is_owned": [
-                    { "var": "record.data.payerAccountId" },
-                    { "var": "record.data.payerBankBic" },
-                    { "var": "accountRegistry" }
+                  "and": [
+                    { "==": [{ "var": "record.data.incoming" }, false] },
+                    { "==": [{ "var": "record.data.isComission" }, false] },
+                    {
+                      "is_owned": [
+                        { "var": "record.data.payerAccountId" },
+                        { "var": "record.data.payerBankBic" },
+                        { "var": "accountRegistry" }
+                      ]
+                    },
+                    {
+                      "is_owned": [
+                        { "var": "record.data.payeeAccountId" },
+                        { "var": "record.data.payeeBankBic" },
+                        { "var": "accountRegistry" }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "and": [
+                    { "==": [{ "var": "record.data.incoming" }, false] },
+                    { "==": [{ "var": "record.data.isComission" }, false] },
+                    { "==": [{ "var": "record.data.isGovernment" }, true] },
+                    {
+                      "is_owned": [
+                        { "var": "record.data.payerAccountId" },
+                        { "var": "record.data.payerBankBic" },
+                        { "var": "accountRegistry" }
+                      ]
+                    }
                   ]
                 }
               ]

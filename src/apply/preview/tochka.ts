@@ -131,6 +131,7 @@ export interface PaymentAcceptedData {
   incoming: boolean;
   failed: boolean;
   isComission: boolean;
+  isGovernment?: boolean;
   payerBankBic: string;
   payeeBankBic: string;
 }

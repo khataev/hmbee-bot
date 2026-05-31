@@ -1,0 +1,27 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "PaymentAccepted"
+    },
+    "time_data": {
+      "event_date": "2026-04-09T20:55:15.538+05:00"
+    }
+  },
+  "data": {
+    "title": "Казначейство России (ФНС России)",
+    "sum": 20154,
+    "sumCurrency": "RUB",
+    "incoming": false,
+    "objectState": "Processed",
+    "failed": false,
+    "isComission": false,
+    "isGovernment": true,
+    "corebankingId": "92;0000000004",
+    "payerAccountId": "40802810100000000001",
+    "payerBankBic": "044525104",
+    "payeeAccountId": "03100643000000018500",
+    "payeeBankBic": "017003983",
+    "payeeName": "Казначейство России (ФНС России)",
+    "currency": "RUB"
+  }
+}
