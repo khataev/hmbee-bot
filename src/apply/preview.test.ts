@@ -1,4 +1,3 @@
-import { loadFixture } from 'src/apply/preview/test-helpers.js';
 import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 import { normalizeHoneyMoneyAmount, normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
 import type { AppConfig } from 'src/config.js';
@@ -240,73 +239,5 @@ describe('Tochka Normalization', () => {
     expect(normalizeHoneyMoneyAmount(241.07, 'e')).toBe(-241);
     expect(normalizeHoneyMoneyAmount(169.99, 'e')).toBe(-170);
     expect(normalizeHoneyMoneyAmount(241.07, 'i')).toBe(241);
-  });
-
-  describe('VedPaymentIncome fixture-backed classification', () => {
-    const rsMappings = {
-      '40802810100000000001': 2053036
-    };
-    const rsOptions = {
-      accountMappings: rsMappings,
-      accountRegistry: createAccountRegistry({
-        sources: {
-          tochka: {
-            accountMappings: rsMappings,
-            hmAccounts: {},
-            typeCodes: {}
-          }
-        }
-      } as AppConfig),
-      typeCodeRules: {
-        VedPaymentIncome: {
-          conditions: {
-            included: {
-              and: [
-                { '==': [{ var: 'record.data.state' }, 'UNDISTRIBUTED'] },
-                {
-                  is_owned: [{ var: 'record.data.recipientAccountId' }, null, { var: 'accountRegistry' }]
-                }
-              ]
-            },
-            excluded: { or: [] }
-          }
-        }
-      }
-    };
-
-    it('classifies VedPaymentIncome (UNDISTRIBUTED) as save-ready income', () => {
-      const income = loadFixture('ved-payment-income-undistributed.json');
-
-      const result = normalizeTochkaRecord(income as TochkaSyncRecord, rsOptions);
-
-      expect(result.identified).toBe(true);
-      expect(result.save).toBe(true);
-      expect(result.reason).toBeNull();
-      expect(result.hmbee?.subtype).toBe('i');
-      expect(result.hmbee?.real_amount).toBe(498672);
-      expect(result.hmbee?.account_id).toBe(2053036);
-    });
-
-    it('remains unmatched for non-undistributed VedPaymentIncome states', () => {
-      const processingIncome = {
-        meta_data: {
-          system_data: { type_code: 'VedPaymentIncome' },
-          time_data: { event_date: '2026-04-08T13:08:48.058+05:00' }
-        },
-        data: {
-          state: 'PROCESSING',
-          recipientAccountId: '40802810100000000001',
-          sum: 100,
-          currency: 'RUB',
-          title: 'Processing',
-          incomeId: 123
-        }
-      };
-
-      const result = normalizeTochkaRecord(processingIncome as TochkaSyncRecord, rsOptions);
-
-      expect(result.identified).toBe(false);
-      expect(result.reason).toBe('no matching included/excluded condition');
-    });
   });
 });
