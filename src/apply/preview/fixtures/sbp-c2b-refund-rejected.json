@@ -1,0 +1,32 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "SbpC2BRefund"
+    },
+    "time_data": {
+      "event_date": "2026-05-02T21:41:13.556+05:00"
+    }
+  },
+  "data": {
+    "title": "Test Merchant",
+    "sum": 439,
+    "sumCurrency": "RUB",
+    "incoming": true,
+    "payerAccountId": "40702810100000000099",
+    "payerBankBic": "044525700",
+    "payerBankName": "Test Bank",
+    "payerName": "Test Merchant LLC",
+    "payeeAccountId": "40802810100000000001",
+    "payeeBankBic": "044525104",
+    "payeeBankName": "Tochka Bank",
+    "payeeName": "Test User T.",
+    "status": "REJECTED",
+    "operationId": "A00000000000000S0B00000000000002",
+    "refOperationId": "B00000000000000D0B00000000000002",
+    "transactionId": "c2b00000000000000000000000000002",
+    "formattedTitle": "Refund 439 RUB",
+    "date": "2026-05-02T19:41:13.556+03:00",
+    "sourceName": "opkc",
+    "currency": "RUB"
+  }
+}

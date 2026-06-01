@@ -16,6 +16,7 @@ This project follows a pragmatic TypeScript style focused on readability and rel
 - Optimize for maintainability over micro-optimizations.
 - Avoid using one letter names for variables, eg in loops; be descriptive.
 - When adding a new environment variable, ALWAYS update `.env.example` to ensure the project remains runnable for others.
+- Always keep in sync structurally these three pieces: `config/sources.json`, `config/sources.example.json` and tests that mock this configuration. Code examples should use dummy data to not expose sensitive information.
 
 ## TypeScript rules
 

@@ -1,0 +1,25 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "PaymentAccepted"
+    },
+    "time_data": {
+      "event_date": "2026-05-25T17:38:39.443+05:00"
+    }
+  },
+  "data": {
+    "title": "Test User T.",
+    "sum": 50000,
+    "sumCurrency": "RUB",
+    "incoming": false,
+    "objectState": "Processed",
+    "failed": false,
+    "isComission": false,
+    "corebankingId": "92;0000000003",
+    "payerAccountId": "40802810100000000001",
+    "payerBankBic": "044525104",
+    "payeeAccountId": "40802810100000000002",
+    "payeeBankBic": "044525104",
+    "currency": "RUB"
+  }
+}

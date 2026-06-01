@@ -1,0 +1,31 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "SbpC2BPayment"
+    },
+    "time_data": {
+      "event_date": "2026-05-01T14:00:00.000+05:00"
+    }
+  },
+  "data": {
+    "title": "Test Merchant",
+    "sum": 3391.5,
+    "sumCurrency": "RUB",
+    "incoming": false,
+    "payerAccountId": "40802810100000000001",
+    "payerBankBic": "044525104",
+    "payerBankName": "Tochka Bank",
+    "payerName": "Test User T.",
+    "payeeAccountId": "40701810100000000024",
+    "payeeBankBic": "044525148",
+    "payeeBankName": "Test Bank",
+    "status": "REJECTED",
+    "purpose": "Order #TEST-C2B-001",
+    "operationId": "A00000000000000T0B00000000000001",
+    "transactionId": "c2b00000000000000000000000000001",
+    "formattedTitle": "Paid 3391.5 RUB",
+    "date": "2026-05-01T12:00:00.000+03:00",
+    "sourceName": "web",
+    "currency": "RUB"
+  }
+}

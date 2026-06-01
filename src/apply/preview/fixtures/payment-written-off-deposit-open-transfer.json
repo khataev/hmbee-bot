@@ -1,0 +1,25 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "PaymentWrittenOff"
+    },
+    "time_data": {
+      "event_date": "2026-03-31T16:42:51.815+05:00"
+    }
+  },
+  "data": {
+    "incoming": false,
+    "objectState": "Processed",
+    "failed": false,
+    "isComission": false,
+    "categoryTypeName": "TRANSFER",
+    "sum": 173000,
+    "currency": "RUB",
+    "title": "Test User T.",
+    "corebankingId": "92;0000000002",
+    "payerAccountId": "40802810000000000011",
+    "payerBankBic": "044525104",
+    "payeeAccountId": "42109810000000000033",
+    "payeeBankBic": "044525104"
+  }
+}

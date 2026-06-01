@@ -2,9 +2,7 @@
 
 ## Purpose
 Preview classification for Tochka source records before apply. TBD.
-
 ## Requirements
-
 ### Requirement: CLI can preview normalized source records from synchronized files
 The system SHALL provide an `apply <source> --preview` flow that reads synchronized source files from `sync/<source>` and emits operator-inspectable preview output without writing to Honey Money.
 
@@ -20,13 +18,28 @@ The system SHALL provide an `apply <source> --preview` flow that reads synchroni
 ### Requirement: Preview output includes a normalized internal representation
 The system SHALL emit a normalized representation for each previewed record so that source-derived meaning is inspectable independently from Honey Money-specific mapping.
 
-#### Scenario: Emit normalized record for an identified expense or income
-- **WHEN** a synchronized Tochka record is recognized as a supported income or expense record
+#### Scenario: Emit normalized record for an identified expense, income, or transfer
+- **WHEN** a synchronized Tochka record is recognized as a supported expense, income, or transfer record
 - **THEN** the preview output includes a normalized record describing its source-derived transaction data
 - **AND** the normalized record includes identification state, transaction identifier, account context, status, date, type, amount, currency, and description fields
 
+#### Scenario: Normalized transfer record uses a dedicated transfer type
+- **WHEN** a synchronized Tochka record is recognized as a supported transfer record
+- **THEN** the normalized preview record has `type = transfer`
+- **AND** the record is not normalized as ordinary income or ordinary expense
+
+#### Scenario: Normalized transfer record includes the counterparty account identifier
+- **WHEN** a synchronized Tochka record is recognized as a supported transfer record
+- **THEN** the normalized preview record includes `counterpartyAccountId`
+- **AND** `counterpartyAccountId` identifies the opposite owned account for the transfer
+
+#### Scenario: Non-transfer normalized record does not require the counterparty account identifier
+- **WHEN** a synchronized Tochka record is normalized as income, expense, or an unidentified record
+- **THEN** the normalized preview record is valid without `counterpartyAccountId`
+- **AND** `counterpartyAccountId` is required only when `type = transfer`
+
 #### Scenario: Emit normalized record for an unsupported source shape
-- **WHEN** a synchronized Tochka record does not match the supported income and expense slice
+- **WHEN** a synchronized Tochka record does not match the supported income, expense, or transfer slice
 - **THEN** the preview output still includes a normalized record for that source entry
 - **AND** the normalized record marks the entry as not identified
 
@@ -83,9 +96,10 @@ The system SHALL classify each preview record with explicit `identified`, `save`
 ### Requirement: Source preview supports config-driven type-code predicates
 The system SHALL read source-specific preview classification rules from the source configuration as `type_codes` dictionaries with boolean `included` and `excluded` predicates.
 
-#### Scenario: CardTransactionInfo uses configured predicates
-- **WHEN** the Tochka source configuration defines `included` and `excluded` predicates for `CardTransactionInfo`
-- **THEN** the preview classifier evaluates those predicates against the source record to decide whether the record is included, excluded, or not identified
+#### Scenario: Type-code predicates may use shared owned-account context
+- **WHEN** the preview classifier evaluates configured predicates for a known source record `type_code`
+- **THEN** the rule context includes the shared owned-account registry derived from configured source account mappings
+- **AND** the classifier may use that shared owned-account context to distinguish transfer records from non-transfer records
 
 #### Scenario: Included and excluded ambiguity fails identification
 - **WHEN** a source record matches the configured `included` predicate and the configured `excluded` predicate for the same known `type_code`
@@ -194,3 +208,60 @@ The system SHALL resolve Honey Money category mapping by evaluating both Merchan
 #### Scenario: MCC match takes priority over title match
 - **WHEN** an identified Tochka preview record has both a matching MCC and a matching title keyword that result in different categories
 - **THEN** the system SHALL prioritize the MCC match for category assignment
+
+### Requirement: Source preview supports Tochka transfer-oriented RS records
+The system SHALL classify the supported Tochka transfer-oriented RS record families in preview using canonical save behavior for each transfer scenario.
+
+#### Scenario: `PaymentAccepted` is supported in preview
+- **WHEN** a synchronized Tochka source record has `type_code = PaymentAccepted`
+- **THEN** the preview classifier evaluates configured predicates for that record
+- **AND** the normalized transaction identifier for supported records is derived from `corebankingId`
+
+#### Scenario: `PaymentIncome` is supported in preview
+- **WHEN** a synchronized Tochka source record has `type_code = PaymentIncome`
+- **THEN** the preview classifier evaluates configured predicates for that record
+- **AND** the normalized transaction identifier for supported records is derived from `corebankingId`
+
+### Requirement: Source preview distinguishes transfer principal return from transfer income duplicates
+The system SHALL keep deposit principal return save-ready while excluding only mirrored duplicate income legs of ordinary own-account transfers.
+
+#### Scenario: Deposit principal return remains save-ready
+- **WHEN** a synchronized Tochka source record has `type_code = PaymentIncome`
+- **AND** the record represents principal return from a Tochka deposit-like account to an owned account
+- **THEN** the preview record has `identified = true`
+- **AND** the preview record has `save = true`
+- **AND** the preview record has `reason = null`
+
+#### Scenario: Ordinary mirrored transfer income is excluded
+- **WHEN** a synchronized Tochka source record has `type_code = PaymentIncome`
+- **AND** the record represents the mirrored incoming leg of an ordinary own-account transfer between non-deposit owned accounts
+- **THEN** the preview record has `identified = true`
+- **AND** the preview record has `save = false`
+- **AND** the preview record has `reason = "excluded"`
+
+### Requirement: Source preview exposes the opposite owned account for transfer mapping
+The system SHALL preserve the resolved opposite owned account on normalized transfer records so transfer intent remains inspectable and mappable.
+
+#### Scenario: Internal transfer exposes the opposite owned account
+- **WHEN** a synchronized Tochka source record is normalized as a supported transfer between two owned accounts
+- **THEN** the normalized preview record includes `counterpartyAccountId`
+- **AND** `counterpartyAccountId` refers to the owned account on the opposite side of the transfer from the current normalized account context
+
+#### Scenario: Deposit principal return exposes the destination owned account as counterparty account
+- **WHEN** a synchronized Tochka source record is normalized as a deposit principal return transfer
+- **THEN** the normalized preview record includes `counterpartyAccountId`
+- **AND** `counterpartyAccountId` refers to the owned non-deposit account that receives the returned principal
+
+### Requirement: Source preview keeps deposit interest in the income flow
+The system SHALL treat deposit interest payout as income rather than transfer duplicate when it does not come from an owned or deposit-like account.
+
+#### Scenario: Deposit interest remains save-ready income
+- **WHEN** a synchronized Tochka source record has `type_code = PaymentIncome`
+- **AND** the record has `incoming = true`
+- **AND** the record has `isComission = false`
+- **AND** the destination account is an owned account
+- **AND** the payer account is neither an owned account nor a Tochka deposit-like account
+- **THEN** the preview record has `identified = true`
+- **AND** the preview record has `save = true`
+- **AND** the preview record is classified in the income flow
+

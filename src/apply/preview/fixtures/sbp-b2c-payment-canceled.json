@@ -1,0 +1,32 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "SbpB2CPayment"
+    },
+    "time_data": {
+      "event_date": "2026-05-25T17:38:13.504+05:00"
+    }
+  },
+  "data": {
+    "title": "Test Person P.",
+    "sum": 4000,
+    "sumCurrency": "RUB",
+    "incoming": false,
+    "payerAccountId": "40802810100000000001",
+    "payerBankBic": "044525104",
+    "payerBankName": "Tochka Bank",
+    "payerName": "",
+    "payeeAccountId": "40817810000000000099",
+    "payeeBankBic": "044525225",
+    "payeeBankName": "Sberbank",
+    "payeeName": "Test Person P.",
+    "phoneNumber": "+79000000000",
+    "status": "CANCELED",
+    "operationId": "B00000000000000T0B00000000000003",
+    "transactionId": "b2c00000000000000000000000000003",
+    "formattedTitle": "Paid 4000 RUB via SBP",
+    "date": "2026-05-25T15:38:13.504+03:00",
+    "sourceName": "web",
+    "currency": "RUB"
+  }
+}
