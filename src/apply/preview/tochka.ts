@@ -86,7 +86,9 @@ export type SbpTransactionRecord = SbpB2CPaymentRecord | SbpC2BPaymentRecord | S
 export interface PaymentWrittenOffData {
   corebankingId: string;
   payerAccountId: string;
+  payerBankBic: string;
   payeeAccountId: string;
+  payeeBankBic: string;
   objectState: string;
   sum: number;
   currency: string;
@@ -215,6 +217,17 @@ function isPaymentAcceptedRecord(record: TochkaSyncRecord): record is PaymentAcc
 
 function isVedPaymentIncomeRecord(record: TochkaSyncRecord): record is VedPaymentIncomeRecord {
   return record.meta_data.system_data.type_code === 'VedPaymentIncome';
+}
+
+type BankPaymentRecord = SbpTransactionRecord | PaymentWrittenOffRecord | PaymentIncomeRecord | PaymentAcceptedRecord;
+
+function isBankPaymentRecord(record: TochkaSyncRecord): record is BankPaymentRecord {
+  return (
+    isSbpTransactionRecord(record) ||
+    isPaymentWrittenOffRecord(record) ||
+    isPaymentIncomeRecord(record) ||
+    isPaymentAcceptedRecord(record)
+  );
 }
 
 function getTransactionId(record: TochkaSyncRecord): string | number | undefined {
@@ -357,12 +370,9 @@ function getNormalizedType(sourceRecord: TochkaSyncRecord, registry: AccountRegi
 
   // By transfer we mean transaction between two accounts that belong to me and are registered as such in honey money.
   const isTransferMatched =
-    (isSbpTransactionRecord(sourceRecord) ||
-      isPaymentWrittenOffRecord(sourceRecord) ||
-      isPaymentIncomeRecord(sourceRecord) ||
-      isPaymentAcceptedRecord(sourceRecord)) &&
-    registry.isOwned(sourceRecord.data.payerAccountId, (sourceRecord.data as SbpBaseTransactionData).payerBankBic) &&
-    registry.isOwned(sourceRecord.data.payeeAccountId, (sourceRecord.data as SbpBaseTransactionData).payeeBankBic);
+    isBankPaymentRecord(sourceRecord) &&
+    registry.isOwned(sourceRecord.data.payerAccountId, sourceRecord.data.payerBankBic) &&
+    registry.isOwned(sourceRecord.data.payeeAccountId, sourceRecord.data.payeeBankBic);
 
   if (isTransferMatched) {
     return 'transfer';
@@ -542,12 +552,7 @@ export function normalizeTochkaRecord(
     if (!tochkaAccountId)
       throw new Error(`No Honey Money account mapping found for Tochka account ${normalized.account}`);
 
-    const incoming =
-      (isSbpTransactionRecord(sourceRecord) ||
-        isPaymentWrittenOffRecord(sourceRecord) ||
-        isPaymentIncomeRecord(sourceRecord) ||
-        isPaymentAcceptedRecord(sourceRecord)) &&
-      sourceRecord.data.incoming;
+    const incoming = isBankPaymentRecord(sourceRecord) && sourceRecord.data.incoming;
 
     return {
       identified: true,
