@@ -30,7 +30,7 @@ CLI-утилита на TypeScript для синхронизации финан�
 3. **Конфигурация**
    Скопируйте файл конфигурации и замените идентификаторы счетов Honey Money на реальные:
    ```bash
-   cp config/sources.json.example config/sources.json
+   cp config/sources.example.json config/sources.json
    ```
 
 
