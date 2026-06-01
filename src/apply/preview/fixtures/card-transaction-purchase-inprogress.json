@@ -1,0 +1,20 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "CardTransactionInfo"
+    },
+    "time_data": {
+      "event_date": "2026-05-25T16:30:42.000+05:00"
+    }
+  },
+  "data": {
+    "tranId": 1000000002,
+    "account": "40802810309500012345",
+    "currency": "RUB",
+    "sum": 83,
+    "tranCode": "Purchase",
+    "status": "InProgress",
+    "title": "Mos.Transport",
+    "mcc": "4111"
+  }
+}

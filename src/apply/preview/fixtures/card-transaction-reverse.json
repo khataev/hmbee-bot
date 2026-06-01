@@ -1,0 +1,20 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "CardTransactionInfo"
+    },
+    "time_data": {
+      "event_date": "2026-05-23T02:00:00.000+05:00"
+    }
+  },
+  "data": {
+    "tranId": 1000000003,
+    "account": "40802810309500012345",
+    "currency": "RUB",
+    "sum": 1014,
+    "tranCode": "ReverseByCard",
+    "status": "Received",
+    "title": "wildberries.ru",
+    "mcc": "5300"
+  }
+}
