@@ -20,6 +20,7 @@ const TypeCodeRuleSchema = z.object({
 });
 
 const TochkaConfigSchema = z.object({
+  bankBic: z.string(),
   hmAccounts: z.record(z.string(), HoneyMoneyAccountSchema).default({}),
   accountMappings: z.record(z.string(), z.string()).default({}),
   typeCodes: z.record(z.string(), TypeCodeRuleSchema).default({})
@@ -32,6 +33,7 @@ const AppConfigSchema = z.object({
 });
 
 const ResolvedTochkaConfigSchema = z.object({
+  bankBic: z.string(),
   hmAccounts: z.record(z.string(), HoneyMoneyAccountSchema),
   accountMappings: z.record(z.string(), z.number().int().positive()),
   typeCodes: z.record(z.string(), TypeCodeRuleSchema)
@@ -51,6 +53,7 @@ export type AppConfig = z.infer<typeof ResolvedAppConfigSchema>;
 
 export interface AccountRegistry {
   isOwned(account: string, bic?: string): boolean;
+  isDeposit(account: string, bic?: string): boolean;
   getHmAccountId(account: string): number | undefined;
 }
 
@@ -76,6 +79,7 @@ export function loadConfig(): AppConfig {
   return ResolvedAppConfigSchema.parse({
     sources: {
       tochka: {
+        bankBic: config.sources.tochka.bankBic,
         hmAccounts,
         accountMappings,
         typeCodes
@@ -86,13 +90,16 @@ export function loadConfig(): AppConfig {
 
 export function createAccountRegistry(config: AppConfig): AccountRegistry {
   const tochkaMappings = config.sources.tochka.accountMappings;
-  const TOCHKA_BIC = '044525104';
+  const bankBic = config.sources.tochka.bankBic;
 
   return {
-    isOwned(account: string, bic?: string): boolean {
+    isOwned(account: string, bic: string): boolean {
       if (account in tochkaMappings) return true;
-      if (bic === TOCHKA_BIC && account.startsWith('421')) return true;
+      if (this.isDeposit(account, bic)) return true;
       return false;
+    },
+    isDeposit(account: string, bic: string): boolean {
+      return bic === bankBic && account.startsWith('421');
     },
     getHmAccountId(account: string): number | undefined {
       return tochkaMappings[account];

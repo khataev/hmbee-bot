@@ -18,6 +18,7 @@ describe('PaymentIncome classification', () => {
     accountRegistry: createAccountRegistry({
       sources: {
         tochka: {
+          bankBic: '044525104',
           accountMappings,
           hmAccounts: {},
           typeCodes: {}
@@ -42,7 +43,11 @@ describe('PaymentIncome classification', () => {
                     ]
                   },
                   {
-                    is_deposit: [{ var: 'record.data.payerAccountId' }, { var: 'record.data.payerBankBic' }]
+                    is_deposit: [
+                      { var: 'record.data.payerAccountId' },
+                      { var: 'record.data.payerBankBic' },
+                      { var: 'accountRegistry' }
+                    ]
                   }
                 ]
               },
@@ -108,7 +113,11 @@ describe('PaymentIncome classification', () => {
               },
               {
                 '!': {
-                  is_deposit: [{ var: 'record.data.payerAccountId' }, { var: 'record.data.payerBankBic' }]
+                  is_deposit: [
+                    { var: 'record.data.payerAccountId' },
+                    { var: 'record.data.payerBankBic' },
+                    { var: 'accountRegistry' }
+                  ]
                 }
               }
             ]

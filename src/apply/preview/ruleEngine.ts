@@ -23,8 +23,8 @@ jsonLogic.add_operation('is_owned', (account: string, bic: string | undefined, r
   return registry?.isOwned(account, bic);
 });
 
-jsonLogic.add_operation('is_deposit', (account: string, bic: string | undefined) => {
-  return bic === '044525104' && account.startsWith('421');
+jsonLogic.add_operation('is_deposit', (account: string, bic: string | undefined, registry: AccountRegistry) => {
+  return registry.isDeposit(account, bic);
 });
 
 /**

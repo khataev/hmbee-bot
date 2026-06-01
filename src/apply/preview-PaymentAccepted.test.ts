@@ -16,6 +16,7 @@ describe('PaymentAccepted classification', () => {
     accountRegistry: createAccountRegistry({
       sources: {
         tochka: {
+          bankBic: '044525104',
           accountMappings,
           hmAccounts: {},
           typeCodes: {}

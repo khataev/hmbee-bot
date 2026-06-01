@@ -35,37 +35,114 @@
               "or": [
                 {
                   "and": [
-                    { "==": [{ "var": "record.data.tranCode" }, "Purchase"] },
-                    { "==": [{ "var": "record.data.status" }, "InProgress"] }
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.tranCode"
+                        },
+                        "Purchase"
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.status"
+                        },
+                        "InProgress"
+                      ]
+                    }
                   ]
                 },
                 {
                   "and": [
-                    { "==": [{ "var": "record.data.tranCode" }, "Purchase"] },
-                    { "==": [{ "var": "record.data.status" }, "Withdraw"] }
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.tranCode"
+                        },
+                        "Purchase"
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.status"
+                        },
+                        "Withdraw"
+                      ]
+                    }
                   ]
                 },
                 {
                   "and": [
-                    { "==": [{ "var": "record.data.tranCode" }, "ReverseByCard"] },
-                    { "==": [{ "var": "record.data.status" }, "Received"] }
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.tranCode"
+                        },
+                        "ReverseByCard"
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.status"
+                        },
+                        "Received"
+                      ]
+                    }
                   ]
                 }
               ]
             },
             "excluded": {
               "or": [
-                { "==": [{ "var": "record.data.tranCode" }, "CheckCard"] },
                 {
-                  "and": [
-                    { "==": [{ "var": "record.data.tranCode" }, "Purchase"] },
-                    { "==": [{ "var": "record.data.status" }, "Canceled"] }
+                  "==": [
+                    {
+                      "var": "record.data.tranCode"
+                    },
+                    "CheckCard"
                   ]
                 },
                 {
                   "and": [
-                    { "==": [{ "var": "record.data.tranCode" }, "Purchase"] },
-                    { "==": [{ "var": "record.data.status" }, "Rejected"] }
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.tranCode"
+                        },
+                        "Purchase"
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.status"
+                        },
+                        "Canceled"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "and": [
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.tranCode"
+                        },
+                        "Purchase"
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.status"
+                        },
+                        "Rejected"
+                      ]
+                    }
                   ]
                 }
               ]
@@ -76,15 +153,50 @@
           "conditions": {
             "included": {
               "and": [
-                { "==": [{ "var": "record.data.status" }, "ACCEPTED"] },
-                { "==": [{ "var": "record.data.incoming" }, false] }
+                {
+                  "==": [
+                    {
+                      "var": "record.data.status"
+                    },
+                    "ACCEPTED"
+                  ]
+                },
+                {
+                  "==": [
+                    {
+                      "var": "record.data.incoming"
+                    },
+                    false
+                  ]
+                }
               ]
             },
             "excluded": {
               "or": [
-                { "==": [{ "var": "record.data.status" }, "CANCELED"] },
-                { "==": [{ "var": "record.data.status" }, "REJECTED"] },
-                { "==": [{ "var": "record.data.incoming" }, true] }
+                {
+                  "==": [
+                    {
+                      "var": "record.data.status"
+                    },
+                    "CANCELED"
+                  ]
+                },
+                {
+                  "==": [
+                    {
+                      "var": "record.data.status"
+                    },
+                    "REJECTED"
+                  ]
+                },
+                {
+                  "==": [
+                    {
+                      "var": "record.data.incoming"
+                    },
+                    true
+                  ]
+                }
               ]
             }
           }
@@ -93,15 +205,50 @@
           "conditions": {
             "included": {
               "and": [
-                { "==": [{ "var": "record.data.status" }, "ACCEPTED"] },
-                { "==": [{ "var": "record.data.incoming" }, true] }
+                {
+                  "==": [
+                    {
+                      "var": "record.data.status"
+                    },
+                    "ACCEPTED"
+                  ]
+                },
+                {
+                  "==": [
+                    {
+                      "var": "record.data.incoming"
+                    },
+                    true
+                  ]
+                }
               ]
             },
             "excluded": {
               "or": [
-                { "==": [{ "var": "record.data.status" }, "CANCELED"] },
-                { "==": [{ "var": "record.data.status" }, "REJECTED"] },
-                { "==": [{ "var": "record.data.incoming" }, false] }
+                {
+                  "==": [
+                    {
+                      "var": "record.data.status"
+                    },
+                    "CANCELED"
+                  ]
+                },
+                {
+                  "==": [
+                    {
+                      "var": "record.data.status"
+                    },
+                    "REJECTED"
+                  ]
+                },
+                {
+                  "==": [
+                    {
+                      "var": "record.data.incoming"
+                    },
+                    false
+                  ]
+                }
               ]
             }
           }
@@ -110,13 +257,33 @@
           "conditions": {
             "included": {
               "and": [
-                { "==": [{ "var": "record.data.status" }, "ACCEPTED"] },
-                { "==": [{ "var": "record.data.incoming" }, false] },
+                {
+                  "==": [
+                    {
+                      "var": "record.data.status"
+                    },
+                    "ACCEPTED"
+                  ]
+                },
+                {
+                  "==": [
+                    {
+                      "var": "record.data.incoming"
+                    },
+                    false
+                  ]
+                },
                 {
                   "is_owned": [
-                    { "var": "record.data.payerAccountId" },
-                    { "var": "record.data.payerBankBic" },
-                    { "var": "accountRegistry" }
+                    {
+                      "var": "record.data.payerAccountId"
+                    },
+                    {
+                      "var": "record.data.payerBankBic"
+                    },
+                    {
+                      "var": "accountRegistry"
+                    }
                   ]
                 }
               ]
@@ -125,11 +292,32 @@
               "or": [
                 {
                   "or": [
-                    { "==": [{ "var": "record.data.status" }, "CANCELED"] },
-                    { "==": [{ "var": "record.data.status" }, "REJECTED"] }
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.status"
+                        },
+                        "CANCELED"
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.status"
+                        },
+                        "REJECTED"
+                      ]
+                    }
                   ]
                 },
-                { "==": [{ "var": "record.data.incoming" }, true] }
+                {
+                  "==": [
+                    {
+                      "var": "record.data.incoming"
+                    },
+                    true
+                  ]
+                }
               ]
             }
           }
@@ -140,46 +328,121 @@
               "or": [
                 {
                   "and": [
-                    { "==": [{ "var": "record.data.incoming" }, false] },
-                    { "==": [{ "var": "record.data.objectState" }, "Processed"] },
-                    { "==": [{ "var": "record.data.failed" }, false] },
-                    { "==": [{ "var": "record.data.isComission" }, true] }
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.incoming"
+                        },
+                        false
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.objectState"
+                        },
+                        "Processed"
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.failed"
+                        },
+                        false
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.isComission"
+                        },
+                        true
+                      ]
+                    }
                   ]
                 },
                 {
                   "and": [
-                    { "==": [{ "var": "record.data.incoming" }, false] },
-                    { "==": [{ "var": "record.data.isComission" }, false] },
                     {
-                      "is_owned": [
-                        { "var": "record.data.payerAccountId" },
-                        { "var": "record.data.payerBankBic" },
-                        { "var": "accountRegistry" }
+                      "==": [
+                        {
+                          "var": "record.data.incoming"
+                        },
+                        false
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.isComission"
+                        },
+                        false
                       ]
                     },
                     {
                       "is_owned": [
-                        { "var": "record.data.payeeAccountId" },
-                        { "var": "record.data.payeeBankBic" },
-                        { "var": "accountRegistry" }
+                        {
+                          "var": "record.data.payerAccountId"
+                        },
+                        {
+                          "var": "record.data.payerBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
+                      ]
+                    },
+                    {
+                      "is_owned": [
+                        {
+                          "var": "record.data.payeeAccountId"
+                        },
+                        {
+                          "var": "record.data.payeeBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
                       ]
                     }
                   ]
                 }
               ]
             },
-            "excluded": { "or": [] }
+            "excluded": {
+              "or": []
+            }
           }
         },
         "VedPaymentIncome": {
           "conditions": {
             "included": {
               "and": [
-                { "==": [{ "var": "record.data.state" }, "UNDISTRIBUTED"] },
-                { "is_owned": [{ "var": "record.data.recipientAccountId" }, null, { "var": "accountRegistry" }] }
+                {
+                  "==": [
+                    {
+                      "var": "record.data.state"
+                    },
+                    "UNDISTRIBUTED"
+                  ]
+                },
+                {
+                  "is_owned": [
+                    {
+                      "var": "record.data.recipientAccountId"
+                    },
+                    null,
+                    {
+                      "var": "accountRegistry"
+                    }
+                  ]
+                }
               ]
             },
-            "excluded": { "or": [] }
+            "excluded": {
+              "or": []
+            }
           }
         },
         "PaymentAccepted": {
@@ -188,41 +451,96 @@
               "or": [
                 {
                   "and": [
-                    { "==": [{ "var": "record.data.incoming" }, false] },
-                    { "==": [{ "var": "record.data.isComission" }, false] },
                     {
-                      "is_owned": [
-                        { "var": "record.data.payerAccountId" },
-                        { "var": "record.data.payerBankBic" },
-                        { "var": "accountRegistry" }
+                      "==": [
+                        {
+                          "var": "record.data.incoming"
+                        },
+                        false
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.isComission"
+                        },
+                        false
                       ]
                     },
                     {
                       "is_owned": [
-                        { "var": "record.data.payeeAccountId" },
-                        { "var": "record.data.payeeBankBic" },
-                        { "var": "accountRegistry" }
+                        {
+                          "var": "record.data.payerAccountId"
+                        },
+                        {
+                          "var": "record.data.payerBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
+                      ]
+                    },
+                    {
+                      "is_owned": [
+                        {
+                          "var": "record.data.payeeAccountId"
+                        },
+                        {
+                          "var": "record.data.payeeBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
                       ]
                     }
                   ]
                 },
                 {
                   "and": [
-                    { "==": [{ "var": "record.data.incoming" }, false] },
-                    { "==": [{ "var": "record.data.isComission" }, false] },
-                    { "==": [{ "var": "record.data.isGovernment" }, true] },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.incoming"
+                        },
+                        false
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.isComission"
+                        },
+                        false
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.isGovernment"
+                        },
+                        true
+                      ]
+                    },
                     {
                       "is_owned": [
-                        { "var": "record.data.payerAccountId" },
-                        { "var": "record.data.payerBankBic" },
-                        { "var": "accountRegistry" }
+                        {
+                          "var": "record.data.payerAccountId"
+                        },
+                        {
+                          "var": "record.data.payerBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
                       ]
                     }
                   ]
                 }
               ]
             },
-            "excluded": { "or": [] }
+            "excluded": {
+              "or": []
+            }
           }
         },
         "PaymentIncome": {
@@ -231,86 +549,201 @@
               "or": [
                 {
                   "and": [
-                    { "==": [{ "var": "record.data.incoming" }, true] },
-                    { "==": [{ "var": "record.data.isComission" }, false] },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.incoming"
+                        },
+                        true
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.isComission"
+                        },
+                        false
+                      ]
+                    },
                     {
                       "is_owned": [
-                        { "var": "record.data.payeeAccountId" },
-                        { "var": "record.data.payeeBankBic" },
-                        { "var": "accountRegistry" }
+                        {
+                          "var": "record.data.payeeAccountId"
+                        },
+                        {
+                          "var": "record.data.payeeBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
                       ]
                     },
                     {
                       "is_deposit": [
-                        { "var": "record.data.payerAccountId" },
-                        { "var": "record.data.payerBankBic" }
+                        {
+                          "var": "record.data.payerAccountId"
+                        },
+                        {
+                          "var": "record.data.payerBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
                       ]
                     }
                   ]
                 },
                 {
                   "and": [
-                    { "==": [{ "var": "record.data.incoming" }, true] },
-                    { "==": [{ "var": "record.data.isComission" }, false] },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.incoming"
+                        },
+                        true
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.isComission"
+                        },
+                        false
+                      ]
+                    },
                     {
                       "is_owned": [
-                        { "var": "record.data.payeeAccountId" },
-                        { "var": "record.data.payeeBankBic" },
-                        { "var": "accountRegistry" }
+                        {
+                          "var": "record.data.payeeAccountId"
+                        },
+                        {
+                          "var": "record.data.payeeBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
                       ]
                     },
                     {
                       "!": {
                         "is_owned": [
-                          { "var": "record.data.payerAccountId" },
-                          { "var": "record.data.payerBankBic" },
-                          { "var": "accountRegistry" }
+                          {
+                            "var": "record.data.payerAccountId"
+                          },
+                          {
+                            "var": "record.data.payerBankBic"
+                          },
+                          {
+                            "var": "accountRegistry"
+                          }
                         ]
                       }
                     },
-                    { "==": [{ "var": "record.data.payerBankBic" }, "044525104"] }
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.payerBankBic"
+                        },
+                        "044525104"
+                      ]
+                    }
                   ]
                 },
                 {
                   "and": [
-                    { "==": [{ "var": "record.data.incoming" }, true] },
-                    { "==": [{ "var": "record.data.isComission" }, false] },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.incoming"
+                        },
+                        true
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.isComission"
+                        },
+                        false
+                      ]
+                    },
                     {
                       "is_owned": [
-                        { "var": "record.data.payeeAccountId" },
-                        { "var": "record.data.payeeBankBic" },
-                        { "var": "accountRegistry" }
+                        {
+                          "var": "record.data.payeeAccountId"
+                        },
+                        {
+                          "var": "record.data.payeeBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
                       ]
                     },
                     {
                       "!": {
                         "is_owned": [
-                          { "var": "record.data.payerAccountId" },
-                          { "var": "record.data.payerBankBic" },
-                          { "var": "accountRegistry" }
+                          {
+                            "var": "record.data.payerAccountId"
+                          },
+                          {
+                            "var": "record.data.payerBankBic"
+                          },
+                          {
+                            "var": "accountRegistry"
+                          }
                         ]
                       }
                     },
-                    { "!": { "==": [{ "var": "record.data.payerBankBic" }, "044525104"] } }
+                    {
+                      "!": {
+                        "==": [
+                          {
+                            "var": "record.data.payerBankBic"
+                          },
+                          "044525104"
+                        ]
+                      }
+                    }
                   ]
                 }
               ]
             },
             "excluded": {
               "and": [
-                { "==": [{ "var": "record.data.incoming" }, true] },
+                {
+                  "==": [
+                    {
+                      "var": "record.data.incoming"
+                    },
+                    true
+                  ]
+                },
                 {
                   "is_owned": [
-                    { "var": "record.data.payerAccountId" },
-                    { "var": "record.data.payerBankBic" },
-                    { "var": "accountRegistry" }
+                    {
+                      "var": "record.data.payerAccountId"
+                    },
+                    {
+                      "var": "record.data.payerBankBic"
+                    },
+                    {
+                      "var": "accountRegistry"
+                    }
                   ]
                 },
                 {
                   "!": {
                     "is_deposit": [
-                      { "var": "record.data.payerAccountId" },
-                      { "var": "record.data.payerBankBic" }
+                      {
+                        "var": "record.data.payerAccountId"
+                      },
+                      {
+                        "var": "record.data.payerBankBic"
+                      },
+                      {
+                        "var": "accountRegistry"
+                      }
                     ]
                   }
                 }
@@ -318,7 +751,8 @@
             }
           }
         }
-      }
+      },
+      "bankBic": "044525104"
     },
     "sber": {
       "hmAccounts": {
