@@ -552,6 +552,15 @@ export function normalizeTochkaRecord(
     if (!tochkaAccountId)
       throw new Error(`No Honey Money account mapping found for Tochka account ${normalized.account}`);
 
+    const counterpartyHmId =
+      normalized.counterpartyAccountId && normalized.type === 'transfer'
+        ? options.accountRegistry.getHmAccountId(normalized.counterpartyAccountId)
+        : undefined;
+
+    if (normalized.type === 'transfer' && !counterpartyHmId) {
+      throw new Error(`Unable to resolve counterparty HM account ID for transfer`);
+    }
+
     const incoming = isBankPaymentRecord(sourceRecord) && sourceRecord.data.incoming;
 
     return {
@@ -560,7 +569,12 @@ export function normalizeTochkaRecord(
       reason: classification.reason,
       sourceRecord,
       normalized,
-      hmbee: buildHoneyMoneyTransaction(normalized, tochkaAccountId, incoming || normalized.type === 'Income')
+      hmbee: buildHoneyMoneyTransaction(
+        normalized,
+        tochkaAccountId,
+        incoming || normalized.type === 'Income',
+        counterpartyHmId
+      )
     };
   } catch (error) {
     return {
@@ -575,11 +589,44 @@ export function normalizeTochkaRecord(
 function buildHoneyMoneyTransaction(
   normalized: NormalizedRecord,
   accountId: number,
-  incoming: boolean
+  incoming: boolean,
+  counterpartyHmId?: number
 ): HoneyMoneyTransaction {
   const category = mapTochkaCategory(normalized.description, normalized.mcc);
   const subtype = incoming ? 'i' : 'e';
   const normalizedAmount = normalizeHoneyMoneyAmount(normalized.amount, subtype);
+
+  if (normalized.type === 'transfer') {
+    if (!counterpartyHmId) {
+      throw new Error('counterpartyHmId is required for transfer transactions');
+    }
+
+    const realAmount = Math.round(normalized.amount);
+    const [fromId, toId] = incoming ? [counterpartyHmId, accountId] : [accountId, counterpartyHmId];
+
+    return {
+      subtype: 't',
+      date: normalized.date.slice(0, 10),
+      account_id: accountId,
+      currency: normalized.currency.toLowerCase(),
+      id: null,
+      type: 'unplanned',
+      virtual_id: -1,
+      category: null,
+      description: String(realAmount),
+      planned_repeat_days: 0,
+      planned_repeat_end: 'always',
+      planned_repeat_end_date: null,
+      transfer_to_amount: realAmount,
+      transfer_type: 'a',
+      real_amount: realAmount,
+      plan_amount: null,
+      common_id: null,
+      transfer_to_currency: null,
+      transfer_from_id: fromId,
+      transfer_to_id: toId
+    };
+  }
 
   return {
     subtype,

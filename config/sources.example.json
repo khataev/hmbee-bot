@@ -1,4 +1,11 @@
 {
+  "hmbee": {
+    "currenciesMapping": {
+      "810": "rub",
+      "840": "usd",
+      "978": "eur"
+    }
+  },
   "sources": {
     "tochka": {
       "hmAccounts": {
@@ -20,7 +27,8 @@
         "tochka-ip-deposits": {
           "id": 4567890,
           "name": "Точка ИП. Депозиты",
-          "currency": "rub"
+          "currency": "rub",
+          "isDeposit": true
         }
       },
       "accountMappings": {

@@ -11,6 +11,9 @@ describe('CardTransactionInfo classification', () => {
   const options = {
     accountMappings,
     accountRegistry: createAccountRegistry({
+      hmbee: {
+        currenciesMapping: {}
+      },
       sources: {
         tochka: {
           bankBic: '044525104',

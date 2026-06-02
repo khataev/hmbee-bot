@@ -14,6 +14,9 @@ describe('PaymentAccepted classification', () => {
   const options = {
     accountMappings,
     accountRegistry: createAccountRegistry({
+      hmbee: {
+        currenciesMapping: {}
+      },
       sources: {
         tochka: {
           bankBic: '044525104',
@@ -80,8 +83,13 @@ describe('PaymentAccepted classification', () => {
     expect(result.reason).toBeNull();
     expect(result.normalized?.type).toBe('transfer');
     expect(result.normalized?.counterpartyAccountId).toBe('40802810100000000002');
-    expect(result.hmbee?.subtype).toBe('e');
+    expect(result.hmbee?.subtype).toBe('t');
     expect(result.hmbee?.account_id).toBe(2053036);
+    if (result.hmbee?.subtype === 't') {
+      expect(result.hmbee.transfer_from_id).toBe(2053036);
+      expect(result.hmbee.transfer_to_id).toBe(2053036);
+      expect(result.hmbee.real_amount).toBeGreaterThan(0);
+    }
   });
 
   it('classifies PaymentAccepted government tax payment as save-ready expense', () => {

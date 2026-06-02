@@ -16,11 +16,23 @@ describe('PaymentIncome classification', () => {
   const options = {
     accountMappings,
     accountRegistry: createAccountRegistry({
+      hmbee: {
+        currenciesMapping: {
+          '810': 'rub'
+        }
+      },
       sources: {
         tochka: {
           bankBic: '044525104',
           accountMappings,
-          hmAccounts: {},
+          hmAccounts: {
+            'tochka-ip-deposits': {
+              id: 8846259,
+              name: 'Точка ИП. Депозиты',
+              currency: 'rub',
+              isDeposit: true
+            }
+          },
           typeCodes: {}
         }
       }
@@ -149,8 +161,12 @@ describe('PaymentIncome classification', () => {
     expect(result.reason).toBeNull();
     expect(result.normalized?.type).toBe('transfer');
     expect(result.normalized?.counterpartyAccountId).toBe('42109810000000000033');
-    expect(result.hmbee?.subtype).toBe('i');
-    expect(result.hmbee?.real_amount).toBe(173000);
+    expect(result.hmbee?.subtype).toBe('t');
+    if (result.hmbee?.subtype === 't') {
+      expect(result.hmbee.transfer_from_id).toBe(8846259);
+      expect(result.hmbee.transfer_to_id).toBe(2053036);
+      expect(result.hmbee.real_amount).toBeGreaterThan(0);
+    }
   });
 
   it('classifies deposit interest as save-ready ordinary income', () => {

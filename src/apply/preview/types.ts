@@ -11,7 +11,7 @@ export interface NormalizedRecord {
   counterpartyAccountId?: string | undefined;
 }
 
-export interface HoneyMoneyTransaction {
+export interface HoneyMoneyIncomeExpenseTransaction {
   subtype: 'e' | 'i';
   date: string;
   account_id: number;
@@ -31,6 +31,31 @@ export interface HoneyMoneyTransaction {
   common_id: null;
   transfer_to_currency: null;
 }
+
+export interface HoneyMoneyTransferTransaction {
+  subtype: 't';
+  date: string;
+  account_id: number;
+  currency: string;
+  id: null;
+  type: 'unplanned';
+  virtual_id: -1;
+  category: null;
+  description: string;
+  planned_repeat_days: 0;
+  planned_repeat_end: 'always';
+  planned_repeat_end_date: null;
+  transfer_to_amount: number;
+  transfer_type: 'a';
+  real_amount: number;
+  plan_amount: null;
+  common_id: null;
+  transfer_to_currency: null;
+  transfer_from_id: number;
+  transfer_to_id: number;
+}
+
+export type HoneyMoneyTransaction = HoneyMoneyIncomeExpenseTransaction | HoneyMoneyTransferTransaction;
 
 export interface PreviewRecord {
   identified: boolean;
