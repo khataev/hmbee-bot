@@ -1,6 +1,7 @@
 import { loadFixture } from 'src/apply/preview/test-helpers.js';
 import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
+import type { HoneyMoneyTransferTransaction } from 'src/apply/preview/types.js';
 import type { AppConfig } from 'src/config.js';
 import { createAccountRegistry } from 'src/config.js';
 import { describe, expect, it } from 'vitest';
@@ -82,11 +83,11 @@ describe('SbpB2CPayment classification', () => {
     expect(result.normalized?.type).toBe('transfer');
     expect(result.normalized?.counterpartyAccountId).toBe('40817810000000000001');
     expect(result.hmbee?.subtype).toBe('t');
-    if (result.hmbee?.subtype === 't') {
-      expect(result.hmbee.transfer_from_id).toBe(2053036);
-      expect(result.hmbee.transfer_to_id).toBe(26755);
-      expect(result.hmbee.real_amount).toBeGreaterThan(0);
-    }
+
+    const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
+    expect(hmbee.transfer_from_id).toBe(2053036);
+    expect(hmbee.transfer_to_id).toBe(26755);
+    expect(hmbee.real_amount).toBeGreaterThan(0);
   });
 
   it('marks SbpB2CPayment invalid forms as identified but excluded (CANCELED/REJECTED/incoming=true)', () => {

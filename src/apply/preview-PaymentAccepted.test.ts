@@ -1,6 +1,7 @@
 import { loadFixture } from 'src/apply/preview/test-helpers.js';
 import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
+import type { HoneyMoneyTransferTransaction } from 'src/apply/preview/types.js';
 import type { AppConfig } from 'src/config.js';
 import { createAccountRegistry } from 'src/config.js';
 import { describe, expect, it } from 'vitest';
@@ -85,11 +86,11 @@ describe('PaymentAccepted classification', () => {
     expect(result.normalized?.counterpartyAccountId).toBe('40802810100000000002');
     expect(result.hmbee?.subtype).toBe('t');
     expect(result.hmbee?.account_id).toBe(2053036);
-    if (result.hmbee?.subtype === 't') {
-      expect(result.hmbee.transfer_from_id).toBe(2053036);
-      expect(result.hmbee.transfer_to_id).toBe(2053036);
-      expect(result.hmbee.real_amount).toBeGreaterThan(0);
-    }
+
+    const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
+    expect(hmbee.transfer_from_id).toBe(2053036);
+    expect(hmbee.transfer_to_id).toBe(2053036);
+    expect(hmbee.real_amount).toBeGreaterThan(0);
   });
 
   it('classifies PaymentAccepted government tax payment as save-ready expense', () => {
