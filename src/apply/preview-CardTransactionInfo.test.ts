@@ -116,6 +116,7 @@ describe('CardTransactionInfo classification', () => {
     expect(result.normalized?.transactionId).toBe('1000000002');
     expect(result.normalized?.amount).toBe(83);
     expect(result.normalized?.status).toBe('InProgress');
+    expect(result.hmbee?.account_id).toBe(67890);
     expect(result.hmbee?.subtype).toBe('e');
     expect(result.hmbee?.real_amount).toBe(-83);
     expect(result.hmbee?.category).toBe('Проезд / Общественный транспорт');
@@ -132,6 +133,7 @@ describe('CardTransactionInfo classification', () => {
     expect(result.normalized?.transactionId).toBe('1000000003');
     expect(result.normalized?.amount).toBe(1014);
     expect(result.normalized?.status).toBe('Received');
+    expect(result.hmbee?.account_id).toBe(67890);
     expect(result.hmbee?.subtype).toBe('i');
     expect(result.hmbee?.real_amount).toBe(1014);
     expect(result.hmbee?.category).toBe('Покупки / Маркетплейсы');

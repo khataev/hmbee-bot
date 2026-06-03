@@ -179,6 +179,7 @@ describe('PaymentIncome classification', () => {
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
     expect(result.normalized?.type).toBe('Income');
+    expect(result.hmbee?.account_id).toBe(2053036);
     expect(result.hmbee?.subtype).toBe('i');
     expect(result.hmbee?.real_amount).toBe(1507);
   });
@@ -192,6 +193,7 @@ describe('PaymentIncome classification', () => {
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
     expect(result.normalized?.type).toBe('Income');
+    expect(result.hmbee?.account_id).toBe(2053036);
     expect(result.hmbee?.subtype).toBe('i');
     expect(result.hmbee?.real_amount).toBe(1391100);
   });
