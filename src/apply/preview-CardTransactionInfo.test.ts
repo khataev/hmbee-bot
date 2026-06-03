@@ -121,7 +121,7 @@ describe('CardTransactionInfo classification', () => {
     expect(result.hmbee?.category).toBe('Проезд / Общественный транспорт');
   });
 
-  it('classifies ReverseByCard + Received as save-ready', () => {
+  it('classifies ReverseByCard + Received as save-ready income', () => {
     const fixture = loadFixture('card-transaction-reverse.json');
 
     const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
@@ -132,6 +132,8 @@ describe('CardTransactionInfo classification', () => {
     expect(result.normalized?.transactionId).toBe('1000000003');
     expect(result.normalized?.amount).toBe(1014);
     expect(result.normalized?.status).toBe('Received');
+    expect(result.hmbee?.subtype).toBe('i');
+    expect(result.hmbee?.real_amount).toBe(1014);
     expect(result.hmbee?.category).toBe('Покупки / Маркетплейсы');
   });
 

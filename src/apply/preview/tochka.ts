@@ -365,7 +365,7 @@ function getDescription(record: TochkaSyncRecord): string | undefined {
 
 function getNormalizedType(sourceRecord: TochkaSyncRecord, registry: AccountRegistry): string {
   if (isCardTransactionInfoRecord(sourceRecord)) {
-    return sourceRecord.data.tranCode;
+    return sourceRecord.data.tranCode === 'ReverseByCard' ? 'Income' : 'Expense';
   }
 
   // By transfer we mean transaction between two accounts that belong to me and are registered as such in honey money.
@@ -578,16 +578,13 @@ export function normalizeTochkaRecord(
     if (!tochkaAccountId)
       throw new Error(`No Honey Money account mapping found for Tochka account ${normalized.account}`);
 
-    const incoming = isBankPaymentRecord(sourceRecord) && sourceRecord.data.incoming;
-    const isIncome = incoming || normalized.type === 'Income';
-
     return {
       identified: true,
       save: classification.save,
       reason: classification.reason,
       sourceRecord,
       normalized,
-      hmbee: buildHoneyMoneyIncomeExpenseTransaction(normalized, tochkaAccountId, isIncome)
+      hmbee: buildHoneyMoneyIncomeExpenseTransaction(normalized, tochkaAccountId)
     };
   } catch (error) {
     return {
@@ -601,11 +598,10 @@ export function normalizeTochkaRecord(
 
 function buildHoneyMoneyIncomeExpenseTransaction(
   normalized: NormalizedRecord,
-  accountId: number,
-  isIncome: boolean
+  accountId: number
 ): HoneyMoneyTransaction {
   const category = mapTochkaCategory(normalized.description, normalized.mcc);
-  const subtype = isIncome ? 'i' : 'e';
+  const subtype = normalized.type === 'Income' ? 'i' : 'e';
   const normalizedAmount = normalizeHoneyMoneyAmount(normalized.amount, subtype);
 
   return {
