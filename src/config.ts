@@ -102,7 +102,7 @@ export function loadConfig(): AppConfig {
     })
   );
 
-  const currenciesMapping = config.hmbee?.currenciesMapping || {};
+  const currenciesMapping = config.hmbee.currenciesMapping;
 
   return ResolvedAppConfigSchema.parse({
     hmbee: {
