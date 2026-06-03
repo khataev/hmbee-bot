@@ -68,9 +68,10 @@ describe('SbpB2CPayment classification', () => {
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
     expect(result.normalized?.type).toBe('expense');
-    expect(result.hmbee?.subtype).toBe('e');
-    expect(result.hmbee?.real_amount).toBe(-4000);
     expect(result.hmbee?.account_id).toBe(2053036);
+    expect(result.hmbee?.subtype).toBe('e');
+    expect(result.hmbee?.currency).toBe('rub');
+    expect(result.hmbee?.real_amount).toBe(-4000);
   });
 
   it('identifies transfer-like SbpB2CPayment as save-ready canonical transfer', () => {
@@ -84,6 +85,7 @@ describe('SbpB2CPayment classification', () => {
     expect(result.normalized?.type).toBe('transfer');
     expect(result.normalized?.counterpartyAccountId).toBe('40817810000000000001');
     expect(result.hmbee?.subtype).toBe('t');
+    expect(result.hmbee?.currency).toBe('rub');
 
     const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
     expect(hmbee.transfer_from_id).toBe(2053036);

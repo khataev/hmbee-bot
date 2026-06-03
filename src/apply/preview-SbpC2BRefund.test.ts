@@ -59,9 +59,10 @@ describe('SbpC2BRefund classification', () => {
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
     expect(result.normalized?.type).toBe('income');
-    expect(result.hmbee?.subtype).toBe('i');
-    expect(result.hmbee?.real_amount).toBe(439);
     expect(result.hmbee?.account_id).toBe(2053036);
+    expect(result.hmbee?.subtype).toBe('i');
+    expect(result.hmbee?.currency).toBe('rub');
+    expect(result.hmbee?.real_amount).toBe(439);
   });
 
   it('marks SbpC2BRefund invalid forms as identified but excluded (CANCELED/REJECTED/incoming=false)', () => {

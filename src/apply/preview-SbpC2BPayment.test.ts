@@ -55,9 +55,10 @@ describe('SbpC2BPayment classification', () => {
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
     expect(result.normalized?.type).toBe('expense');
-    expect(result.hmbee?.subtype).toBe('e');
-    expect(result.hmbee?.real_amount).toBe(-3392);
     expect(result.hmbee?.account_id).toBe(2053036);
+    expect(result.hmbee?.subtype).toBe('e');
+    expect(result.hmbee?.currency).toBe('rub');
+    expect(result.hmbee?.real_amount).toBe(-3392);
   });
 
   it('marks SbpC2BPayment invalid forms as identified but excluded (CANCELED/REJECTED/incoming=true)', () => {

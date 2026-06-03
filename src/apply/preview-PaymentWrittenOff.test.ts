@@ -90,6 +90,7 @@ describe('PaymentWrittenOff classification', () => {
     expect(result.normalized?.type).toBe('expense');
     expect(result.hmbee?.account_id).toBe(2053036);
     expect(result.hmbee?.subtype).toBe('e');
+    expect(result.hmbee?.currency).toBe('rub');
     expect(result.hmbee?.real_amount).toBe(-100);
   });
 
@@ -104,6 +105,7 @@ describe('PaymentWrittenOff classification', () => {
     expect(result.normalized?.type).toBe('transfer');
     expect(result.normalized?.counterpartyAccountId).toBe('42109810000000000033');
     expect(result.hmbee?.subtype).toBe('t');
+    expect(result.hmbee?.currency).toBe('rub');
 
     const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
     expect(hmbee.transfer_from_id).toBe(2053036);

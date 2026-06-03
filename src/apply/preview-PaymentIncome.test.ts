@@ -163,6 +163,7 @@ describe('PaymentIncome classification', () => {
     expect(result.normalized?.type).toBe('transfer');
     expect(result.normalized?.counterpartyAccountId).toBe('42109810000000000033');
     expect(result.hmbee?.subtype).toBe('t');
+    expect(result.hmbee?.currency).toBe('rub');
 
     const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
     expect(hmbee.transfer_from_id).toBe(8846259);
@@ -181,6 +182,7 @@ describe('PaymentIncome classification', () => {
     expect(result.normalized?.type).toBe('income');
     expect(result.hmbee?.account_id).toBe(2053036);
     expect(result.hmbee?.subtype).toBe('i');
+    expect(result.hmbee?.currency).toBe('rub');
     expect(result.hmbee?.real_amount).toBe(1507);
   });
 
@@ -195,6 +197,7 @@ describe('PaymentIncome classification', () => {
     expect(result.normalized?.type).toBe('income');
     expect(result.hmbee?.account_id).toBe(2053036);
     expect(result.hmbee?.subtype).toBe('i');
+    expect(result.hmbee?.currency).toBe('rub');
     expect(result.hmbee?.real_amount).toBe(1391100);
   });
 });

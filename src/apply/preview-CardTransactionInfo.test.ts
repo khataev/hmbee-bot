@@ -102,6 +102,7 @@ describe('CardTransactionInfo classification', () => {
     expect(result.normalized?.type).toBe('expense');
     expect(result.hmbee?.account_id).toBe(67890);
     expect(result.hmbee?.subtype).toBe('e');
+    expect(result.hmbee?.currency).toBe('rub');
     expect(result.hmbee?.real_amount).toBe(-200);
     expect(result.hmbee?.category).toBe('Покупки / Продукты');
   });
@@ -120,6 +121,7 @@ describe('CardTransactionInfo classification', () => {
     expect(result.normalized?.type).toBe('expense');
     expect(result.hmbee?.account_id).toBe(67890);
     expect(result.hmbee?.subtype).toBe('e');
+    expect(result.hmbee?.currency).toBe('rub');
     expect(result.hmbee?.real_amount).toBe(-83);
     expect(result.hmbee?.category).toBe('Проезд / Общественный транспорт');
   });
@@ -138,6 +140,7 @@ describe('CardTransactionInfo classification', () => {
     expect(result.normalized?.type).toBe('income');
     expect(result.hmbee?.account_id).toBe(67890);
     expect(result.hmbee?.subtype).toBe('i');
+    expect(result.hmbee?.currency).toBe('rub');
     expect(result.hmbee?.real_amount).toBe(1014);
     expect(result.hmbee?.category).toBe('Покупки / Маркетплейсы');
   });
