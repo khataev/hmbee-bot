@@ -1,3 +1,4 @@
+import type { ReadyApplyRecord } from 'src/apply/index.js';
 import { loadFixture } from 'src/apply/preview/test-helpers.js';
 import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
@@ -77,16 +78,16 @@ describe('PaymentAccepted classification', () => {
   it('classifies PaymentAccepted internal transfer as save-ready canonical transfer', () => {
     const fixture = loadFixture('payment-accepted-internal-transfer.json');
 
-    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
-    expect(result.normalized?.type).toBe('transfer');
-    expect(result.normalized?.counterpartyAccountId).toBe('40802810100000000002');
-    expect(result.hmbee?.subtype).toBe('t');
-    expect(result.hmbee?.account_id).toBe(2053036);
-    expect(result.hmbee?.currency).toBe('rub');
+    expect(result.normalized.type).toBe('transfer');
+    expect(result.normalized.counterpartyAccountId).toBe('40802810100000000002');
+    expect(result.hmbee.subtype).toBe('t');
+    expect(result.hmbee.account_id).toBe(2053036);
+    expect(result.hmbee.currency).toBe('rub');
 
     const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
     expect(hmbee.transfer_from_id).toBe(2053036);
@@ -97,15 +98,15 @@ describe('PaymentAccepted classification', () => {
   it('classifies PaymentAccepted government tax payment as save-ready expense', () => {
     const fixture = loadFixture('payment-accepted-tax.json');
 
-    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
-    expect(result.normalized?.type).toBe('expense');
-    expect(result.hmbee?.account_id).toBe(2053036);
-    expect(result.hmbee?.subtype).toBe('e');
-    expect(result.hmbee?.currency).toBe('rub');
-    expect(result.hmbee?.real_amount).toBe(-20154);
+    expect(result.normalized.type).toBe('expense');
+    expect(result.hmbee.account_id).toBe(2053036);
+    expect(result.hmbee.subtype).toBe('e');
+    expect(result.hmbee.currency).toBe('rub');
+    expect(result.hmbee.real_amount).toBe(-20154);
   });
 });

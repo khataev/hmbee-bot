@@ -1,3 +1,4 @@
+import type { ReadyApplyRecord } from 'src/apply/index.js';
 import { loadFixture } from 'src/apply/preview/test-helpers.js';
 import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 import { normalizeHoneyMoneyAmount, normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
@@ -91,58 +92,58 @@ describe('CardTransactionInfo classification', () => {
   it('classifies Purchase + Withdraw as save-ready expense', () => {
     const fixture = loadFixture('card-transaction-purchase-withdraw.json');
 
-    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
-    expect(result.normalized?.transactionId).toBe('1000000001');
-    expect(result.normalized?.amount).toBe(199.98);
-    expect(result.normalized?.status).toBe('Withdraw');
-    expect(result.normalized?.type).toBe('expense');
-    expect(result.hmbee?.account_id).toBe(67890);
-    expect(result.hmbee?.subtype).toBe('e');
-    expect(result.hmbee?.currency).toBe('rub');
-    expect(result.hmbee?.real_amount).toBe(-200);
-    expect(result.hmbee?.category).toBe('Покупки / Продукты');
+    expect(result.normalized.transactionId).toBe('1000000001');
+    expect(result.normalized.amount).toBe(199.98);
+    expect(result.normalized.status).toBe('Withdraw');
+    expect(result.normalized.type).toBe('expense');
+    expect(result.hmbee.account_id).toBe(67890);
+    expect(result.hmbee.subtype).toBe('e');
+    expect(result.hmbee.currency).toBe('rub');
+    expect(result.hmbee.real_amount).toBe(-200);
+    expect(result.hmbee.category).toBe('Покупки / Продукты');
   });
 
   it('classifies Purchase + InProgress as save-ready expense', () => {
     const fixture = loadFixture('card-transaction-purchase-inprogress.json');
 
-    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
-    expect(result.normalized?.transactionId).toBe('1000000002');
-    expect(result.normalized?.amount).toBe(83);
-    expect(result.normalized?.status).toBe('InProgress');
-    expect(result.normalized?.type).toBe('expense');
-    expect(result.hmbee?.account_id).toBe(67890);
-    expect(result.hmbee?.subtype).toBe('e');
-    expect(result.hmbee?.currency).toBe('rub');
-    expect(result.hmbee?.real_amount).toBe(-83);
-    expect(result.hmbee?.category).toBe('Проезд / Общественный транспорт');
+    expect(result.normalized.transactionId).toBe('1000000002');
+    expect(result.normalized.amount).toBe(83);
+    expect(result.normalized.status).toBe('InProgress');
+    expect(result.normalized.type).toBe('expense');
+    expect(result.hmbee.account_id).toBe(67890);
+    expect(result.hmbee.subtype).toBe('e');
+    expect(result.hmbee.currency).toBe('rub');
+    expect(result.hmbee.real_amount).toBe(-83);
+    expect(result.hmbee.category).toBe('Проезд / Общественный транспорт');
   });
 
   it('classifies ReverseByCard + Received as save-ready income', () => {
     const fixture = loadFixture('card-transaction-reverse.json');
 
-    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
-    expect(result.normalized?.transactionId).toBe('1000000003');
-    expect(result.normalized?.amount).toBe(1014);
-    expect(result.normalized?.status).toBe('Received');
-    expect(result.normalized?.type).toBe('income');
-    expect(result.hmbee?.account_id).toBe(67890);
-    expect(result.hmbee?.subtype).toBe('i');
-    expect(result.hmbee?.currency).toBe('rub');
-    expect(result.hmbee?.real_amount).toBe(1014);
-    expect(result.hmbee?.category).toBe('Покупки / Маркетплейсы');
+    expect(result.normalized.transactionId).toBe('1000000003');
+    expect(result.normalized.amount).toBe(1014);
+    expect(result.normalized.status).toBe('Received');
+    expect(result.normalized.type).toBe('income');
+    expect(result.hmbee.account_id).toBe(67890);
+    expect(result.hmbee.subtype).toBe('i');
+    expect(result.hmbee.currency).toBe('rub');
+    expect(result.hmbee.real_amount).toBe(1014);
+    expect(result.hmbee.category).toBe('Покупки / Маркетплейсы');
   });
 
   it('marks CheckCard as identified but excluded', () => {

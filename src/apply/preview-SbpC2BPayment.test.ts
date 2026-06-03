@@ -1,3 +1,4 @@
+import type { ReadyApplyRecord } from 'src/apply/index.js';
 import { loadFixture } from 'src/apply/preview/test-helpers.js';
 import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
@@ -49,16 +50,16 @@ describe('SbpC2BPayment classification', () => {
   it('classifies SbpC2BPayment as save-ready expense (happy path)', () => {
     const fixture = loadFixture('sbp-c2b-payment.json');
 
-    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
-    expect(result.normalized?.type).toBe('expense');
-    expect(result.hmbee?.account_id).toBe(2053036);
-    expect(result.hmbee?.subtype).toBe('e');
-    expect(result.hmbee?.currency).toBe('rub');
-    expect(result.hmbee?.real_amount).toBe(-3392);
+    expect(result.normalized.type).toBe('expense');
+    expect(result.hmbee.account_id).toBe(2053036);
+    expect(result.hmbee.subtype).toBe('e');
+    expect(result.hmbee.currency).toBe('rub');
+    expect(result.hmbee.real_amount).toBe(-3392);
   });
 
   it('marks SbpC2BPayment invalid forms as identified but excluded (CANCELED/REJECTED/incoming=true)', () => {

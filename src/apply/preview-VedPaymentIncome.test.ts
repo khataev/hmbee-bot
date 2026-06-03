@@ -1,3 +1,4 @@
+import type { ReadyApplyRecord } from 'src/apply/index.js';
 import { loadFixture } from 'src/apply/preview/test-helpers.js';
 import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
@@ -45,16 +46,16 @@ describe('VedPaymentIncome classification', () => {
   it('classifies VedPaymentIncome (UNDISTRIBUTED) as save-ready income', () => {
     const fixture = loadFixture('ved-payment-income-undistributed.json');
 
-    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
-    expect(result.normalized?.type).toBe('income');
-    expect(result.hmbee?.account_id).toBe(2053036);
-    expect(result.hmbee?.subtype).toBe('i');
-    expect(result.hmbee?.currency).toBe('rub');
-    expect(result.hmbee?.real_amount).toBe(498672);
+    expect(result.normalized.type).toBe('income');
+    expect(result.hmbee.account_id).toBe(2053036);
+    expect(result.hmbee.subtype).toBe('i');
+    expect(result.hmbee.currency).toBe('rub');
+    expect(result.hmbee.real_amount).toBe(498672);
   });
 
   it('remains unmatched for non-undistributed VedPaymentIncome states', () => {

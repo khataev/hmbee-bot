@@ -1,3 +1,4 @@
+import type { ReadyApplyRecord } from 'src/apply/index.js';
 import { loadFixture } from 'src/apply/preview/test-helpers.js';
 import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
@@ -155,15 +156,15 @@ describe('PaymentIncome classification', () => {
   it('classifies deposit principal return as save-ready canonical transfer', () => {
     const fixture = loadFixture('payment-income-deposit-return.json');
 
-    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
-    expect(result.normalized?.type).toBe('transfer');
-    expect(result.normalized?.counterpartyAccountId).toBe('42109810000000000033');
-    expect(result.hmbee?.subtype).toBe('t');
-    expect(result.hmbee?.currency).toBe('rub');
+    expect(result.normalized.type).toBe('transfer');
+    expect(result.normalized.counterpartyAccountId).toBe('42109810000000000033');
+    expect(result.hmbee.subtype).toBe('t');
+    expect(result.hmbee.currency).toBe('rub');
 
     const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
     expect(hmbee.transfer_from_id).toBe(8846259);
@@ -174,30 +175,30 @@ describe('PaymentIncome classification', () => {
   it('classifies deposit interest as save-ready ordinary income', () => {
     const fixture = loadFixture('payment-income-deposit-interest.json');
 
-    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
-    expect(result.normalized?.type).toBe('income');
-    expect(result.hmbee?.account_id).toBe(2053036);
-    expect(result.hmbee?.subtype).toBe('i');
-    expect(result.hmbee?.currency).toBe('rub');
-    expect(result.hmbee?.real_amount).toBe(1507);
+    expect(result.normalized.type).toBe('income');
+    expect(result.hmbee.account_id).toBe(2053036);
+    expect(result.hmbee.subtype).toBe('i');
+    expect(result.hmbee.currency).toBe('rub');
+    expect(result.hmbee.real_amount).toBe(1507);
   });
 
   it('classifies external incoming payment as save-ready ordinary income', () => {
     const fixture = loadFixture('payment-income-external.json');
 
-    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
-    expect(result.normalized?.type).toBe('income');
-    expect(result.hmbee?.account_id).toBe(2053036);
-    expect(result.hmbee?.subtype).toBe('i');
-    expect(result.hmbee?.currency).toBe('rub');
-    expect(result.hmbee?.real_amount).toBe(1391100);
+    expect(result.normalized.type).toBe('income');
+    expect(result.hmbee.account_id).toBe(2053036);
+    expect(result.hmbee.subtype).toBe('i');
+    expect(result.hmbee.currency).toBe('rub');
+    expect(result.hmbee.real_amount).toBe(1391100);
   });
 });
