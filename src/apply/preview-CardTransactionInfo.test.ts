@@ -99,6 +99,7 @@ describe('CardTransactionInfo classification', () => {
     expect(result.normalized?.transactionId).toBe('1000000001');
     expect(result.normalized?.amount).toBe(199.98);
     expect(result.normalized?.status).toBe('Withdraw');
+    expect(result.normalized?.type).toBe('expense');
     expect(result.hmbee?.account_id).toBe(67890);
     expect(result.hmbee?.subtype).toBe('e');
     expect(result.hmbee?.real_amount).toBe(-200);
@@ -116,6 +117,7 @@ describe('CardTransactionInfo classification', () => {
     expect(result.normalized?.transactionId).toBe('1000000002');
     expect(result.normalized?.amount).toBe(83);
     expect(result.normalized?.status).toBe('InProgress');
+    expect(result.normalized?.type).toBe('expense');
     expect(result.hmbee?.account_id).toBe(67890);
     expect(result.hmbee?.subtype).toBe('e');
     expect(result.hmbee?.real_amount).toBe(-83);
@@ -133,6 +135,7 @@ describe('CardTransactionInfo classification', () => {
     expect(result.normalized?.transactionId).toBe('1000000003');
     expect(result.normalized?.amount).toBe(1014);
     expect(result.normalized?.status).toBe('Received');
+    expect(result.normalized?.type).toBe('income');
     expect(result.hmbee?.account_id).toBe(67890);
     expect(result.hmbee?.subtype).toBe('i');
     expect(result.hmbee?.real_amount).toBe(1014);

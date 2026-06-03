@@ -3,7 +3,7 @@ export interface NormalizedRecord {
   account: string;
   status: string;
   date: string;
-  type: string;
+  type: 'income' | 'expense' | 'transfer';
   amount: number;
   currency: string;
   description: string;

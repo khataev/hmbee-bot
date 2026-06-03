@@ -363,9 +363,12 @@ function getDescription(record: TochkaSyncRecord): string | undefined {
   return undefined;
 }
 
-function getNormalizedType(sourceRecord: TochkaSyncRecord, registry: AccountRegistry): string {
+function getNormalizedType(
+  sourceRecord: TochkaSyncRecord,
+  registry: AccountRegistry
+): 'income' | 'expense' | 'transfer' {
   if (isCardTransactionInfoRecord(sourceRecord)) {
-    return sourceRecord.data.tranCode === 'ReverseByCard' ? 'Income' : 'Expense';
+    return sourceRecord.data.tranCode === 'ReverseByCard' ? 'income' : 'expense';
   }
 
   // By transfer we mean transaction between two accounts that belong to me and are registered as such in honey money.
@@ -379,23 +382,23 @@ function getNormalizedType(sourceRecord: TochkaSyncRecord, registry: AccountRegi
   }
 
   if (isSbpTransactionRecord(sourceRecord)) {
-    return sourceRecord.data.incoming ? 'Income' : 'Expense';
+    return sourceRecord.data.incoming ? 'income' : 'expense';
   }
 
   if (isPaymentWrittenOffRecord(sourceRecord)) {
-    return 'Expense';
+    return 'expense';
   }
 
   if (isPaymentIncomeRecord(sourceRecord)) {
-    return 'Income';
+    return 'income';
   }
 
   if (isPaymentAcceptedRecord(sourceRecord)) {
-    return 'Expense';
+    return 'expense';
   }
 
   if (isVedPaymentIncomeRecord(sourceRecord)) {
-    return 'Income';
+    return 'income';
   }
 
   throw new Error('Unsupported record shape for normalized type derivation');
@@ -601,7 +604,7 @@ function buildHoneyMoneyIncomeExpenseTransaction(
   accountId: number
 ): HoneyMoneyTransaction {
   const category = mapTochkaCategory(normalized.description, normalized.mcc);
-  const subtype = normalized.type === 'Income' ? 'i' : 'e';
+  const subtype = normalized.type === 'income' ? 'i' : 'e';
   const normalizedAmount = normalizeHoneyMoneyAmount(normalized.amount, subtype);
 
   return {

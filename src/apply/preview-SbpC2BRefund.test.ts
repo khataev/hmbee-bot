@@ -58,6 +58,7 @@ describe('SbpC2BRefund classification', () => {
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
+    expect(result.normalized?.type).toBe('income');
     expect(result.hmbee?.subtype).toBe('i');
     expect(result.hmbee?.real_amount).toBe(439);
     expect(result.hmbee?.account_id).toBe(2053036);
