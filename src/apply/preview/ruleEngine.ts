@@ -19,11 +19,11 @@ export interface RuleEvaluationContext {
 /**
  * Custom JSON logic operations
  */
-jsonLogic.add_operation('is_owned', (account: string, bic: string | undefined, registry: AccountRegistry) => {
+jsonLogic.add_operation('is_owned', (account: string, bic: string, registry: AccountRegistry) => {
   return registry?.isOwned(account, bic);
 });
 
-jsonLogic.add_operation('is_deposit', (account: string, bic: string | undefined, registry: AccountRegistry) => {
+jsonLogic.add_operation('is_deposit', (account: string, bic: string, registry: AccountRegistry) => {
   return registry.isDeposit(account, bic);
 });
 

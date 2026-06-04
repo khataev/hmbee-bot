@@ -1,6 +1,8 @@
+import type { ReadyApplyRecord } from 'src/apply/index.js';
 import { loadFixture } from 'src/apply/preview/test-helpers.js';
 import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
 import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
+import type { HoneyMoneyTransferTransaction } from 'src/apply/preview/types.js';
 import type { AppConfig } from 'src/config.js';
 import { createAccountRegistry } from 'src/config.js';
 import { describe, expect, it } from 'vitest';
@@ -14,6 +16,9 @@ describe('SbpB2CPayment classification', () => {
   const options = {
     accountMappings,
     accountRegistry: createAccountRegistry({
+      hmbee: {
+        currenciesMapping: {}
+      },
       sources: {
         tochka: {
           bankBic: '044525104',
@@ -58,27 +63,35 @@ describe('SbpB2CPayment classification', () => {
   it('classifies non-transfer SbpB2CPayment as save-ready expense', () => {
     const fixture = loadFixture('sbp-b2c-payment-non-transfer.json');
 
-    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
-    expect(result.hmbee?.subtype).toBe('e');
-    expect(result.hmbee?.real_amount).toBe(-4000);
-    expect(result.hmbee?.account_id).toBe(2053036);
+    expect(result.normalized.type).toBe('expense');
+    expect(result.hmbee.account_id).toBe(2053036);
+    expect(result.hmbee.subtype).toBe('e');
+    expect(result.hmbee.currency).toBe('rub');
+    expect(result.hmbee.real_amount).toBe(-4000);
   });
 
   it('identifies transfer-like SbpB2CPayment as save-ready canonical transfer', () => {
     const fixture = loadFixture('sbp-b2c-payment-own-transfer.json');
 
-    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
     expect(result.save).toBe(true);
     expect(result.reason).toBeNull();
-    expect(result.normalized?.type).toBe('transfer');
-    expect(result.normalized?.counterpartyAccountId).toBe('40817810000000000001');
-    expect(result.hmbee?.subtype).toBe('e');
+    expect(result.normalized.type).toBe('transfer');
+    expect(result.normalized.counterpartyAccountId).toBe('40817810000000000001');
+    expect(result.hmbee.subtype).toBe('t');
+    expect(result.hmbee.currency).toBe('rub');
+
+    const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
+    expect(hmbee.transfer_from_id).toBe(2053036);
+    expect(hmbee.transfer_to_id).toBe(26755);
+    expect(hmbee.real_amount).toBeGreaterThan(0);
   });
 
   it('marks SbpB2CPayment invalid forms as identified but excluded (CANCELED/REJECTED/incoming=true)', () => {

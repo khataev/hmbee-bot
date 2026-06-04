@@ -363,9 +363,12 @@ function getDescription(record: TochkaSyncRecord): string | undefined {
   return undefined;
 }
 
-function getNormalizedType(sourceRecord: TochkaSyncRecord, registry: AccountRegistry): string {
+function getNormalizedType(
+  sourceRecord: TochkaSyncRecord,
+  registry: AccountRegistry
+): 'income' | 'expense' | 'transfer' {
   if (isCardTransactionInfoRecord(sourceRecord)) {
-    return sourceRecord.data.tranCode;
+    return sourceRecord.data.tranCode === 'ReverseByCard' ? 'income' : 'expense';
   }
 
   // By transfer we mean transaction between two accounts that belong to me and are registered as such in honey money.
@@ -379,23 +382,23 @@ function getNormalizedType(sourceRecord: TochkaSyncRecord, registry: AccountRegi
   }
 
   if (isSbpTransactionRecord(sourceRecord)) {
-    return sourceRecord.data.incoming ? 'Income' : 'Expense';
+    return sourceRecord.data.incoming ? 'income' : 'expense';
   }
 
   if (isPaymentWrittenOffRecord(sourceRecord)) {
-    return 'Expense';
+    return 'expense';
   }
 
   if (isPaymentIncomeRecord(sourceRecord)) {
-    return 'Income';
+    return 'income';
   }
 
   if (isPaymentAcceptedRecord(sourceRecord)) {
-    return 'Expense';
+    return 'expense';
   }
 
   if (isVedPaymentIncomeRecord(sourceRecord)) {
-    return 'Income';
+    return 'income';
   }
 
   throw new Error('Unsupported record shape for normalized type derivation');
@@ -547,12 +550,36 @@ export function normalizeTochkaRecord(
       throw new Error('Normalized transfer record missing counterpartyAccountId');
     }
 
+    if (normalized.type === 'transfer') {
+      if (!isBankPaymentRecord(sourceRecord)) {
+        throw new Error('Transfer must be a bank payment record');
+      }
+
+      const payerHmId = options.accountRegistry.getHmAccountId(sourceRecord.data.payerAccountId);
+      const payeeHmId = options.accountRegistry.getHmAccountId(sourceRecord.data.payeeAccountId);
+
+      if (!payerHmId) {
+        throw new Error(`Unable to resolve payer HM account ID for transfer`);
+      }
+
+      if (!payeeHmId) {
+        throw new Error(`Unable to resolve payee HM account ID for transfer`);
+      }
+
+      return {
+        identified: true,
+        save: classification.save,
+        reason: classification.reason,
+        sourceRecord,
+        normalized,
+        hmbee: buildHoneyMoneyTransferTransaction(normalized, payerHmId, payeeHmId)
+      };
+    }
+
     const tochkaAccountId = options.accountMappings[normalized.account];
 
     if (!tochkaAccountId)
       throw new Error(`No Honey Money account mapping found for Tochka account ${normalized.account}`);
-
-    const incoming = isBankPaymentRecord(sourceRecord) && sourceRecord.data.incoming;
 
     return {
       identified: true,
@@ -560,7 +587,7 @@ export function normalizeTochkaRecord(
       reason: classification.reason,
       sourceRecord,
       normalized,
-      hmbee: buildHoneyMoneyTransaction(normalized, tochkaAccountId, incoming || normalized.type === 'Income')
+      hmbee: buildHoneyMoneyIncomeExpenseTransaction(normalized, tochkaAccountId)
     };
   } catch (error) {
     return {
@@ -572,13 +599,12 @@ export function normalizeTochkaRecord(
   }
 }
 
-function buildHoneyMoneyTransaction(
+function buildHoneyMoneyIncomeExpenseTransaction(
   normalized: NormalizedRecord,
-  accountId: number,
-  incoming: boolean
+  accountId: number
 ): HoneyMoneyTransaction {
   const category = mapTochkaCategory(normalized.description, normalized.mcc);
-  const subtype = incoming ? 'i' : 'e';
+  const subtype = normalized.type === 'income' ? 'i' : 'e';
   const normalizedAmount = normalizeHoneyMoneyAmount(normalized.amount, subtype);
 
   return {
@@ -600,6 +626,37 @@ function buildHoneyMoneyTransaction(
     plan_amount: null,
     common_id: null,
     transfer_to_currency: null
+  };
+}
+
+function buildHoneyMoneyTransferTransaction(
+  normalized: NormalizedRecord,
+  payerHmId: number,
+  payeeHmId: number
+): HoneyMoneyTransaction {
+  const realAmount = Math.round(Math.abs(normalized.amount));
+
+  return {
+    subtype: 't',
+    date: normalized.date.slice(0, 10),
+    account_id: payerHmId,
+    currency: normalized.currency.toLowerCase(),
+    id: null,
+    type: 'unplanned',
+    virtual_id: -1,
+    category: null,
+    description: String(realAmount),
+    planned_repeat_days: 0,
+    planned_repeat_end: 'always',
+    planned_repeat_end_date: null,
+    transfer_to_amount: realAmount,
+    transfer_type: 'a',
+    real_amount: realAmount,
+    plan_amount: null,
+    common_id: null,
+    transfer_to_currency: null,
+    transfer_from_id: payerHmId,
+    transfer_to_id: payeeHmId
   };
 }
 

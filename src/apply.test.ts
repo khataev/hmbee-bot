@@ -12,7 +12,7 @@ function createRecord(transactionId: string): ReadyApplyRecord {
       account: '40802810309500023530',
       status: 'Withdraw',
       date: '2026-04-27T11:48:03.000+05:00',
-      type: 'Purchase',
+      type: 'expense',
       amount: 241.07,
       currency: 'RUB',
       description: 'Test',

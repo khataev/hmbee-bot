@@ -41,6 +41,10 @@ Perform a senior-level code review of the current changes.
      - 🟡 **WARNING**: Architecture improvements, missing constants, weak typing.
      - 🟢 **SUGGESTION**: Naming, documentation, non-blocking refactoring.
 
+## Reviewer scope
+
+The reviewer **only reports findings** — it does not implement fixes, refactor code, or make edits to source files. All findings go into `review.md`. Fixes are applied separately via `/opsx:apply`.
+
 ## Integration with Apply
 
 After generating the report, inform the user:
