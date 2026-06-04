@@ -40,6 +40,11 @@ This project follows a pragmatic TypeScript style focused on readability and rel
 - Use **absolute imports** starting with `src/` for all project files (e.g., `import { ... } from 'src/env.js'`). **Relative imports (`./`, `../`) are forbidden.**
 - Always pin exact version of installed package
 
+## Testing
+
+- Do not throw exceptions inside tests for type narrowing purposes. Use `as` type assertions instead — they are more readable and keep the test body focused on assertions.
+- Reserve `throw` / guard clauses in tests only for logic that genuinely cannot continue (e.g., the result itself is undefined when it should not be).
+
 ## Formatting and linting
 
 - Biome is the single quality tool in this repository.
