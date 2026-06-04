@@ -63,8 +63,8 @@ export type TypeCodeConditionsConfig = z.infer<typeof TypeCodeConditionsSchema>;
 export type AppConfig = z.infer<typeof ResolvedAppConfigSchema>;
 
 export interface AccountRegistry {
-  isOwned(account: string, bic?: string): boolean;
-  isDeposit(account: string, bic?: string): boolean;
+  isOwned(account: string, bic: string): boolean;
+  isDeposit(account: string, bic: string): boolean;
   getHmAccountId(account: string): number | undefined;
 }
 
