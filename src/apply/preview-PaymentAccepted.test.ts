@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 describe('PaymentAccepted classification', () => {
   const accountMappings = {
     '40802810100000000001': 2053036,
-    '40802810100000000002': 2053036
+    '40802810100000000002': 2053037
   };
 
   const options = {
@@ -91,7 +91,7 @@ describe('PaymentAccepted classification', () => {
 
     const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
     expect(hmbee.transfer_from_id).toBe(2053036);
-    expect(hmbee.transfer_to_id).toBe(2053036);
+    expect(hmbee.transfer_to_id).toBe(2053037);
     expect(hmbee.real_amount).toBeGreaterThan(0);
   });
 

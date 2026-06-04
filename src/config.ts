@@ -147,6 +147,7 @@ export function createAccountRegistry(config: AppConfig): AccountRegistry {
       }
 
       if (account.startsWith('421')) {
+        // Russian bank accounts encode the ISO 4217 numeric currency code at positions 5–7
         const isoCode = account.slice(5, 8);
         const hmCurrency = currenciesMapping[isoCode];
         if (hmCurrency) {
