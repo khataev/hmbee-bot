@@ -82,9 +82,10 @@ function getCategoryMapping(config) {
 async function loadExistingMappings() {
   const config = await loadJsonFile(CONFIG_PATH);
   const mapping = getCategoryMapping(config);
+  const titleRegexes = Object.keys(mapping.title).map((pat) => new RegExp(pat, "i"));
   return {
     existingMcc: new Set(Object.keys(mapping.mcc)),
-    existingTitle: new Set(Object.keys(mapping.title)),
+    titleRegexes,
   };
 }
 
@@ -145,7 +146,7 @@ async function main() {
     throw new Error("Ожидался массив записей в JSON-файле");
   }
 
-  const { existingMcc, existingTitle } = await loadExistingMappings();
+  const { existingMcc, titleRegexes } = await loadExistingMappings();
 
   const rl = readline.createInterface({ input, output });
 
@@ -162,7 +163,7 @@ async function main() {
       const mccKey = String(mccValue ?? "");
       const titleKey = String(titleValue ?? "");
 
-      if ((mccKey && existingMcc.has(mccKey)) || (titleKey && existingTitle.has(titleKey))) {
+      if ((mccKey && existingMcc.has(mccKey)) || (titleKey && titleRegexes.some((rx) => rx.test(titleKey)))) {
         console.log(
           `[${index + 1}/${parsed.length}] mcc: ${mccKey || "-"}, title: ${titleKey || "-"}`,
         );
@@ -213,7 +214,7 @@ async function main() {
         }
 
         if (parsedLine.mappingField === TITLE_INPUT && sourceKey) {
-          existingTitle.add(sourceKey);
+          titleRegexes.push(new RegExp(sourceKey, "i"));
         }
 
         const entryJson = JSON.stringify({ [mappingKey]: sourceKey, ...mappingEntry });
