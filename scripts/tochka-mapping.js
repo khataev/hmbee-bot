@@ -8,7 +8,6 @@ import { stdin as input, stdout as output } from "node:process";
 const PROJECT_ROOT = process.cwd();
 const DEFAULT_DIR = path.join(PROJECT_ROOT, "sync", "tochka");
 const CONFIG_PATH = path.join(PROJECT_ROOT, "config", "sources.json");
-const CONFIG_EXAMPLE_PATH = path.join(PROJECT_ROOT, "config", "sources.example.json");
 const MCC_INPUT = "m";
 const TITLE_INPUT = "t";
 
@@ -90,12 +89,10 @@ async function loadExistingMappings() {
 }
 
 async function saveMappingEntry(mappingField, key, entry) {
-  for (const filePath of [CONFIG_PATH, CONFIG_EXAMPLE_PATH]) {
-    const config = await loadJsonFile(filePath);
-    const mapping = getCategoryMapping(config);
-    mapping[mappingField][key] = entry;
-    await saveJsonFile(filePath, config);
-  }
+  const config = await loadJsonFile(CONFIG_PATH);
+  const mapping = getCategoryMapping(config);
+  mapping[mappingField][key] = entry;
+  await saveJsonFile(CONFIG_PATH, config);
 }
 
 async function resolveInputFile(inputArg) {
@@ -154,7 +151,7 @@ async function main() {
 
   try {
     console.log(`Файл: ${path.relative(PROJECT_ROOT, inputPath)}`);
-    console.log(`Записываться будет в: config/sources.json и config/sources.example.json`);
+    console.log(`Записываться будет в: config/sources.json`);
     console.log('Формат ввода: m(cc)|t(itle), "Название категории"[, Описание]');
     console.log("Нажмите Enter для пропуска записи. Введите q для остановки.\n");
 
