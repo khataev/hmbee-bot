@@ -27,8 +27,19 @@ const TochkaConfigSchema = z.object({
   typeCodes: z.record(z.string(), TypeCodeRuleSchema).default({})
 });
 
+const MappingEntrySchema = z.object({
+  category: z.string(),
+  description: z.string().optional()
+});
+
+const categoryMappingSchema = z.object({
+  mcc: z.record(z.string(), MappingEntrySchema).default({}),
+  title: z.record(z.string(), MappingEntrySchema).default({})
+});
+
 const HmbeeConfigSchema = z.object({
-  currenciesMapping: z.record(z.string(), z.string()).default({})
+  currenciesMapping: z.record(z.string(), z.string()).default({}),
+  categoryMapping: categoryMappingSchema.default({ mcc: {}, title: {} })
 });
 
 const AppConfigSchema = z.object({
@@ -46,7 +57,11 @@ const ResolvedTochkaConfigSchema = z.object({
 });
 
 const ResolvedHmbeeConfigSchema = z.object({
-  currenciesMapping: z.record(z.string(), z.string())
+  currenciesMapping: z.record(z.string(), z.string()),
+  categoryMapping: z.object({
+    mcc: z.record(z.string(), MappingEntrySchema),
+    title: z.record(z.string(), MappingEntrySchema)
+  })
 });
 
 const ResolvedAppConfigSchema = z.object({
@@ -61,6 +76,7 @@ export type HoneyMoneyAccountConfig = z.infer<typeof HoneyMoneyAccountSchema>;
 export type TypeCodeRule = z.infer<typeof TypeCodeRuleSchema>;
 export type TypeCodeConditionsConfig = z.infer<typeof TypeCodeConditionsSchema>;
 export type AppConfig = z.infer<typeof ResolvedAppConfigSchema>;
+export type MappingEntry = z.infer<typeof MappingEntrySchema>;
 
 export interface AccountRegistry {
   isOwned(account: string, bic: string): boolean;
@@ -103,10 +119,12 @@ export function loadConfig(): AppConfig {
   );
 
   const currenciesMapping = config.hmbee.currenciesMapping;
+  const categoryMapping = config.hmbee.categoryMapping;
 
   return ResolvedAppConfigSchema.parse({
     hmbee: {
-      currenciesMapping
+      currenciesMapping,
+      categoryMapping
     },
     sources: {
       tochka: {

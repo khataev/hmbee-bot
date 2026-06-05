@@ -99,7 +99,8 @@ program
         normalizeTochkaRecord(record, {
           accountMappings: config.sources.tochka.accountMappings,
           typeCodeRules: config.sources.tochka.typeCodes,
-          accountRegistry
+          accountRegistry,
+          categoryMapping: config.hmbee.categoryMapping
         })
       );
 

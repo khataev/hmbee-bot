@@ -13,9 +13,11 @@ describe('SbpC2BRefund classification', () => {
 
   const options = {
     accountMappings,
+    categoryMapping: { mcc: {}, title: {} },
     accountRegistry: createAccountRegistry({
       hmbee: {
-        currenciesMapping: {}
+        currenciesMapping: {},
+        categoryMapping: { mcc: {}, title: {} }
       },
       sources: {
         tochka: {

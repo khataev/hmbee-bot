@@ -17,11 +17,13 @@ describe('PaymentWrittenOff classification', () => {
 
   const options = {
     accountMappings,
+    categoryMapping: { mcc: {}, title: {} },
     accountRegistry: createAccountRegistry({
       hmbee: {
         currenciesMapping: {
           '810': 'rub'
-        }
+        },
+        categoryMapping: { mcc: {}, title: {} }
       },
       sources: {
         tochka: {

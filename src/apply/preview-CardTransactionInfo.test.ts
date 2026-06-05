@@ -9,11 +9,25 @@ import { describe, expect, it } from 'vitest';
 describe('CardTransactionInfo classification', () => {
   const accountMappings = { '40802810309500012345': 67890 };
 
+  const categoryMapping = {
+    mcc: {
+      '5411': { category: 'Покупки / Продукты' },
+      '4111': { category: 'Проезд / Общественный транспорт' },
+      '5300': { category: 'Покупки / Маркетплейсы' },
+      '4121': { category: 'Проезд / Такси' }
+    },
+    title: {
+      WHOOSH: { category: 'Услуги / Аренда самокатов' }
+    }
+  };
+
   const options = {
     accountMappings,
+    categoryMapping,
     accountRegistry: createAccountRegistry({
       hmbee: {
-        currenciesMapping: {}
+        currenciesMapping: {},
+        categoryMapping: { mcc: {}, title: {} }
       },
       sources: {
         tochka: {
@@ -231,6 +245,7 @@ describe('CardTransactionInfo classification', () => {
   it('fails identification on included/excluded ambiguity', () => {
     const optionsWithAmbiguity = {
       ...options,
+      categoryMapping: { mcc: {}, title: {} },
       typeCodeRules: {
         CardTransactionInfo: {
           conditions: {
@@ -278,5 +293,46 @@ describe('CardTransactionInfo classification', () => {
     expect(normalizeHoneyMoneyAmount(241.07, 'e')).toBe(-241);
     expect(normalizeHoneyMoneyAmount(169.99, 'e')).toBe(-170);
     expect(normalizeHoneyMoneyAmount(241.07, 'i')).toBe(241);
+  });
+
+  it('generates description with mapping description when present', () => {
+    const record = {
+      ...mockBaseRecord,
+      data: { ...mockBaseRecord.data, mcc: '5912' }
+    };
+    const result = normalizeTochkaRecord(record, {
+      ...options,
+      categoryMapping: {
+        mcc: { '5912': { category: 'Покупки / Аптека и БАДы', description: 'аптека' } },
+        title: {}
+      }
+    });
+    expect(result.hmbee?.category).toBe('Покупки / Аптека и БАДы');
+    expect(result.hmbee?.description).toBe('241 аптека');
+  });
+
+  it('generates amount-only description when mapping entry has no description', () => {
+    const record = {
+      ...mockBaseRecord,
+      data: { ...mockBaseRecord.data, mcc: '5912' }
+    };
+    const result = normalizeTochkaRecord(record, {
+      ...options,
+      categoryMapping: {
+        mcc: { '5912': { category: 'Покупки / Аптека и БАДы' } },
+        title: {}
+      }
+    });
+    expect(result.hmbee?.category).toBe('Покупки / Аптека и БАДы');
+    expect(result.hmbee?.description).toBe('241');
+  });
+
+  it('returns null category and amount-only description when categoryMapping is empty', () => {
+    const result = normalizeTochkaRecord(mockBaseRecord, {
+      ...options,
+      categoryMapping: { mcc: {}, title: {} }
+    });
+    expect(result.hmbee?.category).toBeNull();
+    expect(result.hmbee?.description).toBe('241');
   });
 });
