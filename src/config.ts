@@ -32,14 +32,20 @@ const MappingEntrySchema = z.object({
   description: z.string().optional()
 });
 
+const ignoredMappingSchema = z.object({
+  mcc: z.array(z.string()).default([]),
+  title: z.array(z.string()).default([])
+});
+
 const categoryMappingSchema = z.object({
   mcc: z.record(z.string(), MappingEntrySchema).default({}),
-  title: z.record(z.string(), MappingEntrySchema).default({})
+  title: z.record(z.string(), MappingEntrySchema).default({}),
+  ignored: ignoredMappingSchema.default({ mcc: [], title: [] })
 });
 
 const HmbeeConfigSchema = z.object({
   currenciesMapping: z.record(z.string(), z.string()).default({}),
-  categoryMapping: categoryMappingSchema.default({ mcc: {}, title: {} })
+  categoryMapping: categoryMappingSchema.default({ mcc: {}, title: {}, ignored: { mcc: [], title: [] } })
 });
 
 const AppConfigSchema = z.object({
@@ -60,7 +66,8 @@ const ResolvedHmbeeConfigSchema = z.object({
   currenciesMapping: z.record(z.string(), z.string()),
   categoryMapping: z.object({
     mcc: z.record(z.string(), MappingEntrySchema),
-    title: z.record(z.string(), MappingEntrySchema)
+    title: z.record(z.string(), MappingEntrySchema),
+    ignored: ignoredMappingSchema
   })
 });
 

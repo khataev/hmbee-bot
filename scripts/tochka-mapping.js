@@ -72,10 +72,13 @@ async function saveJsonFile(filePath, data) {
 
 function getCategoryMapping(config) {
   if (!config.hmbee.categoryMapping) {
-    config.hmbee.categoryMapping = { mcc: {}, title: {} };
+    config.hmbee.categoryMapping = { mcc: {}, title: {}, ignored: { mcc: [], title: [] } };
   }
   if (!config.hmbee.categoryMapping.mcc) config.hmbee.categoryMapping.mcc = {};
   if (!config.hmbee.categoryMapping.title) config.hmbee.categoryMapping.title = {};
+  if (!config.hmbee.categoryMapping.ignored) config.hmbee.categoryMapping.ignored = { mcc: [], title: [] };
+  if (!config.hmbee.categoryMapping.ignored.mcc) config.hmbee.categoryMapping.ignored.mcc = [];
+  if (!config.hmbee.categoryMapping.ignored.title) config.hmbee.categoryMapping.ignored.title = [];
   return config.hmbee.categoryMapping;
 }
 
@@ -83,9 +86,13 @@ async function loadExistingMappings() {
   const config = await loadJsonFile(CONFIG_PATH);
   const mapping = getCategoryMapping(config);
   const titleRegexes = Object.keys(mapping.title).map((pat) => new RegExp(pat, "i"));
+  const ignoredMcc = new Set(mapping.ignored.mcc);
+  const ignoredTitleRegexes = mapping.ignored.title.map((pat) => new RegExp(pat, "i"));
   return {
     existingMcc: new Set(Object.keys(mapping.mcc)),
     titleRegexes,
+    ignoredMcc,
+    ignoredTitleRegexes,
   };
 }
 
@@ -93,6 +100,15 @@ async function saveMappingEntry(mappingField, key, entry) {
   const config = await loadJsonFile(CONFIG_PATH);
   const mapping = getCategoryMapping(config);
   mapping[mappingField][key] = entry;
+  await saveJsonFile(CONFIG_PATH, config);
+}
+
+async function saveIgnoredEntry(field, key) {
+  const config = await loadJsonFile(CONFIG_PATH);
+  const mapping = getCategoryMapping(config);
+  if (!mapping.ignored[field].includes(key)) {
+    mapping.ignored[field].push(key);
+  }
   await saveJsonFile(CONFIG_PATH, config);
 }
 
@@ -146,7 +162,7 @@ async function main() {
     throw new Error("Ожидался массив записей в JSON-файле");
   }
 
-  const { existingMcc, titleRegexes } = await loadExistingMappings();
+  const { existingMcc, titleRegexes, ignoredMcc, ignoredTitleRegexes } = await loadExistingMappings();
 
   const rl = readline.createInterface({ input, output });
 
@@ -154,7 +170,7 @@ async function main() {
     console.log(`Файл: ${path.relative(PROJECT_ROOT, inputPath)}`);
     console.log(`Записываться будет в: config/sources.json`);
     console.log('Формат ввода: m(cc)|t(itle), "Название категории"[, Описание]');
-    console.log("Нажмите Enter для пропуска записи. Введите q для остановки.\n");
+    console.log("Нажмите Enter для пропуска записи. Введите i(gnore)/im/it для игнорирования. Введите q для остановки.\n");
 
     for (let index = 0; index < parsed.length; index += 1) {
       const entry = parsed[index];
@@ -163,11 +179,19 @@ async function main() {
       const mccKey = String(mccValue ?? "");
       const titleKey = String(titleValue ?? "");
 
-      if ((mccKey && existingMcc.has(mccKey)) || (titleKey && titleRegexes.some((rx) => rx.test(titleKey)))) {
+      const alreadyMapped =
+        (mccKey && existingMcc.has(mccKey)) ||
+        (titleKey && titleRegexes.some((rx) => rx.test(titleKey)));
+      const ignored =
+        (mccKey && ignoredMcc.has(mccKey)) ||
+        (titleKey && ignoredTitleRegexes.some((rx) => rx.test(titleKey)));
+
+      if (alreadyMapped || ignored) {
         console.log(
           `[${index + 1}/${parsed.length}] mcc: ${mccKey || "-"}, title: ${titleKey || "-"}`,
         );
-        console.log("Пропущено автоматически: mcc или title уже есть в маппинге\n");
+        const reason = ignored ? "в списке игнорирования" : "уже есть в маппинге";
+        console.log(`Пропущено автоматически: mcc или title ${reason}\n`);
         continue;
       }
 
@@ -184,6 +208,41 @@ async function main() {
         if (/^(q|quit|exit)$/i.test(answer)) {
           console.log("Остановка по команде пользователя");
           return;
+        }
+
+        if (/^(i|im|it)$/i.test(answer)) {
+          const command = answer.toLowerCase();
+          const hasMcc = Boolean(mccKey);
+          const hasTitle = Boolean(titleKey);
+
+          let ignoreField;
+          if (command === "im") {
+            ignoreField = "mcc";
+          } else if (command === "it") {
+            ignoreField = "title";
+          } else {
+            if (hasMcc && hasTitle) {
+              console.log("Неверный ввод. Введите im или it");
+              continue;
+            }
+            ignoreField = hasMcc ? "mcc" : "title";
+          }
+
+          const ignoreKey =
+            ignoreField === "title"
+              ? await validateAndGetPattern(rl, titleKey)
+              : mccKey;
+
+          await saveIgnoredEntry(ignoreField, ignoreKey);
+
+          if (ignoreField === "mcc") {
+            ignoredMcc.add(ignoreKey);
+          } else {
+            ignoredTitleRegexes.push(new RegExp(ignoreKey, "i"));
+          }
+
+          console.log(`Добавлено в ignore: ${ignoreField}="${ignoreKey}"\n`);
+          break;
         }
 
         const parsedLine = parseInputLine(answer);

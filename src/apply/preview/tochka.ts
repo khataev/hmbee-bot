@@ -5,6 +5,7 @@ import type { AccountRegistry, MappingEntry, TypeCodeRule } from 'src/config.js'
 export interface CategoryMapping {
   mcc: Record<string, MappingEntry>;
   title: Record<string, MappingEntry>;
+  ignored: { mcc: string[]; title: string[] };
 }
 
 export interface TochkaNormalizationOptions {
