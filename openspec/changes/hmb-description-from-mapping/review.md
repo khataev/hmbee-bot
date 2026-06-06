@@ -119,7 +119,7 @@ The `categoryMapping` example documents `mcc` and `title` but omits `ignored`. A
 
 ---
 
-### S2 — Dot in `TIMEWEB.CLOUD` title pattern is unescaped
+### S2 ✅ — Dot in `TIMEWEB.CLOUD` title pattern is unescaped
 
 **File:** `config/sources.example.json`
 

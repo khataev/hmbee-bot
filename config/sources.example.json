@@ -13,7 +13,7 @@
       },
       "title": {
         "WHOOSH": { "category": "Услуги / Аренда самокатов" },
-        "TIMEWEB.CLOUD": { "category": "Услуги / Хостинги и облака", "description": "TimeWeb" },
+        "TIMEWEB\\.CLOUD": { "category": "Услуги / Хостинги и облака", "description": "TimeWeb" },
         "YANDEX.+PLUS": { "category": "Подписки и донаты / Яндекс Плюс" }
       }
     }
