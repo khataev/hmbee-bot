@@ -305,8 +305,7 @@ describe('CardTransactionInfo classification', () => {
       ...options,
       categoryMapping: {
         mcc: { '5912': { category: 'Покупки / Аптека и БАДы', description: 'аптека' } },
-        title: {},
-        ignored: { mcc: [], title: [] }
+        title: {}
       }
     });
     expect(result.hmbee?.category).toBe('Покупки / Аптека и БАДы');
@@ -322,8 +321,7 @@ describe('CardTransactionInfo classification', () => {
       ...options,
       categoryMapping: {
         mcc: { '5912': { category: 'Покупки / Аптека и БАДы' } },
-        title: {},
-        ignored: { mcc: [], title: [] }
+        title: {}
       }
     });
     expect(result.hmbee?.category).toBe('Покупки / Аптека и БАДы');
@@ -333,7 +331,7 @@ describe('CardTransactionInfo classification', () => {
   it('returns null category and amount-only description when categoryMapping is empty', () => {
     const result = normalizeTochkaRecord(mockBaseRecord, {
       ...options,
-      categoryMapping: { mcc: {}, title: {}, ignored: { mcc: [], title: [] } }
+      categoryMapping: { mcc: {}, title: {} }
     });
     expect(result.hmbee?.category).toBeNull();
     expect(result.hmbee?.description).toBe('241');

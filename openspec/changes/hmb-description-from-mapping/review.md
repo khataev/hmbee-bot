@@ -92,7 +92,7 @@ W1 becomes a follow-on: `CategoryMapping` in `tochka.ts` should reflect the reso
 
 ---
 
-### W5 — `ignored` field passed into normalization but never consulted
+### W5 ✅ — `ignored` field passed into normalization but never consulted
 
 **File:** `src/apply/preview/tochka.ts:8, 678-694`
 
