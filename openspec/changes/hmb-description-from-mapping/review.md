@@ -8,7 +8,7 @@ All checks pass: `npm audit` (0 vulnerabilities), `npm run typecheck`, `npm run 
 
 ## 🟡 WARNING
 
-### W1 — `CategoryMapping` interface duplicates Zod-derived type
+### W1 ✅ — `CategoryMapping` interface duplicates Zod-derived type
 
 **File:** `src/apply/preview/tochka.ts:4-9`
 

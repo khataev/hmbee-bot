@@ -91,6 +91,7 @@ export type TypeCodeConditionsConfig = z.infer<typeof TypeCodeConditionsSchema>;
 export type MappingEntry = z.infer<typeof MappingEntrySchema>;
 export type TitlePattern = z.infer<typeof TitlePatternSchema>;
 export type AppConfig = z.infer<typeof ResolvedAppConfigSchema>;
+export type CategoryMapping = Omit<z.infer<typeof ResolvedCategoryMappingSchema>, 'ignored'>;
 
 export interface AccountRegistry {
   isOwned(account: string, bic: string): boolean;

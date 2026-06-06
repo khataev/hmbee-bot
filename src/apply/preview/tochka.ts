@@ -1,11 +1,6 @@
 import { evaluateRule } from 'src/apply/preview/ruleEngine.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
-import type { AccountRegistry, MappingEntry, TitlePattern, TypeCodeRule } from 'src/config.js';
-
-export interface CategoryMapping {
-  mcc: Record<string, MappingEntry>;
-  title: TitlePattern[];
-}
+import type { AccountRegistry, CategoryMapping, MappingEntry, TypeCodeRule } from 'src/config.js';
 
 export interface TochkaNormalizationOptions {
   accountMappings: Record<string, number>;
