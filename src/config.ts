@@ -64,11 +64,7 @@ const ResolvedTochkaConfigSchema = z.object({
 
 const ResolvedHmbeeConfigSchema = z.object({
   currenciesMapping: z.record(z.string(), z.string()),
-  categoryMapping: z.object({
-    mcc: z.record(z.string(), MappingEntrySchema),
-    title: z.record(z.string(), MappingEntrySchema),
-    ignored: ignoredMappingSchema
-  })
+  categoryMapping: categoryMappingSchema
 });
 
 const ResolvedAppConfigSchema = z.object({
