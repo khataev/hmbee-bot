@@ -104,7 +104,7 @@ If `ignored` is only meaningful for the interactive script (to avoid re-promptin
 
 ## 🟢 SUGGESTION
 
-### S1 — `ignored` section absent from `config/sources.example.json`
+### S1 ✅ — `ignored` section absent from `config/sources.example.json`
 
 **File:** `config/sources.example.json`
 
