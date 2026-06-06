@@ -1,10 +1,10 @@
 import { evaluateRule } from 'src/apply/preview/ruleEngine.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
-import type { AccountRegistry, MappingEntry, TypeCodeRule } from 'src/config.js';
+import type { AccountRegistry, MappingEntry, TitlePattern, TypeCodeRule } from 'src/config.js';
 
 export interface CategoryMapping {
   mcc: Record<string, MappingEntry>;
-  title: Record<string, MappingEntry>;
+  title: TitlePattern[];
 }
 
 export interface TochkaNormalizationOptions {
@@ -683,8 +683,8 @@ function mapTochkaCategory(
     return categoryMapping.mcc[mcc];
   }
 
-  for (const [pat, entry] of Object.entries(categoryMapping.title)) {
-    if (new RegExp(pat, 'i').test(description)) {
+  for (const { pattern, entry } of categoryMapping.title) {
+    if (pattern.test(description)) {
       return entry;
     }
   }

@@ -15,11 +15,11 @@ describe('PaymentAccepted classification', () => {
 
   const options = {
     accountMappings,
-    categoryMapping: { mcc: {}, title: {}, ignored: { mcc: [], title: [] } },
+    categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } },
     accountRegistry: createAccountRegistry({
       hmbee: {
         currenciesMapping: {},
-        categoryMapping: { mcc: {}, title: {}, ignored: { mcc: [], title: [] } }
+        categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
       },
       sources: {
         tochka: {

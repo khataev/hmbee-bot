@@ -54,7 +54,7 @@ categoryMapping: categoryMappingSchema
 
 ---
 
-### W3+W4 — Regex compiled on every call; invalid patterns crash at runtime
+### W3+W4 ✅ — Regex compiled on every call; invalid patterns crash at runtime
 
 **Files:** `src/apply/preview/tochka.ts:687-689`, `src/config.ts`
 

@@ -62,9 +62,20 @@ const ResolvedTochkaConfigSchema = z.object({
   typeCodes: z.record(z.string(), TypeCodeRuleSchema)
 });
 
+const TitlePatternSchema = z.object({
+  pattern: z.instanceof(RegExp),
+  entry: MappingEntrySchema
+});
+
+const ResolvedCategoryMappingSchema = z.object({
+  mcc: z.record(z.string(), MappingEntrySchema),
+  title: z.array(TitlePatternSchema),
+  ignored: ignoredMappingSchema
+});
+
 const ResolvedHmbeeConfigSchema = z.object({
   currenciesMapping: z.record(z.string(), z.string()),
-  categoryMapping: categoryMappingSchema
+  categoryMapping: ResolvedCategoryMappingSchema
 });
 
 const ResolvedAppConfigSchema = z.object({
@@ -75,11 +86,11 @@ const ResolvedAppConfigSchema = z.object({
 });
 
 export type HoneyMoneyAccountConfig = z.infer<typeof HoneyMoneyAccountSchema>;
-
 export type TypeCodeRule = z.infer<typeof TypeCodeRuleSchema>;
 export type TypeCodeConditionsConfig = z.infer<typeof TypeCodeConditionsSchema>;
-export type AppConfig = z.infer<typeof ResolvedAppConfigSchema>;
 export type MappingEntry = z.infer<typeof MappingEntrySchema>;
+export type TitlePattern = z.infer<typeof TitlePatternSchema>;
+export type AppConfig = z.infer<typeof ResolvedAppConfigSchema>;
 
 export interface AccountRegistry {
   isOwned(account: string, bic: string): boolean;
@@ -121,13 +132,22 @@ export function loadConfig(): AppConfig {
     })
   );
 
-  const currenciesMapping = config.hmbee.currenciesMapping;
-  const categoryMapping = config.hmbee.categoryMapping;
+  const titlePatterns: TitlePattern[] = Object.entries(config.hmbee.categoryMapping.title).map(([pat, entry]) => {
+    try {
+      return { pattern: new RegExp(pat, 'i'), entry };
+    } catch {
+      throw new Error(`Invalid regex pattern in categoryMapping.title: "${pat}"`);
+    }
+  });
 
   return ResolvedAppConfigSchema.parse({
     hmbee: {
-      currenciesMapping,
-      categoryMapping
+      currenciesMapping: config.hmbee.currenciesMapping,
+      categoryMapping: {
+        mcc: config.hmbee.categoryMapping.mcc,
+        title: titlePatterns,
+        ignored: config.hmbee.categoryMapping.ignored
+      }
     },
     sources: {
       tochka: {
