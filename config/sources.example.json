@@ -4,6 +4,22 @@
       "810": "rub",
       "840": "usd",
       "978": "eur"
+    },
+    "categoryMapping": {
+      "mcc": {
+        "5411": { "category": "Покупки / Продукты" },
+        "4121": { "category": "Проезд / Такси" },
+        "5912": { "category": "Покупки / Аптека и БАДы", "description": "аптека" }
+      },
+      "title": {
+        "WHOOSH": { "category": "Услуги / Аренда самокатов" },
+        "TIMEWEB\\.CLOUD": { "category": "Услуги / Хостинги и облака", "description": "TimeWeb" },
+        "YANDEX.+PLUS": { "category": "Подписки и донаты / Яндекс Плюс" }
+      },
+      "ignored": {
+        "mcc": [],
+        "title": ["АКЦИОНЕРНОЕ ОБЩЕСТВО \"ТОЧКА\""]
+      }
     }
   },
   "sources": {

@@ -1,11 +1,12 @@
 import { evaluateRule } from 'src/apply/preview/ruleEngine.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
-import type { AccountRegistry, TypeCodeRule } from 'src/config.js';
+import type { AccountRegistry, CategoryMapping, MappingEntry, TypeCodeRule } from 'src/config.js';
 
 export interface TochkaNormalizationOptions {
   accountMappings: Record<string, number>;
   typeCodeRules: Record<string, TypeCodeRule>;
   accountRegistry: AccountRegistry;
+  categoryMapping: CategoryMapping;
 }
 
 interface TochkaRecordMeta<TTypeCode extends string> {
@@ -587,7 +588,7 @@ export function normalizeTochkaRecord(
       reason: classification.reason,
       sourceRecord,
       normalized,
-      hmbee: buildHoneyMoneyIncomeExpenseTransaction(normalized, tochkaAccountId)
+      hmbee: buildHoneyMoneyIncomeExpenseTransaction(normalized, tochkaAccountId, options.categoryMapping)
     };
   } catch (error) {
     return {
@@ -601,11 +602,14 @@ export function normalizeTochkaRecord(
 
 function buildHoneyMoneyIncomeExpenseTransaction(
   normalized: NormalizedRecord,
-  accountId: number
+  accountId: number,
+  categoryMapping: CategoryMapping
 ): HoneyMoneyTransaction {
-  const category = mapTochkaCategory(normalized.description, normalized.mcc);
+  const entry = mapTochkaCategory(normalized.description, normalized.mcc, categoryMapping);
   const subtype = normalized.type === 'income' ? 'i' : 'e';
   const normalizedAmount = normalizeHoneyMoneyAmount(normalized.amount, subtype);
+  const absAmount = Math.abs(normalizedAmount);
+  const description = entry?.description ? `${absAmount} ${entry.description}` : String(absAmount);
 
   return {
     subtype,
@@ -615,8 +619,8 @@ function buildHoneyMoneyIncomeExpenseTransaction(
     id: null,
     type: 'unplanned',
     virtual_id: -1,
-    category,
-    description: String(Math.abs(normalizedAmount)),
+    category: entry ? entry.category : null,
+    description,
     planned_repeat_days: 0,
     planned_repeat_end: 'always',
     planned_repeat_end_date: null,
@@ -665,73 +669,18 @@ export function normalizeHoneyMoneyAmount(amount: number, subtype: 'e' | 'i'): n
   return subtype === 'e' ? -normalizedAmount : normalizedAmount;
 }
 
-const MCC_MAP: Record<string, string> = {
-  '5411': 'Покупки / Продукты',
-  '5311': 'Покупки / Продукты',
-  '5499': 'Покупки / Продукты',
-  '5912': 'Покупки / Аптека и БАДы',
-  '4111': 'Проезд / Общественный транспорт',
-  '5300': 'Покупки / Маркетплейсы',
-  '5814': 'Еда вне дома',
-  '4131': 'Проезд / Общественный транспорт',
-  '4121': 'Проезд / Такси',
-  '5812': 'Еда вне дома',
-  '4814': 'Счета / Мобильная связь',
-  '5945': 'Покупки / Детские товары',
-  '8062': 'Услуги / Медицинские услуги',
-  '7221': 'Услуги',
-  '5999': 'Покупки',
-  '8999': 'Услуги',
-  '7338': 'Услуги',
-  '7996': 'Развлечения',
-  '7395': 'Услуги',
-  '5942': 'Покупки / Книги и Журналы',
-  '5541': 'Автомобиль / Бензин',
-  '7542': 'Автомобиль / Мойка',
-  '5719': 'Покупки / Хозтовары',
-  '8011': 'Услуги / Медицинские услуги',
-  '7922': 'Развлечения',
-  '7538': 'Автомобиль / Ремонт',
-  '5200': 'Покупки / Хозтовары',
-  '7349': 'Покупки / Хозтовары',
-  '7230': 'Услуги / Парикмахерская',
-  '5309': 'Путешествия / Покупки'
-};
-
-const TITLE_MAP: [string, string][] = [
-  ['PDLDK_AI_CLUB', 'Подписки и донаты'],
-  ['WHOOSH', 'Услуги / Аренда самокатов'],
-  ['TIMEWEB.CLOUD', 'Услуги / Хостинги и облака'],
-  ['GAZPROMBONUS', 'Подписки и донаты'],
-  ['LEONARDO', 'Покупки / Детские товары'],
-  ['ART-MOSKVA', 'Услуги / Коворкинг'],
-  ['YANDEX*5815*PLUS', 'Подписки и донаты / Яндекс Плюс'],
-  ['SHINSERVIS', 'Автомобиль / Шиномонтаж']
-];
-
-const TITLE_REGEX_MAP: [RegExp, string][] = [[/YANDEX.+PLUS/, 'Подписки и донаты / Яндекс Плюс']];
-
-/**
- * Maps Tochka description or MCC to Honey Money category.
- */
-function mapTochkaCategory(description: string, mcc?: string): string | null {
-  // 1. Try MCC first
-  if (mcc && MCC_MAP[mcc]) {
-    return MCC_MAP[mcc];
+function mapTochkaCategory(
+  description: string,
+  mcc: string | undefined,
+  categoryMapping: CategoryMapping
+): MappingEntry | null {
+  if (mcc && categoryMapping.mcc[mcc]) {
+    return categoryMapping.mcc[mcc];
   }
 
-  // 2. Try complete description match
-  const desc = description.toUpperCase();
-  for (const [pattern, category] of TITLE_MAP) {
-    if (desc.includes(pattern.toUpperCase())) {
-      return category;
-    }
-  }
-
-  // 3. Try regex patterns
-  for (const [regex, category] of TITLE_REGEX_MAP) {
-    if (regex.test(desc)) {
-      return category;
+  for (const { pattern, entry } of categoryMapping.title) {
+    if (pattern.test(description)) {
+      return entry;
     }
   }
 

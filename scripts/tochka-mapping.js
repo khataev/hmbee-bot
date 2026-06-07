@@ -7,7 +7,7 @@ import { stdin as input, stdout as output } from "node:process";
 
 const PROJECT_ROOT = process.cwd();
 const DEFAULT_DIR = path.join(PROJECT_ROOT, "sync", "tochka");
-const DEFAULT_OUT = path.join(PROJECT_ROOT, "tochka_mapping.txt");
+const CONFIG_PATH = path.join(PROJECT_ROOT, "config", "sources.json");
 const MCC_INPUT = "m";
 const TITLE_INPUT = "t";
 
@@ -24,19 +24,31 @@ function normalizeCategory(raw) {
 }
 
 function parseInputLine(line) {
-  const commaIndex = line.indexOf(",");
+  const firstComma = line.indexOf(",");
 
-  if (commaIndex === -1) {
-    return { error: "Ожидается запятая: m|t, \"Категория\"" };
+  if (firstComma === -1) {
+    return { error: 'Ожидается запятая: m|t, "Категория"' };
   }
 
-  const mappingField = line.slice(0, commaIndex).trim().toLowerCase();
-  const categoryPart = line.slice(commaIndex + 1);
-  const category = normalizeCategory(categoryPart);
+  const mappingField = line.slice(0, firstComma).trim().toLowerCase();
+  const rest = line.slice(firstComma + 1);
 
   if (mappingField !== MCC_INPUT && mappingField !== TITLE_INPUT) {
     return { error: `Первое значение должно быть ${MCC_INPUT} или ${TITLE_INPUT}` };
   }
+
+  const secondComma = rest.indexOf(",");
+  let categoryRaw, descriptionRaw;
+
+  if (secondComma === -1) {
+    categoryRaw = rest;
+    descriptionRaw = undefined;
+  } else {
+    categoryRaw = rest.slice(0, secondComma);
+    descriptionRaw = rest.slice(secondComma + 1).trim() || undefined;
+  }
+
+  const category = normalizeCategory(categoryRaw);
 
   if (!category) {
     return { error: "Название категории не должно быть пустым" };
@@ -45,60 +57,59 @@ function parseInputLine(line) {
   return {
     mappingField,
     category,
+    description: descriptionRaw,
   };
 }
 
-async function loadExistingMappings(filePath) {
-  try {
-    const raw = await fs.readFile(filePath, "utf8");
-    const lines = raw.split(/\r?\n/);
-    const existingMcc = new Set();
-    const existingTitle = new Set();
+async function loadJsonFile(filePath) {
+  const raw = await fs.readFile(filePath, "utf8");
+  return JSON.parse(raw);
+}
 
-    for (const line of lines) {
-      const trimmed = line.trim();
+async function saveJsonFile(filePath, data) {
+  await fs.writeFile(filePath, JSON.stringify(data, null, 2) + "\n", "utf8");
+}
 
-      if (!trimmed) {
-        continue;
-      }
-
-      let parsedLine;
-
-      try {
-        parsedLine = JSON.parse(trimmed);
-      } catch {
-        continue;
-      }
-
-      if (!parsedLine || typeof parsedLine !== "object") {
-        continue;
-      }
-
-      if (typeof parsedLine.mcc === "string" && parsedLine.mcc) {
-        existingMcc.add(parsedLine.mcc);
-      }
-
-      if (typeof parsedLine.title === "string" && parsedLine.title) {
-        existingTitle.add(parsedLine.title);
-      }
-    }
-
-    return { existingMcc, existingTitle };
-  } catch (error) {
-    if (
-      error &&
-      typeof error === "object" &&
-      "code" in error &&
-      error.code === "ENOENT"
-    ) {
-      return {
-        existingMcc: new Set(),
-        existingTitle: new Set(),
-      };
-    }
-
-    throw error;
+function getCategoryMapping(config) {
+  if (!config.hmbee.categoryMapping) {
+    config.hmbee.categoryMapping = { mcc: {}, title: {}, ignored: { mcc: [], title: [] } };
   }
+  if (!config.hmbee.categoryMapping.mcc) config.hmbee.categoryMapping.mcc = {};
+  if (!config.hmbee.categoryMapping.title) config.hmbee.categoryMapping.title = {};
+  if (!config.hmbee.categoryMapping.ignored) config.hmbee.categoryMapping.ignored = { mcc: [], title: [] };
+  if (!config.hmbee.categoryMapping.ignored.mcc) config.hmbee.categoryMapping.ignored.mcc = [];
+  if (!config.hmbee.categoryMapping.ignored.title) config.hmbee.categoryMapping.ignored.title = [];
+  return config.hmbee.categoryMapping;
+}
+
+async function loadExistingMappings() {
+  const config = await loadJsonFile(CONFIG_PATH);
+  const mapping = getCategoryMapping(config);
+  const titleRegexes = Object.keys(mapping.title).map((pat) => new RegExp(pat, "i"));
+  const ignoredMcc = new Set(mapping.ignored.mcc);
+  const ignoredTitleRegexes = mapping.ignored.title.map((pat) => new RegExp(pat, "i"));
+  return {
+    existingMcc: new Set(Object.keys(mapping.mcc)),
+    titleRegexes,
+    ignoredMcc,
+    ignoredTitleRegexes,
+  };
+}
+
+async function saveMappingEntry(mappingField, key, entry) {
+  const config = await loadJsonFile(CONFIG_PATH);
+  const mapping = getCategoryMapping(config);
+  mapping[mappingField][key] = entry;
+  await saveJsonFile(CONFIG_PATH, config);
+}
+
+async function saveIgnoredEntry(field, key) {
+  const config = await loadJsonFile(CONFIG_PATH);
+  const mapping = getCategoryMapping(config);
+  if (!mapping.ignored[field].includes(key)) {
+    mapping.ignored[field].push(key);
+  }
+  await saveJsonFile(CONFIG_PATH, config);
 }
 
 async function resolveInputFile(inputArg) {
@@ -121,16 +132,28 @@ async function resolveInputFile(inputArg) {
   return path.join(DEFAULT_DIR, jsonFiles[jsonFiles.length - 1]);
 }
 
+async function validateAndGetPattern(rl, titleValue) {
+  let selfMatches = false;
+  try {
+    selfMatches = new RegExp(titleValue, "i").test(titleValue);
+  } catch {
+    selfMatches = false;
+  }
+
+  if (selfMatches) {
+    return titleValue;
+  }
+
+  console.log(`⚠ Паттерн «${titleValue}» не матчится с title как regex.`);
+  console.log("  Введите паттерн вручную (или Enter чтобы сохранить строку as-is):");
+  const custom = (await rl.question("  > ")).trim();
+  return custom || titleValue;
+}
+
 async function main() {
   const inputArg = process.argv[2];
-  const outputArg = process.argv[3];
 
   const inputPath = await resolveInputFile(inputArg);
-  const outputPath = outputArg
-    ? path.isAbsolute(outputArg)
-      ? outputArg
-      : path.join(PROJECT_ROOT, outputArg)
-    : DEFAULT_OUT;
 
   const raw = await fs.readFile(inputPath, "utf8");
   const parsed = JSON.parse(raw);
@@ -139,16 +162,15 @@ async function main() {
     throw new Error("Ожидался массив записей в JSON-файле");
   }
 
-  const { existingMcc, existingTitle } = await loadExistingMappings(outputPath);
+  const { existingMcc, titleRegexes, ignoredMcc, ignoredTitleRegexes } = await loadExistingMappings();
 
   const rl = readline.createInterface({ input, output });
 
   try {
     console.log(`Файл: ${path.relative(PROJECT_ROOT, inputPath)}`);
-    console.log(`Записываться будет в: ${path.relative(PROJECT_ROOT, outputPath)}`);
-    console.log("Формат ввода: m(cc)|t(itle), \"Название категории\"");
-    console.log("Формат записи: {\"mcc\":\"...\",\"category\":\"...\"} или {\"title\":\"...\",\"category\":\"...\"}");
-    console.log("Нажмите Enter для пропуска записи. Введите q для остановки.\n");
+    console.log(`Записываться будет в: config/sources.json`);
+    console.log('Формат ввода: m(cc)|t(itle), "Название категории"[, Описание]');
+    console.log("Нажмите Enter для пропуска записи. Введите i(gnore)/im/it для игнорирования. Введите q для остановки.\n");
 
     for (let index = 0; index < parsed.length; index += 1) {
       const entry = parsed[index];
@@ -157,11 +179,19 @@ async function main() {
       const mccKey = String(mccValue ?? "");
       const titleKey = String(titleValue ?? "");
 
-      if ((mccKey && existingMcc.has(mccKey)) || (titleKey && existingTitle.has(titleKey))) {
+      const alreadyMapped =
+        (mccKey && existingMcc.has(mccKey)) ||
+        (titleKey && titleRegexes.some((rx) => rx.test(titleKey)));
+      const ignored =
+        (mccKey && ignoredMcc.has(mccKey)) ||
+        (titleKey && ignoredTitleRegexes.some((rx) => rx.test(titleKey)));
+
+      if (alreadyMapped || ignored) {
         console.log(
           `[${index + 1}/${parsed.length}] mcc: ${mccKey || "-"}, title: ${titleKey || "-"}`,
         );
-        console.log("Пропущено автоматически: mcc или title уже есть в файле маппинга\n");
+        const reason = ignored ? "в списке игнорирования" : "уже есть в маппинге";
+        console.log(`Пропущено автоматически: mcc или title ${reason}\n`);
         continue;
       }
 
@@ -180,6 +210,41 @@ async function main() {
           return;
         }
 
+        if (/^(i|im|it)$/i.test(answer)) {
+          const command = answer.toLowerCase();
+          const hasMcc = Boolean(mccKey);
+          const hasTitle = Boolean(titleKey);
+
+          let ignoreField;
+          if (command === "im") {
+            ignoreField = "mcc";
+          } else if (command === "it") {
+            ignoreField = "title";
+          } else {
+            if (hasMcc && hasTitle) {
+              console.log("Неверный ввод. Введите im или it");
+              continue;
+            }
+            ignoreField = hasMcc ? "mcc" : "title";
+          }
+
+          const ignoreKey =
+            ignoreField === "title"
+              ? await validateAndGetPattern(rl, titleKey)
+              : mccKey;
+
+          await saveIgnoredEntry(ignoreField, ignoreKey);
+
+          if (ignoreField === "mcc") {
+            ignoredMcc.add(ignoreKey);
+          } else {
+            ignoredTitleRegexes.push(new RegExp(ignoreKey, "i"));
+          }
+
+          console.log(`Добавлено в ignore: ${ignoreField}="${ignoreKey}"\n`);
+          break;
+        }
+
         const parsedLine = parseInputLine(answer);
 
         if ("error" in parsedLine) {
@@ -188,27 +253,31 @@ async function main() {
           continue;
         }
 
-        const sourceValue =
-          parsedLine.mappingField === MCC_INPUT
-            ? mccKey
-            : titleKey;
+        let sourceKey =
+          parsedLine.mappingField === MCC_INPUT ? mccKey : titleKey;
 
-        const outObject =
-          parsedLine.mappingField === MCC_INPUT
-            ? { mcc: sourceValue, category: parsedLine.category }
-            : { title: sourceValue, category: parsedLine.category };
-        const outLine = `${JSON.stringify(outObject)}\n`;
-        await fs.appendFile(outputPath, outLine, "utf8");
-
-        if (parsedLine.mappingField === MCC_INPUT && sourceValue) {
-          existingMcc.add(sourceValue);
+        if (parsedLine.mappingField === TITLE_INPUT) {
+          sourceKey = await validateAndGetPattern(rl, titleKey);
         }
 
-        if (parsedLine.mappingField === TITLE_INPUT && sourceValue) {
-          existingTitle.add(sourceValue);
+        const mappingEntry = { category: parsedLine.category };
+        if (parsedLine.description) {
+          mappingEntry.description = parsedLine.description;
         }
 
-        console.log(`Сохранено: ${outLine.trim()}\n`);
+        const mappingKey = parsedLine.mappingField === MCC_INPUT ? "mcc" : "title";
+        await saveMappingEntry(mappingKey, sourceKey, mappingEntry);
+
+        if (parsedLine.mappingField === MCC_INPUT && sourceKey) {
+          existingMcc.add(sourceKey);
+        }
+
+        if (parsedLine.mappingField === TITLE_INPUT && sourceKey) {
+          titleRegexes.push(new RegExp(sourceKey, "i"));
+        }
+
+        const entryJson = JSON.stringify({ [mappingKey]: sourceKey, ...mappingEntry });
+        console.log(`Сохранено: ${entryJson}\n`);
         break;
       }
     }

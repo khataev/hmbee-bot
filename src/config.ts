@@ -27,8 +27,25 @@ const TochkaConfigSchema = z.object({
   typeCodes: z.record(z.string(), TypeCodeRuleSchema).default({})
 });
 
+const MappingEntrySchema = z.object({
+  category: z.string(),
+  description: z.string().optional()
+});
+
+const ignoredMappingSchema = z.object({
+  mcc: z.array(z.string()).default([]),
+  title: z.array(z.string()).default([])
+});
+
+const categoryMappingSchema = z.object({
+  mcc: z.record(z.string(), MappingEntrySchema).default({}),
+  title: z.record(z.string(), MappingEntrySchema).default({}),
+  ignored: ignoredMappingSchema.default({ mcc: [], title: [] })
+});
+
 const HmbeeConfigSchema = z.object({
-  currenciesMapping: z.record(z.string(), z.string()).default({})
+  currenciesMapping: z.record(z.string(), z.string()).default({}),
+  categoryMapping: categoryMappingSchema.default({ mcc: {}, title: {}, ignored: { mcc: [], title: [] } })
 });
 
 const AppConfigSchema = z.object({
@@ -45,8 +62,20 @@ const ResolvedTochkaConfigSchema = z.object({
   typeCodes: z.record(z.string(), TypeCodeRuleSchema)
 });
 
+const TitlePatternSchema = z.object({
+  pattern: z.instanceof(RegExp),
+  entry: MappingEntrySchema
+});
+
+const ResolvedCategoryMappingSchema = z.object({
+  mcc: z.record(z.string(), MappingEntrySchema),
+  title: z.array(TitlePatternSchema),
+  ignored: ignoredMappingSchema
+});
+
 const ResolvedHmbeeConfigSchema = z.object({
-  currenciesMapping: z.record(z.string(), z.string())
+  currenciesMapping: z.record(z.string(), z.string()),
+  categoryMapping: ResolvedCategoryMappingSchema
 });
 
 const ResolvedAppConfigSchema = z.object({
@@ -57,10 +86,12 @@ const ResolvedAppConfigSchema = z.object({
 });
 
 export type HoneyMoneyAccountConfig = z.infer<typeof HoneyMoneyAccountSchema>;
-
 export type TypeCodeRule = z.infer<typeof TypeCodeRuleSchema>;
 export type TypeCodeConditionsConfig = z.infer<typeof TypeCodeConditionsSchema>;
+export type MappingEntry = z.infer<typeof MappingEntrySchema>;
+export type TitlePattern = z.infer<typeof TitlePatternSchema>;
 export type AppConfig = z.infer<typeof ResolvedAppConfigSchema>;
+export type CategoryMapping = Omit<z.infer<typeof ResolvedCategoryMappingSchema>, 'ignored'>;
 
 export interface AccountRegistry {
   isOwned(account: string, bic: string): boolean;
@@ -102,11 +133,22 @@ export function loadConfig(): AppConfig {
     })
   );
 
-  const currenciesMapping = config.hmbee.currenciesMapping;
+  const titlePatterns: TitlePattern[] = Object.entries(config.hmbee.categoryMapping.title).map(([pat, entry]) => {
+    try {
+      return { pattern: new RegExp(pat, 'i'), entry };
+    } catch {
+      throw new Error(`Invalid regex pattern in categoryMapping.title: "${pat}"`);
+    }
+  });
 
   return ResolvedAppConfigSchema.parse({
     hmbee: {
-      currenciesMapping
+      currenciesMapping: config.hmbee.currenciesMapping,
+      categoryMapping: {
+        mcc: config.hmbee.categoryMapping.mcc,
+        title: titlePatterns,
+        ignored: config.hmbee.categoryMapping.ignored
+      }
     },
     sources: {
       tochka: {
