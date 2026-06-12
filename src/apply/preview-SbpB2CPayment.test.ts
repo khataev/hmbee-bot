@@ -28,7 +28,8 @@ describe('SbpB2CPayment classification', () => {
           hmAccounts: {},
           typeCodes: {}
         }
-      }
+      },
+      allAccountMappings: accountMappings
     } as AppConfig),
     typeCodeRules: {
       SbpB2CPayment: {
@@ -111,5 +112,105 @@ describe('SbpB2CPayment classification', () => {
       expect(result.save).toBe(false);
       expect(result.reason).toBe('excluded');
     }
+  });
+});
+
+describe('SbpB2CPayment cross-bank transfer (multi-bank registry)', () => {
+  const tochkaAccountId = 2053036;
+  const tinkoffAccountId = 1000003;
+  const tochkaAccountMappings = { '40802810100000000001': tochkaAccountId };
+  const tinkoffAccountMappings = { '40817810000000000020': tinkoffAccountId };
+  const allAccountMappings = { ...tochkaAccountMappings, ...tinkoffAccountMappings };
+
+  const multiRegistry = createAccountRegistry({
+    hmbee: {
+      currenciesMapping: {},
+      categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
+    },
+    sources: {
+      tochka: {
+        bankBic: '044525104',
+        accountMappings: tochkaAccountMappings,
+        hmAccounts: {},
+        typeCodes: {}
+      }
+    },
+    allAccountMappings
+  } as AppConfig);
+
+  const multiOptions = {
+    accountMappings: tochkaAccountMappings,
+    categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } },
+    accountRegistry: multiRegistry,
+    typeCodeRules: {
+      SbpB2CPayment: {
+        conditions: {
+          included: {
+            and: [
+              { '==': [{ var: 'record.data.status' }, 'ACCEPTED'] },
+              { '==': [{ var: 'record.data.incoming' }, false] },
+              {
+                is_owned: [
+                  { var: 'record.data.payerAccountId' },
+                  { var: 'record.data.payerBankBic' },
+                  { var: 'accountRegistry' }
+                ]
+              }
+            ]
+          },
+          excluded: {
+            or: [
+              {
+                or: [
+                  { '==': [{ var: 'record.data.status' }, 'CANCELED'] },
+                  { '==': [{ var: 'record.data.status' }, 'REJECTED'] }
+                ]
+              },
+              { '==': [{ var: 'record.data.incoming' }, true] }
+            ]
+          }
+        }
+      }
+    }
+  };
+
+  // 6.4: unit test on registry recognizing accounts from both banks
+  it('createAccountRegistry recognizes accounts from tochka and tinkoff as owned and resolves both hmIds', () => {
+    expect(multiRegistry.isOwned('40802810100000000001', '044525104')).toBe(true);
+    expect(multiRegistry.isOwned('40817810000000000020', '044525974')).toBe(true);
+    expect(multiRegistry.isOwned('40817810000000000099', '044525974')).toBe(false);
+    expect(multiRegistry.getHmAccountId('40802810100000000001')).toBe(tochkaAccountId);
+    expect(multiRegistry.getHmAccountId('40817810000000000020')).toBe(tinkoffAccountId);
+  });
+
+  // 6.1: full flow — cross-bank transfer gives type=transfer with correct ids
+  it('classifies SbpB2CPayment Tochka → T-Bank as transfer with correct counterpartyAccountId and transfer ids', () => {
+    const fixture = loadFixture('sbp-b2c-payment-cross-bank-transfer.json');
+
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, multiOptions) as ReadyApplyRecord;
+
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(true);
+    expect(result.reason).toBeNull();
+    expect(result.normalized.type).toBe('transfer');
+    expect(result.normalized.counterpartyAccountId).toBe('40817810000000000020');
+    expect(result.hmbee.subtype).toBe('t');
+    expect(result.hmbee.currency).toBe('rub');
+
+    const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
+    expect(hmbee.transfer_from_id).toBe(tochkaAccountId);
+    expect(hmbee.transfer_to_id).toBe(tinkoffAccountId);
+    expect(hmbee.real_amount).toBeGreaterThan(0);
+  });
+
+  // 6.2: payee absent from all banks stays expense
+  it('classifies SbpB2CPayment to account absent from all banks as expense', () => {
+    const fixture = loadFixture('sbp-b2c-payment-non-transfer.json');
+
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, multiOptions) as ReadyApplyRecord;
+
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(true);
+    expect(result.normalized.type).toBe('expense');
   });
 });

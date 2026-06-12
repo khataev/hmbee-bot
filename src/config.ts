@@ -20,11 +20,15 @@ const TypeCodeRuleSchema = z.object({
   conditions: TypeCodeConditionsSchema
 });
 
-const TochkaConfigSchema = z.object({
-  bankBic: z.string(),
+const BankConfigSchema = z.object({
+  bankBic: z.string().optional(),
   hmAccounts: z.record(z.string(), HoneyMoneyAccountSchema).default({}),
   accountMappings: z.record(z.string(), z.string()).default({}),
   typeCodes: z.record(z.string(), TypeCodeRuleSchema).default({})
+});
+
+const TochkaBankConfigSchema = BankConfigSchema.extend({
+  bankBic: z.string()
 });
 
 const MappingEntrySchema = z.object({
@@ -50,13 +54,13 @@ const HmbeeConfigSchema = z.object({
 
 const AppConfigSchema = z.object({
   hmbee: HmbeeConfigSchema,
-  sources: z.object({
-    tochka: TochkaConfigSchema
-  })
+  sources: z
+    .record(z.string(), BankConfigSchema)
+    .refine((s) => Object.keys(s).length > 0, { message: 'sources must not be empty' })
 });
 
-const ResolvedTochkaConfigSchema = z.object({
-  bankBic: z.string(),
+const ResolvedBankConfigSchema = z.object({
+  bankBic: z.string().optional(),
   hmAccounts: z.record(z.string(), HoneyMoneyAccountSchema),
   accountMappings: z.record(z.string(), z.number().int().positive()),
   typeCodes: z.record(z.string(), TypeCodeRuleSchema)
@@ -80,9 +84,8 @@ const ResolvedHmbeeConfigSchema = z.object({
 
 const ResolvedAppConfigSchema = z.object({
   hmbee: ResolvedHmbeeConfigSchema,
-  sources: z.object({
-    tochka: ResolvedTochkaConfigSchema
-  })
+  sources: z.record(z.string(), ResolvedBankConfigSchema),
+  allAccountMappings: z.record(z.string(), z.number().int().positive())
 });
 
 export type HoneyMoneyAccountConfig = z.infer<typeof HoneyMoneyAccountSchema>;
@@ -90,6 +93,8 @@ export type TypeCodeRule = z.infer<typeof TypeCodeRuleSchema>;
 export type TypeCodeConditionsConfig = z.infer<typeof TypeCodeConditionsSchema>;
 export type MappingEntry = z.infer<typeof MappingEntrySchema>;
 export type TitlePattern = z.infer<typeof TitlePatternSchema>;
+export type BankConfig = z.infer<typeof BankConfigSchema>;
+export type TochkaBankConfig = z.infer<typeof TochkaBankConfigSchema>;
 export type AppConfig = z.infer<typeof ResolvedAppConfigSchema>;
 export type CategoryMapping = Omit<z.infer<typeof ResolvedCategoryMappingSchema>, 'ignored'>;
 
@@ -105,33 +110,46 @@ export function loadConfig(): AppConfig {
   const fileContents = readFileSync(CONFIG_PATH, 'utf8');
   const parsed = JSON.parse(fileContents) as unknown;
   const config = AppConfigSchema.parse(parsed);
-  const hmAccounts = config.sources.tochka.hmAccounts;
-  const typeCodes = config.sources.tochka.typeCodes;
 
-  const currenciesByDeposit: Record<string, string[]> = {};
-  for (const [key, account] of Object.entries(hmAccounts)) {
-    if (account.isDeposit) {
-      const currency = account.currency;
-      currenciesByDeposit[currency] = (currenciesByDeposit[currency] ?? []).concat(key);
-    }
-  }
-
-  for (const [currency, keys] of Object.entries(currenciesByDeposit)) {
-    if (keys.length > 1) {
-      throw new Error(`Duplicate deposit accounts for currency '${currency}': ${keys.join(', ')}`);
-    }
-  }
-
-  const accountMappings = Object.fromEntries(
-    Object.entries(config.sources.tochka.accountMappings).map(([sourceAccount, hmAccountKey]) => {
-      const hmAccount = hmAccounts[hmAccountKey];
-      if (!hmAccount) {
-        throw new Error(`Unknown Tochka hmAccounts key in config/sources.json: ${hmAccountKey}`);
+  // Deposit duplicate check (tochka-specific heuristic)
+  const tochkaRaw = config.sources.tochka;
+  if (tochkaRaw) {
+    const currenciesByDeposit: Record<string, string[]> = {};
+    for (const [key, account] of Object.entries(tochkaRaw.hmAccounts)) {
+      if (account.isDeposit) {
+        const currency = account.currency;
+        currenciesByDeposit[currency] = (currenciesByDeposit[currency] ?? []).concat(key);
       }
+    }
+    for (const [currency, keys] of Object.entries(currenciesByDeposit)) {
+      if (keys.length > 1) {
+        throw new Error(`Duplicate deposit accounts for currency '${currency}': ${keys.join(', ')}`);
+      }
+    }
+  }
 
-      return [sourceAccount, hmAccount.id];
-    })
-  );
+  // Build per-bank resolved mappings and unified account map simultaneously
+  const allAccountMappings: Record<string, number> = {};
+  const resolvedSources: Record<string, z.infer<typeof ResolvedBankConfigSchema>> = {};
+
+  for (const [bankName, bankConfig] of Object.entries(config.sources)) {
+    const resolvedMappings: Record<string, number> = {};
+    for (const [accountNumber, hmAccountKey] of Object.entries(bankConfig.accountMappings)) {
+      const hmAccount = bankConfig.hmAccounts[hmAccountKey];
+      if (!hmAccount) {
+        throw new Error(`Unknown hmAccounts key '${hmAccountKey}' in sources.${bankName}.accountMappings`);
+      }
+      const existingId = allAccountMappings[accountNumber];
+      if (existingId !== undefined && existingId !== hmAccount.id) {
+        throw new Error(
+          `Account number '${accountNumber}' is mapped to different Honey Money accounts in different banks`
+        );
+      }
+      allAccountMappings[accountNumber] = hmAccount.id;
+      resolvedMappings[accountNumber] = hmAccount.id;
+    }
+    resolvedSources[bankName] = { ...bankConfig, accountMappings: resolvedMappings };
+  }
 
   const titlePatterns: TitlePattern[] = Object.entries(config.hmbee.categoryMapping.title).map(([pat, entry]) => {
     try {
@@ -150,22 +168,19 @@ export function loadConfig(): AppConfig {
         ignored: config.hmbee.categoryMapping.ignored
       }
     },
-    sources: {
-      tochka: {
-        bankBic: config.sources.tochka.bankBic,
-        hmAccounts,
-        accountMappings,
-        typeCodes
-      }
-    }
+    sources: resolvedSources,
+    allAccountMappings
   });
 }
 
 export function createAccountRegistry(config: AppConfig): AccountRegistry {
-  const tochkaMappings = config.sources.tochka.accountMappings;
-  const bankBic = config.sources.tochka.bankBic;
-  const hmAccounts = config.sources.tochka.hmAccounts;
+  const allMappings = config.allAccountMappings;
   const currenciesMapping = config.hmbee.currenciesMapping;
+
+  // Deposit detection is tochka-specific: BIC 044525104 + account prefix 421
+  const tochkaConfig = config.sources.tochka;
+  const bankBic = tochkaConfig?.bankBic;
+  const hmAccounts = tochkaConfig?.hmAccounts ?? {};
 
   const depositByCurrency: Record<string, number> = {};
   for (const [_key, account] of Object.entries(hmAccounts)) {
@@ -176,16 +191,16 @@ export function createAccountRegistry(config: AppConfig): AccountRegistry {
 
   return {
     isOwned(account: string, bic: string): boolean {
-      if (account in tochkaMappings) return true;
+      if (account in allMappings) return true;
       if (this.isDeposit(account, bic)) return true;
       return false;
     },
     isDeposit(account: string, bic: string): boolean {
-      return bic === bankBic && account.startsWith('421');
+      return bankBic !== undefined && bic === bankBic && account.startsWith('421');
     },
     getHmAccountId(account: string): number | undefined {
-      if (account in tochkaMappings) {
-        return tochkaMappings[account];
+      if (account in allMappings) {
+        return allMappings[account];
       }
 
       if (account.startsWith('421')) {

@@ -93,12 +93,17 @@ program
 
     try {
       const config = loadConfig();
+      const tochkaConfig = config.sources.tochka;
+      if (!tochkaConfig) {
+        console.error("Source 'tochka' is not configured in sources.json");
+        process.exit(1);
+      }
       const accountRegistry = createAccountRegistry(config);
       const records = loadSyncFiles(source);
       const previewRecords = records.map((record) =>
         normalizeTochkaRecord(record, {
-          accountMappings: config.sources.tochka.accountMappings,
-          typeCodeRules: config.sources.tochka.typeCodes,
+          accountMappings: tochkaConfig.accountMappings,
+          typeCodeRules: tochkaConfig.typeCodes,
           accountRegistry,
           categoryMapping: config.hmbee.categoryMapping
         })

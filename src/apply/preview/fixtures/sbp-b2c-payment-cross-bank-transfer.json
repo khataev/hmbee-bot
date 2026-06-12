@@ -1,0 +1,32 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "SbpB2CPayment"
+    },
+    "time_data": {
+      "event_date": "2026-06-01T12:00:00.000+03:00"
+    }
+  },
+  "data": {
+    "title": "Перевод на свой счёт в Т-Банке",
+    "sum": 5000,
+    "sumCurrency": "RUB",
+    "incoming": false,
+    "payerAccountId": "40802810100000000001",
+    "payerBankBic": "044525104",
+    "payerBankName": "Точка Банк",
+    "payerName": "",
+    "payeeAccountId": "40817810000000000020",
+    "payeeBankBic": "044525974",
+    "payeeBankName": "Т-Банк",
+    "payeeName": "",
+    "phoneNumber": "+79000000001",
+    "status": "ACCEPTED",
+    "operationId": "B00000000000000T0B00000000000005",
+    "transactionId": "b2c00000000000000000000000000005",
+    "formattedTitle": "Paid 5000 RUB via SBP",
+    "date": "2026-06-01T12:00:00.000+03:00",
+    "sourceName": "web",
+    "currency": "RUB"
+  }
+}

@@ -28,7 +28,8 @@ describe('PaymentAccepted classification', () => {
           hmAccounts: {},
           typeCodes: {}
         }
-      }
+      },
+      allAccountMappings: accountMappings
     } as AppConfig),
     typeCodeRules: {
       PaymentAccepted: {

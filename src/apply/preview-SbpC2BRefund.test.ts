@@ -26,7 +26,8 @@ describe('SbpC2BRefund classification', () => {
           hmAccounts: {},
           typeCodes: {}
         }
-      }
+      },
+      allAccountMappings: accountMappings
     } as AppConfig),
     typeCodeRules: {
       SbpC2BRefund: {
