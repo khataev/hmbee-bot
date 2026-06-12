@@ -54,6 +54,12 @@
 | Любая известная форма без совпадения по `included` и `excluded` | `Любой поддерживаемый type_code` | `false` | `false` | `no matching included/excluded condition` | Общий fallback preview-классификатора. Полезно держать в голове как baseline для новых кейсов. | Не выполнилось ни одно условие `included`. | `—` | Не выполнилось ни одно условие `excluded`. | `—` |  |  |
 | Неподдерживаемый `type_code` | `Любой неизвестный type_code` | `false` | `false` | `unsupported type_code: <value>` | Общий fallback для неподлежащих нормализации записей. | `—` | `—` | `—` | `—` |  |  |
 
+## Сквозные правила (применяются независимо от type_code)
+
+| Правило | Применяется к | Условие | Результат | Примечание |
+| --- | --- | --- | --- | --- |
+| Missing category downgrade | Любой identified income/expense record (`subtype = i` или `e`) | `hmbee.category === null` после маппинга категорий И `save = true` по итогам `included`/`excluded`-классификации | `identified = true`, `save = false`, `reason = "Category is missing for income or expense transaction"`, `hmbee` сохраняется в выводе | Проверка происходит после построения `hmbee` в `normalizeTochkaRecord`. Transfer-записи (`subtype = t`) и excluded-записи не затрагиваются. Источник истины: `src/apply/preview/tochka.ts` (`MISSING_CATEGORY_REASON`). |
+
 ## Что сейчас особенно важно помнить
 
 - `PaymentIncome` — три явные OR-ветки в `included` (deposit return, deposit interest, external). `excluded` явно использует `NOT DEPOSIT_PAYER`, чтобы не захватить возврат тела депозита. Источник истины — `sources.json` и `preview-PaymentIncome.test.ts`.

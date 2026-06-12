@@ -13,7 +13,11 @@ describe('SbpC2BRefund classification', () => {
 
   const options = {
     accountMappings,
-    categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } },
+    categoryMapping: {
+      mcc: {},
+      title: [{ pattern: /.*/, entry: { category: 'Прочее' } }],
+      ignored: { mcc: [], title: [] }
+    },
     accountRegistry: createAccountRegistry({
       hmbee: {
         currenciesMapping: {},
@@ -84,5 +88,19 @@ describe('SbpC2BRefund classification', () => {
       expect(result.save).toBe(false);
       expect(result.reason).toBe('excluded');
     }
+  });
+
+  it('downgrades identified income with missing category: not save-ready, hmbee still present', () => {
+    const fixture = loadFixture('sbp-c2b-refund.json');
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, {
+      ...options,
+      categoryMapping: { mcc: {}, title: [] }
+    });
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(false);
+    expect(result.reason).toBe('Category is missing for income or expense transaction');
+    expect(result.hmbee).toBeDefined();
+    expect(result.hmbee?.subtype).toBe('i');
+    expect(result.normalized).toBeDefined();
   });
 });

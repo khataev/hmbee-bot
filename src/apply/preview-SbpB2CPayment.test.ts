@@ -15,7 +15,11 @@ describe('SbpB2CPayment classification', () => {
 
   const options = {
     accountMappings,
-    categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } },
+    categoryMapping: {
+      mcc: {},
+      title: [{ pattern: /.*/, entry: { category: 'Прочее' } }],
+      ignored: { mcc: [], title: [] }
+    },
     accountRegistry: createAccountRegistry({
       hmbee: {
         currenciesMapping: {},
@@ -113,6 +117,21 @@ describe('SbpB2CPayment classification', () => {
       expect(result.reason).toBe('excluded');
     }
   });
+
+  it('transfer records with null category remain save-ready (missing-category rule does not apply)', () => {
+    const fixture = loadFixture('sbp-b2c-payment-own-transfer.json');
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, {
+      ...options,
+      categoryMapping: { mcc: {}, title: [] }
+    }) as ReadyApplyRecord;
+
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(true);
+    expect(result.reason).toBeNull();
+    expect(result.normalized.type).toBe('transfer');
+    expect(result.hmbee.category).toBeNull();
+    expect(result.hmbee.subtype).toBe('t');
+  });
 });
 
 describe('SbpB2CPayment cross-bank transfer (multi-bank registry)', () => {
@@ -140,7 +159,11 @@ describe('SbpB2CPayment cross-bank transfer (multi-bank registry)', () => {
 
   const multiOptions = {
     accountMappings: tochkaAccountMappings,
-    categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } },
+    categoryMapping: {
+      mcc: {},
+      title: [{ pattern: /.*/, entry: { category: 'Прочее' } }],
+      ignored: { mcc: [], title: [] }
+    },
     accountRegistry: multiRegistry,
     typeCodeRules: {
       SbpB2CPayment: {

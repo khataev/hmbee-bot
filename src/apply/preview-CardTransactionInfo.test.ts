@@ -332,7 +332,23 @@ describe('CardTransactionInfo classification', () => {
       ...options,
       categoryMapping: { mcc: {}, title: [] }
     });
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(false);
+    expect(result.reason).toBe('Category is missing for income or expense transaction');
     expect(result.hmbee?.category).toBeNull();
     expect(result.hmbee?.description).toBe('241');
+  });
+
+  it('downgrades identified expense with missing category: hmbee is still present', () => {
+    const result = normalizeTochkaRecord(mockBaseRecord, {
+      ...options,
+      categoryMapping: { mcc: {}, title: [] }
+    });
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(false);
+    expect(result.reason).toBe('Category is missing for income or expense transaction');
+    expect(result.hmbee).toBeDefined();
+    expect(result.hmbee?.subtype).toBe('e');
+    expect(result.normalized).toBeDefined();
   });
 });
