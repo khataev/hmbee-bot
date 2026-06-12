@@ -23,3 +23,11 @@ Tracking identified technical debt and planned simplifications.
  - **Context**: Biome checks currently allow relative imports.
 - **Goal**: Use only absolute paths in imports for consistency.
 - **Status**: Added 2026-05-10.
+
+### 4. Типизация схем загрузки конфига
+- **Context**: `AppConfigSchema.sources` использует `z.record(z.string(), BankConfigSchema)`, из-за чего Zod не применяет банк-специфичные схемы (например, `TochkaBankConfigSchema` с обязательным `bankBic`) к конкретным ключам вроде `tochka`. В итоге `TochkaBankConfigSchema` / `TochkaBankConfig` объявлены, но не применяются при парсинге.
+- **Goal**:
+    - Добавить `.superRefine` на `sources`, чтобы ключ `tochka` валидировался через `TochkaBankConfigSchema`.
+    - По аналогии создать `ResolvedTochkaBankConfigSchema` для симметрии с input-схемами.
+- **Why**: Без этого отсутствие `bankBic` в секции `tochka` не отловится при загрузке конфига, а `isDeposit` молча перестанет работать.
+- **Status**: Added 2026-06-12. (OpenSpec: multi-bank-owned-accounts, review.md)
