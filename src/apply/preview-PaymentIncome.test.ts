@@ -39,7 +39,8 @@ describe('PaymentIncome classification', () => {
           },
           typeCodes: {}
         }
-      }
+      },
+      allAccountMappings: accountMappings
     } as AppConfig),
     typeCodeRules: {
       PaymentIncome: {

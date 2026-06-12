@@ -26,7 +26,8 @@ describe('VedPaymentIncome classification', () => {
           hmAccounts: {},
           typeCodes: {}
         }
-      }
+      },
+      allAccountMappings: accountMappings
     } as AppConfig),
     typeCodeRules: {
       VedPaymentIncome: {

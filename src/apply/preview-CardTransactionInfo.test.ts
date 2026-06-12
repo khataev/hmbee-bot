@@ -35,7 +35,8 @@ describe('CardTransactionInfo classification', () => {
           hmAccounts: {},
           typeCodes: {}
         }
-      }
+      },
+      allAccountMappings: accountMappings
     } as AppConfig),
     typeCodeRules: {
       CardTransactionInfo: {

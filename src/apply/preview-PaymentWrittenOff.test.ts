@@ -39,7 +39,8 @@ describe('PaymentWrittenOff classification', () => {
           },
           typeCodes: {}
         }
-      }
+      },
+      allAccountMappings: accountMappings
     } as AppConfig),
     typeCodeRules: {
       PaymentWrittenOff: {
