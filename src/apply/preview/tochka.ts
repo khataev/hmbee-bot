@@ -2,6 +2,8 @@ import { evaluateRule } from 'src/apply/preview/ruleEngine.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
 import type { AccountRegistry, CategoryMapping, MappingEntry, TypeCodeRule } from 'src/config.js';
 
+const MISSING_CATEGORY_REASON = 'Category is missing for income or expense transaction';
+
 export interface TochkaNormalizationOptions {
   accountMappings: Record<string, number>;
   typeCodeRules: Record<string, TypeCodeRule>;
@@ -582,13 +584,26 @@ export function normalizeTochkaRecord(
     if (!tochkaAccountId)
       throw new Error(`No Honey Money account mapping found for Tochka account ${normalized.account}`);
 
+    const hmbee = buildHoneyMoneyIncomeExpenseTransaction(normalized, tochkaAccountId, options.categoryMapping);
+
+    if (classification.save && hmbee.category === null) {
+      return {
+        identified: true,
+        save: false,
+        reason: MISSING_CATEGORY_REASON,
+        sourceRecord,
+        normalized,
+        hmbee
+      };
+    }
+
     return {
       identified: true,
       save: classification.save,
       reason: classification.reason,
       sourceRecord,
       normalized,
-      hmbee: buildHoneyMoneyIncomeExpenseTransaction(normalized, tochkaAccountId, options.categoryMapping)
+      hmbee
     };
   } catch (error) {
     return {
