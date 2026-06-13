@@ -7,6 +7,7 @@ import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
 import type { HoneyMoneyTransaction, PreviewRecord } from 'src/apply/preview/types.js';
 import { createAccountRegistry, loadConfig } from 'src/config.js';
 import { loadEnv, validateHoneyMoneyEnv, validateTochkaEnv } from 'src/env.js';
+import { trimEntries, writeCache } from 'src/hmbee/cache.js';
 import { HoneyMoneyClient } from 'src/hmbee/client.js';
 import { writeOutput } from 'src/output.js';
 
@@ -44,6 +45,7 @@ program
   .option('--format <type>', 'Output format (adapted|raw)', 'adapted')
   .option('--verbose', 'Print informational output')
   .option('--stdout', 'Write output to stdout instead of file')
+  .option('--update-hmbee-cache', 'After source sync, also fetch and write the Honey Money transaction cache')
   .action(async (source, options) => {
     const isVerbose = options.verbose;
     const writeToStdout = options.stdout;
@@ -73,6 +75,21 @@ program
     } catch (error: unknown) {
       console.error(`Sync failed: ${getErrorMessage(error)}`);
       process.exit(1);
+    }
+
+    if (options.updateHmbeeCache) {
+      if (isVerbose) console.log('Updating Honey Money cache...');
+      try {
+        const hmEnv = validateHoneyMoneyEnv();
+        const client = new HoneyMoneyClient(hmEnv);
+        const all = await client.getAllTransactions();
+        const trimmed = trimEntries(all, options.from);
+        writeCache(trimmed);
+        if (isVerbose) console.log(`✓ Honey Money cache updated. ${trimmed.length} records written to cache.`);
+      } catch (error: unknown) {
+        console.error(`Honey Money cache update failed: ${getErrorMessage(error)}`);
+        process.exit(1);
+      }
     }
   });
 
