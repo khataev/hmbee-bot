@@ -29,12 +29,12 @@
 
 ## 5. Wire skip into apply
 
-- [ ] 5.1 Пост-проход в `apply`: при матче ставить `identified=true, save=false, reason="Внесена вручную"`; при отсутствии — не менять запись
-- [ ] 5.2 Убедиться, что skip-записи не уходят в write-path (через существующий `save=false`) и видны в `--preview`
-- [ ] 5.3 (verbose) Печать сводки пропущенных и возраста/даты кеша
-- [ ] 5.4 Тесты: skip помечается и не пишется; не-матч остаётся writable; запись видна в preview
+- [x] 5.1 Пост-проход в `apply`: при матче ставить `identified=true, save=false, reason="Внесена вручную"`; при отсутствии — не менять запись
+- [x] 5.2 Убедиться, что skip-записи не уходят в write-path (через существующий `save=false`) и видны в `--preview`
+- [x] 5.3 (verbose) Печать сводки пропущенных и возраста/даты кеша
+- [x] 5.4 Тесты: skip помечается и не пишется; не-матч остаётся writable; запись видна в preview
 
 ## 6. Quality gate
 
-- [ ] 6.1 Прогнать `npm run check` (Biome lint+format, TypeScript strict, тесты) до зелёного
-- [ ] 6.2 Обновить документацию при необходимости (README/TRANSACTION-RULES) по новому флагу и skip-поведению
+- [x] 6.1 Прогнать `npm run check` (Biome lint+format, TypeScript strict, тесты) до зелёного
+- [x] 6.2 Обновить документацию при необходимости (README/TRANSACTION-RULES) по новому флагу и skip-поведению

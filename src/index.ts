@@ -1,3 +1,4 @@
+import { statSync } from 'node:fs';
 import { Command } from 'commander';
 import { TochkaAdapter } from 'src/adapters/tochka.js';
 import type { SourceAdapter } from 'src/adapters/types.js';
@@ -7,8 +8,9 @@ import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
 import type { HoneyMoneyTransaction, PreviewRecord } from 'src/apply/preview/types.js';
 import { createAccountRegistry, loadConfig } from 'src/config.js';
 import { loadEnv, validateHoneyMoneyEnv, validateTochkaEnv } from 'src/env.js';
-import { trimEntries, writeCache } from 'src/hmbee/cache.js';
+import { CACHE_PATH, trimEntries, writeCache } from 'src/hmbee/cache.js';
 import { HoneyMoneyClient } from 'src/hmbee/client.js';
+import { applySkipPass, buildMatchIndex, loadCache } from 'src/hmbee/skipIndex.js';
 import { writeOutput } from 'src/output.js';
 
 loadEnv();
@@ -118,7 +120,7 @@ program
       }
       const accountRegistry = createAccountRegistry(config);
       const records = loadSyncFiles(source);
-      const previewRecords = records.map((record) =>
+      const normalized = records.map((record) =>
         normalizeTochkaRecord(record, {
           accountMappings: tochkaConfig.accountMappings,
           typeCodeRules: tochkaConfig.typeCodes,
@@ -126,6 +128,18 @@ program
           categoryMapping: config.hmbee.categoryMapping
         })
       );
+
+      const cacheEntries = loadCache();
+      const skipIndex = buildMatchIndex(cacheEntries);
+      const previewRecords = applySkipPass(normalized, skipIndex);
+
+      if (isVerbose) {
+        const skippedCount = previewRecords.filter((r) => r.reason === 'Внесена вручную').length;
+        if (skippedCount > 0) {
+          const cacheDate = statSync(CACHE_PATH).mtime.toISOString().slice(0, 10);
+          console.error(`Skipped ${skippedCount} records already entered in Honey Money (cache date: ${cacheDate}).`);
+        }
+      }
 
       if (options.preview) {
         if (isVerbose) {

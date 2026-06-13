@@ -1,15 +1,20 @@
 import { existsSync, readFileSync } from 'node:fs';
+import type { PreviewRecord } from 'src/apply/preview/types.js';
 import { CACHE_PATH } from 'src/hmbee/cache.js';
-import { HoneyMoneyCacheEntrySchema, type HoneyMoneyCacheEntry } from 'src/hmbee/client.js';
+import { type HoneyMoneyCacheEntry, HoneyMoneyCacheEntrySchema } from 'src/hmbee/client.js';
 import { z } from 'zod';
 
 export type MatchIndex = Map<string, HoneyMoneyCacheEntry[]>;
 
+type MatchableEntry = HoneyMoneyCacheEntry & { real_amount: number; account_id: number };
+
+function isMatchable(entry: HoneyMoneyCacheEntry): entry is MatchableEntry {
+  return entry.real_amount != null && entry.account_id != null;
+}
+
 export function loadCache(path = CACHE_PATH): HoneyMoneyCacheEntry[] {
   if (!existsSync(path)) {
-    throw new Error(
-      `Honey Money cache not found at ${path}. Run 'sync <source> --update-hmbee-cache' first.`
-    );
+    throw new Error(`Honey Money cache not found at ${path}. Run 'sync <source> --update-hmbee-cache' first.`);
   }
   return z.array(HoneyMoneyCacheEntrySchema).parse(JSON.parse(readFileSync(path, 'utf8')));
 }
@@ -17,7 +22,7 @@ export function loadCache(path = CACHE_PATH): HoneyMoneyCacheEntry[] {
 export function buildMatchIndex(entries: HoneyMoneyCacheEntry[]): MatchIndex {
   const index: MatchIndex = new Map();
   for (const entry of entries) {
-    if (entry.real_amount == null || entry.account_id == null) continue;
+    if (!isMatchable(entry)) continue;
     const key = makeCacheKey(entry);
     const list = index.get(key);
     if (list) {
@@ -44,11 +49,21 @@ export function consumeMatch(
   return list.shift() ?? null;
 }
 
-function makeCacheKey(entry: HoneyMoneyCacheEntry): string {
+export function applySkipPass(records: PreviewRecord[], index: MatchIndex): PreviewRecord[] {
+  return records.map((record) => {
+    if (!record.hmbee) return record;
+    const { account_id, date, real_amount, subtype, category, currency } = record.hmbee;
+    const match = consumeMatch(index, account_id, date, real_amount, subtype, category, currency);
+    if (!match) return record;
+    return { ...record, identified: true, save: false, reason: 'Внесена вручную' };
+  });
+}
+
+function makeCacheKey(entry: MatchableEntry): string {
   return makeKey(
-    entry.account_id!,
+    entry.account_id,
     entry.date,
-    entry.real_amount!,
+    entry.real_amount,
     entry.subtype,
     entry.category ?? null,
     entry.currency
