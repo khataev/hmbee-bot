@@ -1,0 +1,30 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "SbpC2CPayment"
+    },
+    "time_data": {
+      "event_date": "2026-04-15T12:00:00.000+03:00"
+    }
+  },
+  "data": {
+    "title": "Мария Алексеевна А.",
+    "sum": 5000,
+    "sumCurrency": "RUB",
+    "incoming": true,
+    "payerAccountId": "40817810000000000099",
+    "payerBankBic": "044525225",
+    "payerBankName": "Сбербанк",
+    "payerName": "Мария Алексеевна А.",
+    "payeeAccountId": "40802810100000000001",
+    "payeeBankBic": "044525104",
+    "payeeBankName": "Точка Банк",
+    "status": "DONE",
+    "operationId": "C2C00000000000000000000000000001",
+    "transactionId": "c2c00000000000000000000000000001",
+    "formattedTitle": "Получено 5000 RUB по СБП",
+    "date": "2026-04-15T12:00:00.000+03:00",
+    "sourceName": "web",
+    "currency": "RUB"
+  }
+}

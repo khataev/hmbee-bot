@@ -1,0 +1,30 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "SbpC2CPayment"
+    },
+    "time_data": {
+      "event_date": "2026-04-05T14:00:00.000+03:00"
+    }
+  },
+  "data": {
+    "title": "Петр Петрович П.",
+    "sum": 2000,
+    "sumCurrency": "RUB",
+    "incoming": true,
+    "payerAccountId": "40817810000000000099",
+    "payerBankBic": "044525225",
+    "payerBankName": "Сбербанк",
+    "payerName": "Петр Петрович П.",
+    "payeeAccountId": "40802810100000000001",
+    "payeeBankBic": "044525104",
+    "payeeBankName": "Точка Банк",
+    "status": "PROCESSING",
+    "operationId": "C2C00000000000000000000000000004",
+    "transactionId": "c2c00000000000000000000000000004",
+    "formattedTitle": "Получено 2000 RUB по СБП",
+    "date": "2026-04-05T14:00:00.000+03:00",
+    "sourceName": "web",
+    "currency": "RUB"
+  }
+}
