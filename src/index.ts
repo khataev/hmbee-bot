@@ -81,6 +81,7 @@ program
   .description('Process synchronized data for a source')
   .argument('<source>', 'Source name (e.g., tochka)')
   .option('--preview', 'Preview normalized records without writing to Honey Money')
+  .option('--only-errors', 'When combined with --preview, show only records with identified=false or save=false')
   .option('--only-id <ids>', 'Only save the specified comma-separated source transaction ids')
   .option('--quiet', 'Suppress informational output')
   .action(async (source, options) => {
@@ -115,9 +116,21 @@ program
           console.error(`Loaded ${records.length} records from sync/${source}`);
         }
 
-        writeOutput(previewRecords);
+        const outputRecords = options.onlyErrors
+          ? previewRecords.filter((r) => !r.identified || !r.save)
+          : previewRecords;
 
-        if (!isQuiet) console.error(`✓ Preview complete. Processed ${previewRecords.length} records.`);
+        writeOutput(outputRecords);
+
+        if (!isQuiet) {
+          if (options.onlyErrors) {
+            console.error(
+              `✓ Preview complete. Processed ${previewRecords.length} records. Showing ${outputRecords.length} error records.`
+            );
+          } else {
+            console.error(`✓ Preview complete. Processed ${previewRecords.length} records.`);
+          }
+        }
         return;
       }
 
