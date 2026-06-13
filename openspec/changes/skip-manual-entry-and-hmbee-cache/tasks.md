@@ -20,12 +20,12 @@
 
 ## 4. Manual-entry skip index & matching
 
-- [ ] 4.1 Загрузка кеша `sync/hmbee/all_json_cache.json` в `apply`; при отсутствии файла — жёсткая ошибка с подсказкой `sync --update-hmbee-cache`
-- [ ] 4.2 Построить индекс «реально внесённых»: записи с `real_amount != null` (unplanned ∪ confirmed-planned), исключить планы только с `plan_amount`
-- [ ] 4.3 Реализовать ключ сопоставления `account_id + date + round(amount) + direction + category`; для `subtype=t` исключить категорию; включить валюту
-- [ ] 4.4 Нормализация перед сравнением: `Math.round` суммы и фолбэк даты карт
-- [ ] 4.5 Жадный 1:1: индекс как `Map<key, list>`, изъятие записи при матче
-- [ ] 4.6 Тесты: income/expense по полному ключу, transfer без категории, нормализация суммы/даты, 1:1 при двух одинаковых суммах за день
+- [x] 4.1 Загрузка кеша `sync/hmbee/all_json_cache.json` в `apply`; при отсутствии файла — жёсткая ошибка с подсказкой `sync --update-hmbee-cache`
+- [x] 4.2 Построить индекс «реально внесённых»: записи с `real_amount != null` (unplanned ∪ confirmed-planned), исключить планы только с `plan_amount`
+- [x] 4.3 Реализовать ключ сопоставления `account_id + date + round(amount) + direction + category`; для `subtype=t` исключить категорию; включить валюту
+- [x] 4.4 Нормализация перед сравнением: `Math.round` суммы и фолбэк даты карт
+- [x] 4.5 Жадный 1:1: индекс как `Map<key, list>`, изъятие записи при матче
+- [x] 4.6 Тесты: income/expense по полному ключу, transfer без категории, нормализация суммы/даты, 1:1 при двух одинаковых суммах за день
 
 ## 5. Wire skip into apply
 

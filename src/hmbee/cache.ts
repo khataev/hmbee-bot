@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { HoneyMoneyCacheEntry } from 'src/hmbee/client.js';
 
-const CACHE_PATH = 'sync/hmbee/all_json_cache.json';
+export const CACHE_PATH = 'sync/hmbee/all_json_cache.json';
 const LOOKBACK_DAYS = 10;
 
 export function trimEntries(entries: HoneyMoneyCacheEntry[], from: string): HoneyMoneyCacheEntry[] {
