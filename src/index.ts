@@ -42,10 +42,10 @@ program
   .requiredOption('--from <date>', 'From date (YYYY-MM-DD)')
   .requiredOption('--to <date>', 'To date (YYYY-MM-DD)')
   .option('--format <type>', 'Output format (adapted|raw)', 'adapted')
-  .option('--quiet', 'Suppress informational output')
+  .option('--verbose', 'Print informational output')
   .option('--stdout', 'Write output to stdout instead of file')
   .action(async (source, options) => {
-    const isQuiet = options.quiet;
+    const isVerbose = options.verbose;
     const writeToStdout = options.stdout;
     let adapter: SourceAdapter;
     if (source === 'tochka') {
@@ -61,7 +61,7 @@ program
       process.exit(1);
     }
 
-    if (!isQuiet) console.log(`Syncing from ${source}...`);
+    if (isVerbose) console.log(`Syncing from ${source}...`);
     try {
       const result = await adapter.sync({ from: options.from, to: options.to });
 
@@ -69,7 +69,7 @@ program
       const outputPath = writeToStdout ? undefined : `sync/${source}/${options.from}_${options.to}.json`;
       writeOutput(outputData, outputPath);
 
-      if (!isQuiet) console.log(`✓ Sync complete. Fetched ${result.records.length} records.`);
+      if (isVerbose) console.log(`✓ Sync complete. Fetched ${result.records.length} records.`);
     } catch (error: unknown) {
       console.error(`Sync failed: ${getErrorMessage(error)}`);
       process.exit(1);
@@ -81,10 +81,11 @@ program
   .description('Process synchronized data for a source')
   .argument('<source>', 'Source name (e.g., tochka)')
   .option('--preview', 'Preview normalized records without writing to Honey Money')
+  .option('--only-errors', 'When combined with --preview, show only records with identified=false or save=false')
   .option('--only-id <ids>', 'Only save the specified comma-separated source transaction ids')
-  .option('--quiet', 'Suppress informational output')
+  .option('--verbose', 'Print informational output')
   .action(async (source, options) => {
-    const isQuiet = options.quiet;
+    const isVerbose = options.verbose;
 
     if (source !== 'tochka') {
       console.error(`Unsupported source: ${source}`);
@@ -110,14 +111,26 @@ program
       );
 
       if (options.preview) {
-        if (!isQuiet) {
+        if (isVerbose) {
           console.error(`Applying ${source} with preview...`);
           console.error(`Loaded ${records.length} records from sync/${source}`);
         }
 
-        writeOutput(previewRecords);
+        const outputRecords = options.onlyErrors
+          ? previewRecords.filter((r) => !r.identified || !r.save)
+          : previewRecords;
 
-        if (!isQuiet) console.error(`✓ Preview complete. Processed ${previewRecords.length} records.`);
+        writeOutput(outputRecords);
+
+        if (isVerbose) {
+          if (options.onlyErrors) {
+            console.error(
+              `✓ Preview complete. Processed ${previewRecords.length} records. Showing ${outputRecords.length} error records.`
+            );
+          } else {
+            console.error(`✓ Preview complete. Processed ${previewRecords.length} records.`);
+          }
+        }
         return;
       }
 
@@ -136,7 +149,7 @@ program
       const hmEnv = validateHoneyMoneyEnv();
       const client = new HoneyMoneyClient(hmEnv);
 
-      if (!isQuiet) {
+      if (isVerbose) {
         console.error(`Applying ${source} to Honey Money...`);
         console.error(`Loaded ${records.length} records from sync/${source}`);
         console.error(`Sending ${selectedRecords.length} identified income/expense records.`);
@@ -163,7 +176,7 @@ program
 
       writeOutput(createdTransactions);
 
-      if (!isQuiet) {
+      if (isVerbose) {
         const skippedCount = previewRecords.length - selectedRecords.length;
         console.error(
           `✓ Apply complete. Created ${createdTransactions.length} Honey Money transactions.` +
