@@ -1,0 +1,30 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "SbpC2CPayment"
+    },
+    "time_data": {
+      "event_date": "2026-04-10T09:00:00.000+03:00"
+    }
+  },
+  "data": {
+    "title": "Иван Иванович И.",
+    "sum": 3000,
+    "sumCurrency": "RUB",
+    "incoming": false,
+    "payerAccountId": "40802810100000000001",
+    "payerBankBic": "044525104",
+    "payerBankName": "Точка Банк",
+    "payerName": "",
+    "payeeAccountId": "40817810000000000099",
+    "payeeBankBic": "044525225",
+    "payeeBankName": "Сбербанк",
+    "status": "DONE",
+    "operationId": "C2C00000000000000000000000000003",
+    "transactionId": "c2c00000000000000000000000000003",
+    "formattedTitle": "Отправлено 3000 RUB по СБП",
+    "date": "2026-04-10T09:00:00.000+03:00",
+    "sourceName": "web",
+    "currency": "RUB"
+  }
+}

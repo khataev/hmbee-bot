@@ -346,6 +346,38 @@
             }
           }
         },
+        "SbpC2CPayment": {
+          "conditions": {
+            "included": {
+              "and": [
+                {
+                  "==": [
+                    {
+                      "var": "record.data.status"
+                    },
+                    "DONE"
+                  ]
+                },
+                {
+                  "==": [
+                    {
+                      "var": "record.data.incoming"
+                    },
+                    true
+                  ]
+                }
+              ]
+            },
+            "excluded": {
+              "==": [
+                {
+                  "var": "record.data.incoming"
+                },
+                false
+              ]
+            }
+          }
+        },
         "PaymentWrittenOff": {
           "conditions": {
             "included": {

@@ -84,7 +84,11 @@ export interface SbpC2BRefundRecord extends TochkaRecordMeta<'SbpC2BRefund'> {
   data: SbpC2BRefundData;
 }
 
-export type SbpTransactionRecord = SbpB2CPaymentRecord | SbpC2BPaymentRecord | SbpC2BRefundRecord;
+export interface SbpC2CPaymentRecord extends TochkaRecordMeta<'SbpC2CPayment'> {
+  data: SbpBaseTransactionData;
+}
+
+export type SbpTransactionRecord = SbpB2CPaymentRecord | SbpC2BPaymentRecord | SbpC2BRefundRecord | SbpC2CPaymentRecord;
 
 export interface PaymentWrittenOffData {
   corebankingId: string;
@@ -175,7 +179,7 @@ export type TochkaSyncRecord =
   | VedPaymentIncomeRecord
   | UnsupportedTochkaRecord;
 
-type SbpTypeCode = 'SbpB2CPayment' | 'SbpC2BPayment' | 'SbpC2BRefund';
+type SbpTypeCode = 'SbpB2CPayment' | 'SbpC2BPayment' | 'SbpC2BRefund' | 'SbpC2CPayment';
 type SupportedTochkaTypeCode =
   | 'CardTransactionInfo'
   | SbpTypeCode
@@ -190,6 +194,7 @@ function isSupportedTochkaTypeCode(typeCode: string): typeCode is SupportedTochk
     typeCode === 'SbpB2CPayment' ||
     typeCode === 'SbpC2BPayment' ||
     typeCode === 'SbpC2BRefund' ||
+    typeCode === 'SbpC2CPayment' ||
     typeCode === 'PaymentWrittenOff' ||
     typeCode === 'PaymentIncome' ||
     typeCode === 'PaymentAccepted' ||
@@ -203,7 +208,12 @@ function isCardTransactionInfoRecord(record: TochkaSyncRecord): record is CardTr
 
 function isSbpTransactionRecord(record: TochkaSyncRecord): record is SbpTransactionRecord {
   const typeCode = record.meta_data.system_data.type_code;
-  return typeCode === 'SbpB2CPayment' || typeCode === 'SbpC2BPayment' || typeCode === 'SbpC2BRefund';
+  return (
+    typeCode === 'SbpB2CPayment' ||
+    typeCode === 'SbpC2BPayment' ||
+    typeCode === 'SbpC2BRefund' ||
+    typeCode === 'SbpC2CPayment'
+  );
 }
 
 function isPaymentWrittenOffRecord(record: TochkaSyncRecord): record is PaymentWrittenOffRecord {
