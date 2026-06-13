@@ -172,6 +172,27 @@ The system SHALL classify the first supported Tochka SBP families in preview whe
 - **AND** the preview record has `save = true`
 - **AND** the preview record is classified in the expense flow
 
+#### Scenario: Non-transfer SbpC2CPayment is previewed as income
+- **WHEN** a synchronized Tochka source record has `type_code = SbpC2CPayment`
+- **AND** the record has `status = DONE` and `incoming = true`
+- **AND** the record is not detected as a transfer-like movement between my own accounts
+- **THEN** the preview record has `identified = true`
+- **AND** the preview record has `save = true`
+- **AND** the preview record is classified in the income flow
+
+#### Scenario: Outgoing SbpC2CPayment is excluded
+- **WHEN** a synchronized Tochka source record has `type_code = SbpC2CPayment`
+- **AND** the record has `incoming = false`
+- **THEN** the preview record has `identified = true`
+- **AND** the preview record has `save = false`
+- **AND** the preview record has `reason = "excluded"`
+
+#### Scenario: SbpC2CPayment with an unrecognized status is not identified
+- **WHEN** a synchronized Tochka source record has `type_code = SbpC2CPayment`
+- **AND** the record has `incoming = true` and a status other than `DONE`
+- **THEN** the preview record has `identified = false`
+- **AND** the preview record is not classified in the save-ready income flow
+
 ### Requirement: Transfer-like SBP records are not treated as save-ready income or expense
 The system SHALL perform transfer-like detection before assigning the supported SBP income or expense flows.
 
