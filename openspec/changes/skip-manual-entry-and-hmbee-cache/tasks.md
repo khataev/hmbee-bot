@@ -20,7 +20,7 @@
 
 ## 4. Manual-entry skip index & matching
 
-- [ ] 4.1 Загрузка кеша `sync/hmbee/all_json_cache.json` в `apply` (поведение при отсутствии файла — по решению в design Open Questions)
+- [ ] 4.1 Загрузка кеша `sync/hmbee/all_json_cache.json` в `apply`; при отсутствии файла — жёсткая ошибка с подсказкой `sync --update-hmbee-cache`
 - [ ] 4.2 Построить индекс «реально внесённых»: записи с `real_amount != null` (unplanned ∪ confirmed-planned), исключить планы только с `plan_amount`
 - [ ] 4.3 Реализовать ключ сопоставления `account_id + date + round(amount) + direction + category`; для `subtype=t` исключить категорию; включить валюту
 - [ ] 4.4 Нормализация перед сравнением: `Math.round` суммы и фолбэк даты карт

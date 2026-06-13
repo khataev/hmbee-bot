@@ -13,6 +13,23 @@ The system SHALL detect synchronized source transactions that already exist in t
 - **WHEN** `apply <source>` processes a normalized record that has no matching Honey Money cache record
 - **THEN** the skip step does not change the record's `identified`, `save`, or `reason`
 
+#### Scenario: Fail when the Honey Money cache file is missing
+- **WHEN** `apply <source>` runs and the Honey Money cache file `sync/hmbee/all_json_cache.json` does not exist
+- **THEN** the system fails with a clear error before any write
+- **AND** the error advises running `sync <source> --update-hmbee-cache`
+
+### Requirement: Apply reports skipped manual entries only in verbose mode
+The system SHALL print a summary of skipped manual-entry transactions and the Honey Money cache age only when verbose output is enabled.
+
+#### Scenario: Verbose run prints skip summary and cache age
+- **WHEN** `apply <source> --verbose` completes with one or more skipped manual-entry records
+- **THEN** the system prints how many records were skipped as manual entries
+- **AND** the system prints the Honey Money cache age or date
+
+#### Scenario: Non-verbose run stays quiet about skips
+- **WHEN** `apply <source>` runs without verbose output
+- **THEN** the system does not print the skip summary or cache age
+
 ### Requirement: Skip matching considers only really-entered Honey Money records
 The system SHALL include in the matching index only Honey Money records that represent really-entered transactions, identified by the presence of a real amount.
 
