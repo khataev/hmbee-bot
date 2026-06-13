@@ -19,7 +19,7 @@ export const HoneyMoneyCacheEntrySchema = z.object({
   real_amount: z.number().nullable().optional(),
   plan_amount: z.number().nullable().optional(),
   currency: z.string(),
-  description: z.string(),
+  description: z.string().optional(),
   date: z.string(),
   category: z.string().nullable().optional(),
   account_id: z.number().optional()
@@ -27,10 +27,7 @@ export const HoneyMoneyCacheEntrySchema = z.object({
 
 export type HoneyMoneyCacheEntry = z.infer<typeof HoneyMoneyCacheEntrySchema>;
 
-const AllJsonResponseSchema = z.union([
-  z.record(z.string(), HoneyMoneyCacheEntrySchema),
-  z.array(HoneyMoneyCacheEntrySchema)
-]);
+const AllJsonResponseSchema = z.array(HoneyMoneyCacheEntrySchema);
 
 export class HoneyMoneyClient {
   constructor(private readonly env: THoneyMoneyEnvSchema) {}
@@ -52,7 +49,7 @@ export class HoneyMoneyClient {
       throw new Error(`Honey Money request failed with status ${response.status}`);
     }
 
-    const payload = HoneyMoneyCreateTransactionResponseSchema.parse((await response.json()) as unknown);
+    const payload = HoneyMoneyCreateTransactionResponseSchema.parse(await response.json());
 
     if (payload.status !== 'success') {
       throw new Error(`Honey Money transaction creation returned status ${payload.status}`);
@@ -76,7 +73,6 @@ export class HoneyMoneyClient {
       throw new Error(`Honey Money all_json request failed with status ${response.status}`);
     }
 
-    const raw = AllJsonResponseSchema.parse((await response.json()) as unknown);
-    return Array.isArray(raw) ? raw : Object.values(raw);
+    return AllJsonResponseSchema.parse(await response.json());
   }
 }

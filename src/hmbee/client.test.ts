@@ -14,33 +14,6 @@ describe('HoneyMoneyClient.getAllTransactions', () => {
     vi.restoreAllMocks();
   });
 
-  it('parses object response and returns array of entries', async () => {
-    const entry = {
-      id: 737481,
-      type: 'unplanned',
-      subtype: 'e',
-      real_amount: -1000,
-      currency: 'rub',
-      description: 'test',
-      date: '2013-11-01',
-      category: 'Спорт',
-      account_id: 5695
-    };
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ '737481': entry })
-      })
-    );
-
-    const client = new HoneyMoneyClient(mockEnv);
-    const result = await client.getAllTransactions();
-
-    expect(result).toHaveLength(1);
-    expect(result[0]).toMatchObject({ id: 737481, subtype: 'e', real_amount: -1000 });
-  });
-
   it('parses array response and returns array of entries', async () => {
     const entry = {
       id: 737481,
@@ -68,7 +41,32 @@ describe('HoneyMoneyClient.getAllTransactions', () => {
     expect(result[0]).toMatchObject({ id: 737481 });
   });
 
-  it('throws an error', async () => {
+  it('accepts entries without description', async () => {
+    const entry = {
+      id: 737481,
+      type: 'unplanned',
+      subtype: 'e',
+      real_amount: -1000,
+      currency: 'rub',
+      date: '2013-11-01',
+      account_id: 5695
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [entry]
+      })
+    );
+
+    const client = new HoneyMoneyClient(mockEnv);
+    const result = await client.getAllTransactions();
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.description).toBeUndefined();
+  });
+
+  it('throws an error without revealing secrets when HTTP fails', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
