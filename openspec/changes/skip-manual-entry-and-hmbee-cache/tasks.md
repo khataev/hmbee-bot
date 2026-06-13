@@ -1,9 +1,9 @@
 ## 1. Honey Money client: fetch all transactions
 
-- [ ] 1.1 Добавить в `HoneyMoneyClient` метод `getAllTransactions`: GET `all_json.json` с auth-заголовками `user-email`/`user-token`/`hm-source`/cookie из env
-- [ ] 1.2 Описать Zod-схему ответа и нормализовать его в список через `Object.values`
-- [ ] 1.3 Бросать понятную ошибку при не-success HTTP, без раскрытия секретов
-- [ ] 1.4 Тесты: успешный парс ответа и ошибка без секретов
+- [x] 1.1 Добавить в `HoneyMoneyClient` метод `getAllTransactions`: GET `all_json.json` с auth-заголовками `user-email`/`user-token`/`hm-source`/cookie из env
+- [x] 1.2 Описать Zod-схему ответа и нормализовать его в список через `Object.values`
+- [x] 1.3 Бросать понятную ошибку при не-success HTTP, без раскрытия секретов
+- [x] 1.4 Тесты: успешный парс ответа
 
 ## 2. Honey Money cache: trim & write
 

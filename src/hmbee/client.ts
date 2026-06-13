@@ -12,6 +12,26 @@ const HoneyMoneyCreateTransactionResponseSchema = z.object({
   })
 });
 
+export const HoneyMoneyCacheEntrySchema = z.object({
+  id: z.number(),
+  type: z.string(),
+  subtype: z.string(),
+  real_amount: z.number().nullable().optional(),
+  plan_amount: z.number().nullable().optional(),
+  currency: z.string(),
+  description: z.string(),
+  date: z.string(),
+  category: z.string().nullable().optional(),
+  account_id: z.number().optional()
+});
+
+export type HoneyMoneyCacheEntry = z.infer<typeof HoneyMoneyCacheEntrySchema>;
+
+const AllJsonResponseSchema = z.union([
+  z.record(z.string(), HoneyMoneyCacheEntrySchema),
+  z.array(HoneyMoneyCacheEntrySchema)
+]);
+
 export class HoneyMoneyClient {
   constructor(private readonly env: THoneyMoneyEnvSchema) {}
 
@@ -39,5 +59,24 @@ export class HoneyMoneyClient {
     }
 
     return payload.data.transaction.id;
+  }
+
+  async getAllTransactions(): Promise<HoneyMoneyCacheEntry[]> {
+    const response = await fetch(`${this.env.HM_API_BASE_URL.replace(/\/$/, '')}/transaction/all_json.json`, {
+      headers: {
+        'content-type': 'application/json',
+        'hm-source': this.env.HM_SOURCE,
+        'user-email': this.env.HM_USER_EMAIL,
+        'user-token': this.env.HM_USER_TOKEN,
+        cookie: this.env.HM_COOKIE
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Honey Money all_json request failed with status ${response.status}`);
+    }
+
+    const raw = AllJsonResponseSchema.parse((await response.json()) as unknown);
+    return Array.isArray(raw) ? raw : Object.values(raw);
   }
 }

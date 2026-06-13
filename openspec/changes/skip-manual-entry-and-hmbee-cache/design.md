@@ -51,7 +51,7 @@
 Skip — пост-проход в `apply` после нормализации: для каждого `PreviewRecord` с заполненным `hmbee`/`normalized` пытаемся изъять матч из индекса; при успехе ставим `identified=true, save=false, reason="Внесена вручную"`. Существующая запись через `save=false` уже исключается из write-path, поэтому `source-apply` менять не нужно. Skip-записи показываются в `--preview` (и проходят `--only-errors`, т.к. `save=false`).
 
 ### 7. Новый метод клиента `getAllTransactions`
-GET `all_json.json` с теми же auth-заголовками, что у `createTransaction` (`user-email`, `user-token`, `hm-source`, cookie из env). Ответ парсится Zod-схемой и нормализуется через `Object.values`. Ошибки — без раскрытия секретов.
+GET `all_json.json` с теми же auth-заголовками, что у `createTransaction` (`user-email`, `user-token`, `hm-source`, cookie из env). Ответ парсится Zod-схемой и нормализуется через `Object.values`.
 
 ## Risks / Trade-offs
 
