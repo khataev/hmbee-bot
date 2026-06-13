@@ -27,6 +27,6 @@ The system SHALL accept an `--only-errors` flag on the `apply <source> --preview
 The system SHALL include the total number of loaded records and the number of error records in the informational summary when `--only-errors` is active, so the operator can assess the proportion of problematic entries without rerunning without the flag.
 
 #### Scenario: Summary message includes total and error counts
-- **WHEN** the operator runs `apply <source> --preview --only-errors` without `--quiet`
+- **WHEN** the operator runs `apply <source> --preview --only-errors` with `--verbose`
 - **THEN** the informational summary states the total number of processed records
 - **AND** the summary states the number of records included in the filtered (error) output
