@@ -7,7 +7,7 @@ The system SHALL provide a Honey Money client method that fetches the full trans
 - **WHEN** the cache update requests all Honey Money transactions
 - **THEN** the client issues a GET request to the Honey Money `all_json.json` endpoint
 - **AND** the request uses the configured `user-email`, `user-token`, `hm-source`, and cookie authentication from environment secrets
-- **AND** the client returns the transactions as a list normalized from the keyed object response
+- **AND** the client returns the transactions as a list parsed from the JSON array response
 
 #### Scenario: Fetch fails with a clear error
 - **WHEN** the Honey Money `all_json` request returns a non-success HTTP status
