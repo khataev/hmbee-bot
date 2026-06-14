@@ -1,3 +1,4 @@
+import { statSync } from 'node:fs';
 import { Command } from 'commander';
 import { TochkaAdapter } from 'src/adapters/tochka.js';
 import type { SourceAdapter } from 'src/adapters/types.js';
@@ -7,7 +8,9 @@ import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
 import type { HoneyMoneyTransaction, PreviewRecord } from 'src/apply/preview/types.js';
 import { createAccountRegistry, loadConfig } from 'src/config.js';
 import { loadEnv, validateHoneyMoneyEnv, validateTochkaEnv } from 'src/env.js';
+import { CACHE_PATH, trimEntries, writeCache } from 'src/hmbee/cache.js';
 import { HoneyMoneyClient } from 'src/hmbee/client.js';
+import { applySkipPass, buildMatchIndex, loadCache } from 'src/hmbee/skipIndex.js';
 import { writeOutput } from 'src/output.js';
 
 loadEnv();
@@ -44,6 +47,7 @@ program
   .option('--format <type>', 'Output format (adapted|raw)', 'adapted')
   .option('--verbose', 'Print informational output')
   .option('--stdout', 'Write output to stdout instead of file')
+  .option('--update-hmbee-cache', 'After source sync, also fetch and write the Honey Money transaction cache')
   .action(async (source, options) => {
     const isVerbose = options.verbose;
     const writeToStdout = options.stdout;
@@ -74,6 +78,21 @@ program
       console.error(`Sync failed: ${getErrorMessage(error)}`);
       process.exit(1);
     }
+
+    if (options.updateHmbeeCache) {
+      if (isVerbose) console.log('Updating Honey Money cache...');
+      try {
+        const hmEnv = validateHoneyMoneyEnv();
+        const client = new HoneyMoneyClient(hmEnv);
+        const all = await client.getAllTransactions();
+        const trimmed = trimEntries(all, options.from);
+        writeCache(trimmed);
+        if (isVerbose) console.log(`✓ Honey Money cache updated. ${trimmed.length} records written to cache.`);
+      } catch (error: unknown) {
+        console.error(`Honey Money cache update failed: ${getErrorMessage(error)}`);
+        process.exit(1);
+      }
+    }
   });
 
 program
@@ -101,7 +120,7 @@ program
       }
       const accountRegistry = createAccountRegistry(config);
       const records = loadSyncFiles(source);
-      const previewRecords = records.map((record) =>
+      const normalized = records.map((record) =>
         normalizeTochkaRecord(record, {
           accountMappings: tochkaConfig.accountMappings,
           typeCodeRules: tochkaConfig.typeCodes,
@@ -109,6 +128,23 @@ program
           categoryMapping: config.hmbee.categoryMapping
         })
       );
+
+      const cacheEntries = loadCache();
+      let cacheMtime: string;
+      try {
+        cacheMtime = statSync(CACHE_PATH).mtime.toISOString().slice(0, 10);
+      } catch {
+        cacheMtime = 'unknown';
+      }
+      const skipIndex = buildMatchIndex(cacheEntries);
+      const previewRecords = applySkipPass(normalized, skipIndex);
+
+      if (isVerbose) {
+        const skippedCount = previewRecords.filter((r) => r.reason === 'Внесена вручную').length;
+        if (skippedCount > 0) {
+          console.error(`Skipped ${skippedCount} records already entered in Honey Money (cache date: ${cacheMtime}).`);
+        }
+      }
 
       if (options.preview) {
         if (isVerbose) {

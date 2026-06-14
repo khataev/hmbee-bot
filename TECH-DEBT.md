@@ -11,20 +11,12 @@ Tracking identified technical debt and planned simplifications.
 - **Why**: Reduces complexity in pipeline interpretation and simplifies consumer logic.
 - **Status**: Added 2026-05-10.
 
-### 2. Standardize `sync` output and remove `--out` flag
-- **Context**: The `sync` command currently allows a custom output path via `--out`.
-- **Goal**: 
-    - Remove the `--out` flag.
-    - Standardize output path to `sync/[source]/[from]_[to].json` by default.
-- **Why**: Ensures predictable file discovery for the `apply` command and reduces operator decision overhead.
-- **Status**: Completed 2026-05-11. (OpenSpec: sync-fiename-improvement)
-
-### 3. Use only absolute paths in imports
+### 2. Use only absolute paths in imports
  - **Context**: Biome checks currently allow relative imports.
 - **Goal**: Use only absolute paths in imports for consistency.
 - **Status**: Added 2026-05-10.
 
-### 4. Типизация схем загрузки конфига
+### 3. Типизация схем загрузки конфига
 - **Context**: `AppConfigSchema.sources` использует `z.record(z.string(), BankConfigSchema)`, из-за чего Zod не применяет банк-специфичные схемы (например, `TochkaBankConfigSchema` с обязательным `bankBic`) к конкретным ключам вроде `tochka`. В итоге `TochkaBankConfigSchema` / `TochkaBankConfig` объявлены, но не применяются при парсинге.
 - **Goal**:
     - Добавить `.superRefine` на `sources`, чтобы ключ `tochka` валидировался через `TochkaBankConfigSchema`.
@@ -32,16 +24,25 @@ Tracking identified technical debt and planned simplifications.
 - **Why**: Без этого отсутствие `bankBic` в секции `tochka` не отловится при загрузке конфига, а `isDeposit` молча перестанет работать.
 - **Status**: Added 2026-06-12. (OpenSpec: multi-bank-owned-accounts, review.md)
 
-### 5. Более точный маппинг title `ООО "Банк Точка"`
+### 4. Более точный маппинг title `ООО "Банк Точка"`
 - **Context**: Сейчас title `ООО "Банк Точка"` смаплен одной записью, но под ним проходят разнородные операции: комиссии за банковское обслуживание (`activityId=tariffer-…`, `cbs-tb-…`) и проценты по депозитам. Одна категория не различает эти сценарии.
 - **Goal**: Разделить классификацию по дополнительным признакам сырой записи (например, `activityId`/`type_code`), чтобы комиссии и проценты по депозитам попадали в разные категории.
 - **Why**: Точность аналитики расходов/доходов: банковское обслуживание и проценты по депозитам — это разные статьи.
 - **Status**: Added 2026-06-13.
 
-### 6. Более точный маппинг title `АКЦИОНЕРНОЕ ОБЩЕСТВО "ТОЧКА"`
+### 5. Более точный маппинг title `АКЦИОНЕРНОЕ ОБЩЕСТВО "ТОЧКА"`
 - **Context**: Под этим title проходят как минимум два разных сценария: комиссия за СМС-информирование (`activityId=sms-commission-…`) и cashback. Сейчас они смаплены в одну категорию.
 - **Goal**: Различать комиссию за СМС и cashback (разные категории; cashback к тому же доход, а комиссия — расход).
 - **Why**: Без различения доход (cashback) и расход (комиссия) смешиваются под одним title.
+- **Status**: Added 2026-06-13.
+
+### 6. Рефакторинг инфраструктуры CLI
+
+- **Context**: Весь код команд `sync` и `apply` (валидация, оркестрация, вызовы клиентов) сосредоточен в `src/index.ts`. Параллельно `src/apply/` содержит и логику preview/нормализации, и вспомогательные функции самой команды, без чёткой границы между ними.
+- **Goal**:
+  - Вынести полную логику каждой команды в отдельный модуль (`src/commands/sync.ts`, `src/commands/apply.ts`); `src/index.ts` только регистрирует команды и вызывает их.
+  - Пересмотреть иерархию `src/apply/`: отделить pipeline нормализации/preview (сейчас `src/apply/preview/`) от точки входа команды, сделать зависимости однонаправленными.
+- **Why**: Файл `src/index.ts` не тестируется и растёт с каждой командой. Размытая граница между командой `apply` и её sub-pipeline усложняет навигацию и добавление новых шагов (например, skip-индекса).
 - **Status**: Added 2026-06-13.
 
 ### 7. Разделить `ignored` и тип маппинга классификатора
