@@ -12,7 +12,8 @@ function isMatchable(entry: HoneyMoneyCacheEntry): entry is MatchableEntry {
   return entry.real_amount != null && entry.account_id != null;
 }
 
-export function loadCache(path = CACHE_PATH): HoneyMoneyCacheEntry[] {
+export function loadCache(): HoneyMoneyCacheEntry[] {
+  const path = CACHE_PATH;
   if (!existsSync(path)) {
     throw new Error(`Honey Money cache not found at ${path}. Run 'sync <source> --update-hmbee-cache' first.`);
   }
@@ -78,7 +79,7 @@ function makeKey(
   category: string | null,
   currency: string
 ): string {
-  const amount = Math.abs(Math.round(realAmount));
+  const amount = Math.abs(Math.round(realAmount)); // direction is encoded by subtype, not sign
   const cat = subtype === 't' ? '' : (category ?? '');
   return `${accountId}|${date}|${amount}|${subtype}|${cat}|${currency}`;
 }

@@ -130,14 +130,19 @@ program
       );
 
       const cacheEntries = loadCache();
+      let cacheMtime: string;
+      try {
+        cacheMtime = statSync(CACHE_PATH).mtime.toISOString().slice(0, 10);
+      } catch {
+        cacheMtime = 'unknown';
+      }
       const skipIndex = buildMatchIndex(cacheEntries);
       const previewRecords = applySkipPass(normalized, skipIndex);
 
       if (isVerbose) {
         const skippedCount = previewRecords.filter((r) => r.reason === 'Внесена вручную').length;
         if (skippedCount > 0) {
-          const cacheDate = statSync(CACHE_PATH).mtime.toISOString().slice(0, 10);
-          console.error(`Skipped ${skippedCount} records already entered in Honey Money (cache date: ${cacheDate}).`);
+          console.error(`Skipped ${skippedCount} records already entered in Honey Money (cache date: ${cacheMtime}).`);
         }
       }
 

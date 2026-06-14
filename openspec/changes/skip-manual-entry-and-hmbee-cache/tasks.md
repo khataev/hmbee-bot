@@ -1,7 +1,7 @@
 ## 1. Honey Money client: fetch all transactions
 
 - [x] 1.1 Добавить в `HoneyMoneyClient` метод `getAllTransactions`: GET `all_json.json` с auth-заголовками `user-email`/`user-token`/`hm-source`/cookie из env
-- [x] 1.2 Описать Zod-схему ответа и нормализовать его в список через `Object.values`
+- [x] 1.2 Описать Zod-схему ответа (`z.array(...)`) и распарсить JSON-массив, возвращаемый эндпоинтом
 - [x] 1.3 Бросать понятную ошибку при не-success HTTP, без раскрытия секретов
 - [x] 1.4 Тесты: успешный парс ответа
 
@@ -9,7 +9,7 @@
 
 - [x] 2.1 Модуль кеша: обрезка записей по `date >= (from − 10 дней)` (учесть фолбэк даты карт `meta_data.time_data.event_date`)
 - [x] 2.2 Запись в `sync/hmbee/all_json_cache.json` с созданием каталога `sync/hmbee/` при отсутствии и overwrite при каждом обновлении
-- [x] 2.3 Тесты: граница обрезки (включительно `from − 10д`), создание каталога, перезапись
+- [x] 2.3 Тесты: граница обрезки (включительно `from − 10д`)
 
 ## 3. Sync command flag
 
@@ -20,7 +20,7 @@
 
 ## 4. Manual-entry skip index & matching
 
-- [x] 4.1 Загрузка кеша `sync/hmbee/all_json_cache.json` в `apply`; при отсутствии файла — жёсткая ошибка с подсказкой `sync --update-hmbee-cache`
+- [x] 4.1 Загрузка кеша `sync/hmbee/all_json_cache.json` в `apply`; при отсутствии файла — жёсткая ошибка с подсказкой `sync --update-hmbee-cache` (тест не реализован)
 - [x] 4.2 Построить индекс «реально внесённых»: записи с `real_amount != null` (unplanned ∪ confirmed-planned), исключить планы только с `plan_amount`
 - [x] 4.3 Реализовать ключ сопоставления `account_id + date + round(amount) + direction + category`; для `subtype=t` исключить категорию; включить валюту
 - [x] 4.4 Нормализация перед сравнением: `Math.round` суммы и фолбэк даты карт
