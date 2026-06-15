@@ -12,11 +12,11 @@
 
 ## 3. Дефолтный матчер
 
-- [ ] 3.1 Ключ матча: account + direction + category + сумма ±20% (round), окно = календарный месяц транзакции
-- [ ] 3.2 Для transfer исключить category из ключа
-- [ ] 3.3 Уникальность 1:1 с «съеданием» плана; tie-break: ближайший по дате, затем по сумме
-- [ ] 3.4 Проставление статуса: matched-exact / matched-tolerance / out-of-tolerance / no-candidate / ambiguous
-- [ ] 3.5 Тесты: exact, ±20% граница, вне допуска, неверное направление, transfer без категории, 1:1 на двух кандидатах, ambiguous
+- [x] 3.1 Ключ матча: account + direction + category + сумма ±20% (round), окно = календарный месяц транзакции
+- [x] 3.2 Для transfer исключить category из ключа
+- [x] 3.3 Уникальность 1:1 с «съеданием» плана; tie-break: ближайший по дате, затем по сумме
+- [x] 3.4 Проставление статуса: matched-exact / matched-tolerance / out-of-tolerance / no-candidate / ambiguous
+- [x] 3.5 Тесты: exact, ±20% граница, вне допуска, неверное направление, transfer без категории, 1:1 на двух кандидатах, ambiguous
 
 ## 4. Встраивание в пайплайн apply/preview
 
