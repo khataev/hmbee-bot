@@ -6,9 +6,9 @@
 
 ## 2. Срез кандидатов из кеша
 
-- [ ] 2.1 Построить срез «неподтверждённые планы»: `type=planned`, `plan_amount != null`, `real_amount == null`
-- [ ] 2.2 Индексировать по `account_id + direction + category` (для transfer — без category), учитывать календарный месяц
-- [ ] 2.3 Тесты: в срез попадают только неподтверждённые планы; confirmed и unplanned исключены
+- [x] 2.1 Построить срез «неподтверждённые планы»: `type=planned`, `plan_amount != null`, `real_amount == null`
+- [x] 2.2 Индексировать по `account_id + direction + category` (для transfer — без category), учитывать календарный месяц
+- [x] 2.3 Тесты: в срез попадают только неподтверждённые планы; confirmed и unplanned исключены
 
 ## 3. Дефолтный матчер
 
