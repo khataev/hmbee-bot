@@ -1,8 +1,8 @@
 ## 1. Контракт PreviewRecord и hmbee
 
-- [ ] 1.1 Добавить в `PreviewRecord` поле `plannedMatchStatus?: MatchStatus` (без отдельного объекта матчинга)
-- [ ] 1.2 Ввести тип `MatchStatus`: `matched-exact` | `matched-tolerance` | `no-candidate` | `out-of-tolerance` | `ambiguous`
-- [ ] 1.3 Расширить `HoneyMoneyTransaction` confirm-вариантом: `id:number`, `type:'planned'`, `plan_amount`, `common_id`, `virtual_id` (create-вариант остаётся с `id:null`)
+- [x] 1.1 Добавить в `PreviewRecord` поле `plannedMatchStatus?: MatchStatus` (без отдельного объекта матчинга)
+- [x] 1.2 Ввести тип `MatchStatus`: `matched-exact` | `matched-tolerance` | `no-candidate` | `out-of-tolerance` | `ambiguous`
+- [x] 1.3 Расширить `HoneyMoneyTransaction` confirm-вариантом: `id:number`, `type:'planned'`, `plan_amount`, `common_id`, `virtual_id` (create-вариант остаётся с `id:null`)
 
 ## 2. Срез кандидатов из кеша
 
