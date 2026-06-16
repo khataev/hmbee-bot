@@ -26,7 +26,9 @@ export function buildPreviewPlannedOutput(
 ): PreviewPlannedOutput {
   const yearMonths = new Set(records.flatMap((r) => r.normalized?.date?.slice(0, 7) ?? []));
   return {
-    records: selectPlanRelevantRecords(records),
-    unmatchedPlans: collectUnmatchedPlans(index, accountIds, yearMonths)
+    records: selectPlanRelevantRecords(records).sort((a, b) =>
+      (a.normalized?.date ?? '').localeCompare(b.normalized?.date ?? '')
+    ),
+    unmatchedPlans: collectUnmatchedPlans(index, accountIds, yearMonths).sort((a, b) => a.date.localeCompare(b.date))
   };
 }
