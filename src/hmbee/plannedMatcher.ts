@@ -1,4 +1,11 @@
-import type { MatchStatus } from 'src/apply/preview/types.js';
+import type {
+  HoneyMoneyConfirmIncomeExpenseTransaction,
+  HoneyMoneyConfirmTransferTransaction,
+  HoneyMoneyIncomeExpenseTransaction,
+  HoneyMoneyTransferTransaction,
+  MatchStatus,
+  PreviewRecord
+} from 'src/apply/preview/types.js';
 import { getPlanCandidates, type PlannedCandidateIndex, type UnconfirmedPlannedTxn } from 'src/hmbee/plannedIndex.js';
 
 export interface MatchResult {
@@ -41,6 +48,41 @@ export function matchPlannedTransaction(
     status: sourceAbs === planAbs ? 'matched-exact' : 'matched-tolerance',
     plan: matched
   };
+}
+
+export function applyMatchPass(records: PreviewRecord[], index: PlannedCandidateIndex): PreviewRecord[] {
+  return records.map((record) => {
+    if (!record.identified || !record.save || !record.hmbee || record.hmbee.id !== null) {
+      return record;
+    }
+    const { account_id, subtype, category, date, real_amount } = record.hmbee;
+    const result = matchPlannedTransaction(index, account_id, subtype, category, date, real_amount);
+    if (result.plan !== null) {
+      return {
+        ...record,
+        hmbee: buildConfirmHmbee(record.hmbee, result.plan),
+        plannedMatchStatus: result.status
+      };
+    }
+    return { ...record, plannedMatchStatus: result.status };
+  });
+}
+
+function buildConfirmHmbee(
+  createDraft: HoneyMoneyIncomeExpenseTransaction | HoneyMoneyTransferTransaction,
+  plan: UnconfirmedPlannedTxn
+): HoneyMoneyConfirmIncomeExpenseTransaction | HoneyMoneyConfirmTransferTransaction {
+  const planOverrides = {
+    id: plan.id,
+    type: 'planned',
+    plan_amount: plan.plan_amount,
+    common_id: plan.common_id ?? null,
+    virtual_id: plan.virtual_id ?? null
+  };
+  if (createDraft.subtype === 't') {
+    return { ...createDraft, ...planOverrides } as HoneyMoneyConfirmTransferTransaction;
+  }
+  return { ...createDraft, ...planOverrides } as HoneyMoneyConfirmIncomeExpenseTransaction;
 }
 
 function isWithinTolerance(sourceAbs: number, planAmount: number): boolean {

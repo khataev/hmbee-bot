@@ -20,12 +20,12 @@
 
 ## 4. Встраивание в пайплайн apply/preview
 
-- [ ] 4.1 Вызвать матчер после стадии skip (порядок: skip → match → create), переиспользуя загруженный кеш
-- [ ] 4.2 При матче: `identified=true, save=true, reason=null`, `hmbee` = confirm-форма (id плана, real_amount=сумма банка, date=дата факта), `plannedMatchStatus` = matched-*
-- [ ] 4.3 Без матча: запись сохраняет create-черновик (`id=null`), `save=true`; проставить `plannedMatchStatus` (no-candidate/out-of-tolerance/ambiguous)
-- [ ] 4.4 Гард раннера: `apply` (без preview) отправляет только create-черновики (`hmbee.id == null`); confirm-черновики (`id != null`) не шлёт
-- [ ] 4.5 (verbose) Печать количества отложенных confirm-черновиков
-- [ ] 4.6 Тесты: confirm-черновик не уходит в запись; create остаётся writable; порядок стадий корректен
+- [x] 4.1 Вызвать матчер после стадии skip (порядок: skip → match → create), переиспользуя загруженный кеш
+- [x] 4.2 При матче: `identified=true, save=true, reason=null`, `hmbee` = confirm-форма (id плана, real_amount=сумма банка, date=дата факта), `plannedMatchStatus` = matched-*
+- [x] 4.3 Без матча: запись сохраняет create-черновик (`id=null`), `save=true`; проставить `plannedMatchStatus` (no-candidate/out-of-tolerance/ambiguous)
+- [x] 4.4 Гард раннера: `apply` (без preview) отправляет только create-черновики (`hmbee.id == null`); confirm-черновики (`id != null`) не шлёт
+- [x] 4.5 (verbose) Печать количества отложенных confirm-черновиков
+- [x] 4.6 Тесты: confirm-черновик не уходит в запись; create остаётся writable; порядок стадий корректен
 
 ## 5. Фильтр --preview-planned
 

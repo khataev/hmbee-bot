@@ -1,7 +1,47 @@
+import type { PreviewRecord } from 'src/apply/preview/types.js';
 import type { HoneyMoneyCacheEntry } from 'src/hmbee/client.js';
 import { buildPlannedCandidateIndex } from 'src/hmbee/plannedIndex.js';
-import { matchPlannedTransaction } from 'src/hmbee/plannedMatcher.js';
+import { applyMatchPass, matchPlannedTransaction } from 'src/hmbee/plannedMatcher.js';
 import { describe, expect, it } from 'vitest';
+
+function makeCreateRecord(overrides?: { save?: boolean; reason?: string }): PreviewRecord {
+  return {
+    identified: true,
+    save: overrides?.save ?? true,
+    reason: overrides?.reason ?? null,
+    sourceRecord: {},
+    normalized: {
+      transactionId: 'tx-1',
+      account: '40802810309500023530',
+      status: 'Withdraw',
+      date: '2026-05-15T09:23:45',
+      type: 'expense',
+      amount: 5000,
+      currency: 'RUB',
+      description: 'Аренда'
+    },
+    hmbee: {
+      subtype: 'e',
+      date: '2026-05-15',
+      account_id: 2053036,
+      currency: 'rub',
+      id: null,
+      type: 'unplanned',
+      virtual_id: -1,
+      category: 'Аренда',
+      description: '5000',
+      planned_repeat_days: 0,
+      planned_repeat_end: 'always',
+      planned_repeat_end_date: null,
+      transfer_to_amount: null,
+      transfer_type: 'a',
+      real_amount: -5000,
+      plan_amount: null,
+      common_id: null,
+      transfer_to_currency: null
+    }
+  };
+}
 
 function makePlan(overrides: Partial<HoneyMoneyCacheEntry> & Pick<HoneyMoneyCacheEntry, 'id'>): HoneyMoneyCacheEntry {
   return {
@@ -112,5 +152,41 @@ describe('matchPlannedTransaction', () => {
     const result = matchPlannedTransaction(index, 2053036, 'e', 'Аренда', '2026-05-15T09:23:45', 5000);
     expect(result.status).toBe('ambiguous');
     expect(result.plan).toBeNull();
+  });
+});
+
+describe('applyMatchPass', () => {
+  it('matched record gets confirm-shaped hmbee with plan id and stays identified and save-ready', () => {
+    const plan = makePlan({ id: 42, plan_amount: -5000, common_id: 7, virtual_id: 3 });
+    const index = buildPlannedCandidateIndex([plan]);
+    const record = makeCreateRecord();
+    const [result] = applyMatchPass([record], index);
+    expect(result?.hmbee?.id).toBe(42);
+    expect(result?.hmbee?.type).toBe('planned');
+    expect(result?.hmbee?.plan_amount).toBe(-5000);
+    expect(result?.hmbee?.common_id).toBe(7);
+    expect(result?.hmbee?.virtual_id).toBe(3);
+    expect(result?.plannedMatchStatus).toBe('matched-exact');
+    expect(result?.identified).toBe(true);
+    expect(result?.save).toBe(true);
+    expect(result?.reason).toBeNull();
+  });
+
+  it('unmatched record keeps create draft (id=null) and save=true', () => {
+    const index = buildPlannedCandidateIndex([]);
+    const [result] = applyMatchPass([makeCreateRecord()], index);
+    expect(result?.hmbee?.id).toBeNull();
+    expect(result?.save).toBe(true);
+    expect(result?.plannedMatchStatus).toBe('no-candidate');
+  });
+
+  it('skipped record (save=false) is not touched by match pass', () => {
+    const plan = makePlan({ id: 1 });
+    const index = buildPlannedCandidateIndex([plan]);
+    const skipped = makeCreateRecord({ save: false, reason: 'Внесена вручную' });
+    const [result] = applyMatchPass([skipped], index);
+    expect(result?.hmbee?.id).toBeNull();
+    expect(result?.plannedMatchStatus).toBeUndefined();
+    expect(result?.save).toBe(false);
   });
 });
