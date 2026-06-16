@@ -12,6 +12,7 @@ import { CACHE_PATH, trimEntries, writeCache } from 'src/hmbee/cache.js';
 import { HoneyMoneyClient } from 'src/hmbee/client.js';
 import { buildPlannedCandidateIndex } from 'src/hmbee/plannedIndex.js';
 import { applyMatchPass } from 'src/hmbee/plannedMatcher.js';
+import { buildPreviewPlannedOutput } from 'src/hmbee/previewPlanned.js';
 import { applySkipPass, buildMatchIndex, loadCache } from 'src/hmbee/skipIndex.js';
 import { writeOutput } from 'src/output.js';
 
@@ -102,6 +103,10 @@ program
   .description('Process synchronized data for a source')
   .argument('<source>', 'Source name (e.g., tochka)')
   .option('--preview', 'Preview normalized records without writing to Honey Money')
+  .option(
+    '--preview-planned',
+    'Preview only plan-relevant records (matched and candidates) plus the source unmatched plans'
+  )
   .option('--only-errors', 'When combined with --preview, show only records with identified=false or save=false')
   .option('--only-id <ids>', 'Only save the specified comma-separated source transaction ids')
   .option('--verbose', 'Print informational output')
@@ -148,6 +153,19 @@ program
         if (skippedCount > 0) {
           console.error(`Skipped ${skippedCount} records already entered in Honey Money (cache date: ${cacheMtime}).`);
         }
+      }
+
+      if (options.previewPlanned) {
+        const hmAccountIds = new Set(Object.values(tochkaConfig.hmAccounts).map((account) => account.id));
+        const output = buildPreviewPlannedOutput(previewRecords, plannedIndex, hmAccountIds);
+        writeOutput(output);
+
+        if (isVerbose) {
+          console.error(
+            `✓ Preview-planned complete. ${output.records.length} plan-relevant records, ${output.unmatchedPlans.length} unmatched plans.`
+          );
+        }
+        return;
       }
 
       if (options.preview) {

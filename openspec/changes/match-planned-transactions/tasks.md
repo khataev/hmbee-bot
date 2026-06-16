@@ -29,13 +29,13 @@
 
 ## 5. Фильтр --preview-planned
 
-- [ ] 5.1 Добавить флаг `--preview-planned` к команде `apply` в `src/index.ts`
-- [ ] 5.2 Вывод: записи с `plannedMatchStatus` ≠ `no-candidate` (matched + кандидаты out-of-tolerance/ambiguous) + несматченные планы источника за период
-- [ ] 5.3 Несматченные планы брать из среза кандидатов кеша на HM-счетах источника, не «съеденных» матчем
-- [ ] 5.4 Показать сматченный план и `plannedMatchStatus`
-- [ ] 5.5 Тесты: no-candidate исключены; кандидаты и несматченные планы показаны; пустой вывод когда нечего показывать
+- [x] 5.1 Добавить флаг `--preview-planned` к команде `apply` в `src/index.ts`
+- [x] 5.2 Вывод: записи с `plannedMatchStatus` ≠ `no-candidate` (matched + кандидаты out-of-tolerance/ambiguous) + несматченные планы источника за период
+- [x] 5.3 Несматченные планы брать из среза кандидатов кеша на HM-счетах источника, не «съеденных» матчем
+- [x] 5.4 Показать сматченный план и `plannedMatchStatus`
+- [x] 5.5 Тесты: no-candidate исключены; кандидаты и несматченные планы показаны; пустой вывод когда нечего показывать
 
 ## 6. Quality gate
 
-- [ ] 6.1 `npm run check` (Biome lint+format, TypeScript strict, тесты) до зелёного
-- [ ] 6.2 Обновить документацию при необходимости (README/TRANSACTION-RULES) по матчингу планов и `--preview-planned`
+- [x] 6.1 `npm run check` (Biome lint+format, TypeScript strict, тесты) до зелёного
+- [x] 6.2 Обновить документацию при необходимости (README/TRANSACTION-RULES) по матчингу планов и `--preview-planned`

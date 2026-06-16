@@ -35,6 +35,24 @@ export function getPlanCandidates(
   return index.get(makeKey(accountId, subtype, category, yearMonth)) ?? [];
 }
 
+// Plans left in the index after the match pass has consumed (spliced out) matched plans.
+// Scoped to the source's Honey Money accounts and the year-months under consideration.
+export function collectUnmatchedPlans(
+  index: PlannedCandidateIndex,
+  accountIds: Set<number>,
+  yearMonths: Set<string>
+): UnconfirmedPlannedTxn[] {
+  const unmatched: UnconfirmedPlannedTxn[] = [];
+  for (const plans of index.values()) {
+    for (const plan of plans) {
+      if (accountIds.has(plan.account_id) && yearMonths.has(plan.date.slice(0, 7))) {
+        unmatched.push(plan);
+      }
+    }
+  }
+  return unmatched;
+}
+
 function isUnconfirmedPlannedTxn(entry: HoneyMoneyCacheEntry): entry is UnconfirmedPlannedTxn {
   return (
     entry.type === 'planned' &&
