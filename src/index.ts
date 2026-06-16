@@ -174,9 +174,13 @@ program
           console.error(`Loaded ${records.length} records from sync/${source}`);
         }
 
-        const outputRecords = options.onlyErrors
+        const filteredRecords = options.onlyErrors
           ? previewRecords.filter((r) => !r.identified || !r.save)
           : previewRecords;
+
+        const outputRecords = [...filteredRecords].sort((a, b) =>
+          (a.normalized?.date ?? '').localeCompare(b.normalized?.date ?? '')
+        );
 
         writeOutput(outputRecords);
 
