@@ -25,7 +25,7 @@
 - [x] 4.3 Без матча: запись сохраняет create-черновик (`id=null`), `save=true`; проставить `plannedMatchStatus` (no-candidate/out-of-tolerance/ambiguous)
 - [x] 4.4 Гард раннера: `apply` (без preview) отправляет только create-черновики (`hmbee.id == null`); confirm-черновики (`id != null`) не шлёт
 - [x] 4.5 (verbose) Печать количества отложенных confirm-черновиков
-- [x] 4.6 Тесты: confirm-черновик не уходит в запись; create остаётся writable; порядок стадий корректен
+- [x] 4.6 Тесты: create остаётся writable; порядок стадий корректен
 
 ## 5. Фильтр --preview-planned
 
