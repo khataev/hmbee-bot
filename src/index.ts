@@ -155,6 +155,10 @@ program
         }
       }
 
+      if (options.previewPlanned && options.preview) {
+        console.error('--preview-planned and --preview are mutually exclusive; using --preview-planned');
+      }
+
       if (options.previewPlanned) {
         const hmAccountIds = new Set(Object.values(tochkaConfig.hmAccounts).map((account) => account.id));
         const output = buildPreviewPlannedOutput(previewRecords, plannedIndex, hmAccountIds);

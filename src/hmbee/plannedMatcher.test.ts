@@ -117,7 +117,7 @@ describe('matchPlannedTransaction', () => {
     expect(result.plan?.id).toBe(1);
   });
 
-  it('1:1 — two source transactions, one planed: only first matches', () => {
+  it('1:1 — two source transactions, one planned: only first matches', () => {
     const plan = makePlan({ id: 1 });
     const index = buildPlannedCandidateIndex([plan]);
     const first = matchPlannedTransaction(index, 2053036, 'e', 'Аренда', '2026-05-15T09:23:45', 5000);

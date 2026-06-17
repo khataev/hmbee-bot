@@ -8,6 +8,8 @@ import type {
 } from 'src/apply/preview/types.js';
 import { getPlanCandidates, type PlannedCandidateIndex, type UnconfirmedPlannedTxn } from 'src/hmbee/plannedIndex.js';
 
+const AMOUNT_MATCH_TOLERANCE = 0.2; // 20% of plan_amount
+
 export interface MatchResult {
   status: MatchStatus;
   plan: UnconfirmedPlannedTxn | null;
@@ -36,7 +38,7 @@ export function matchPlannedTransaction(
   }
 
   const [matched, ...rest] = selectBest(withinTolerance, date, sourceAbs);
-  // HINT: 'matched' is always present at this point, this check here only just to make TS happy
+  // candidates.length > 0 was verified above; TS can't track it through selectBest's return type
   if (!matched || rest.length > 0) {
     return { status: 'ambiguous', plan: null };
   }
@@ -74,7 +76,7 @@ function buildConfirmHmbee(
 ): HoneyMoneyConfirmIncomeExpenseTransaction | HoneyMoneyConfirmTransferTransaction {
   const planOverrides = {
     id: plan.id,
-    type: 'planned',
+    type: 'planned' as const,
     plan_amount: plan.plan_amount,
     common_id: plan.common_id ?? null,
     virtual_id: plan.virtual_id ?? null
@@ -87,7 +89,7 @@ function buildConfirmHmbee(
 
 function isWithinTolerance(sourceAbs: number, planAmount: number): boolean {
   const planAbs = Math.abs(planAmount);
-  return Math.abs(sourceAbs - planAbs) <= 0.2 * planAbs;
+  return Math.abs(sourceAbs - planAbs) <= AMOUNT_MATCH_TOLERANCE * planAbs;
 }
 
 function selectBest(
