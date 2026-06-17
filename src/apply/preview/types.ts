@@ -11,6 +11,8 @@ export interface NormalizedRecord {
   counterpartyAccountId?: string | undefined;
 }
 
+export type MatchStatus = 'matched-exact' | 'matched-tolerance' | 'no-candidate' | 'out-of-tolerance' | 'ambiguous';
+
 export interface HoneyMoneyIncomeExpenseTransaction {
   subtype: 'e' | 'i';
   date: string;
@@ -55,7 +57,55 @@ export interface HoneyMoneyTransferTransaction {
   transfer_to_id: number;
 }
 
-export type HoneyMoneyTransaction = HoneyMoneyIncomeExpenseTransaction | HoneyMoneyTransferTransaction;
+export interface HoneyMoneyConfirmIncomeExpenseTransaction {
+  subtype: 'e' | 'i';
+  date: string;
+  account_id: number;
+  currency: string;
+  id: number;
+  type: 'planned';
+  virtual_id: number | null;
+  category: string | null;
+  description: string;
+  planned_repeat_days: 0;
+  planned_repeat_end: 'always';
+  planned_repeat_end_date: null;
+  transfer_to_amount: null;
+  transfer_type: 'a';
+  real_amount: number;
+  plan_amount: number;
+  common_id: number | null;
+  transfer_to_currency: null;
+}
+
+export interface HoneyMoneyConfirmTransferTransaction {
+  subtype: 't';
+  date: string;
+  account_id: number;
+  currency: string;
+  id: number;
+  type: 'planned';
+  virtual_id: number | null;
+  category: null;
+  description: string;
+  planned_repeat_days: 0;
+  planned_repeat_end: 'always';
+  planned_repeat_end_date: null;
+  transfer_to_amount: number;
+  transfer_type: 'a';
+  real_amount: number;
+  plan_amount: number;
+  common_id: number | null;
+  transfer_to_currency: null;
+  transfer_from_id: number;
+  transfer_to_id: number;
+}
+
+export type HoneyMoneyTransaction =
+  | HoneyMoneyIncomeExpenseTransaction
+  | HoneyMoneyTransferTransaction
+  | HoneyMoneyConfirmIncomeExpenseTransaction
+  | HoneyMoneyConfirmTransferTransaction;
 
 export interface PreviewRecord {
   identified: boolean;
@@ -64,4 +114,5 @@ export interface PreviewRecord {
   sourceRecord: unknown;
   normalized?: NormalizedRecord;
   hmbee?: HoneyMoneyTransaction;
+  plannedMatchStatus?: MatchStatus;
 }

@@ -22,7 +22,9 @@ export const HoneyMoneyCacheEntrySchema = z.object({
   description: z.string().optional(),
   date: z.string(),
   category: z.string().nullable().optional(),
-  account_id: z.number().optional()
+  account_id: z.number().optional(),
+  common_id: z.union([z.number(), z.string()]).nullable().optional(),
+  virtual_id: z.union([z.number(), z.string()]).nullable().optional()
 });
 
 export type HoneyMoneyCacheEntry = z.infer<typeof HoneyMoneyCacheEntrySchema>;

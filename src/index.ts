@@ -10,6 +10,9 @@ import { createAccountRegistry, loadConfig } from 'src/config.js';
 import { loadEnv, validateHoneyMoneyEnv, validateTochkaEnv } from 'src/env.js';
 import { CACHE_PATH, trimEntries, writeCache } from 'src/hmbee/cache.js';
 import { HoneyMoneyClient } from 'src/hmbee/client.js';
+import { buildPlannedCandidateIndex } from 'src/hmbee/plannedIndex.js';
+import { applyMatchPass } from 'src/hmbee/plannedMatcher.js';
+import { buildPreviewPlannedOutput } from 'src/hmbee/previewPlanned.js';
 import { applySkipPass, buildMatchIndex, loadCache } from 'src/hmbee/skipIndex.js';
 import { writeOutput } from 'src/output.js';
 
@@ -100,6 +103,10 @@ program
   .description('Process synchronized data for a source')
   .argument('<source>', 'Source name (e.g., tochka)')
   .option('--preview', 'Preview normalized records without writing to Honey Money')
+  .option(
+    '--preview-planned',
+    'Preview only plan-relevant records (matched and candidates) plus the source unmatched plans'
+  )
   .option('--only-errors', 'When combined with --preview, show only records with identified=false or save=false')
   .option('--only-id <ids>', 'Only save the specified comma-separated source transaction ids')
   .option('--verbose', 'Print informational output')
@@ -137,7 +144,9 @@ program
         cacheMtime = 'unknown';
       }
       const skipIndex = buildMatchIndex(cacheEntries);
-      const previewRecords = applySkipPass(normalized, skipIndex);
+      const afterSkip = applySkipPass(normalized, skipIndex);
+      const plannedIndex = buildPlannedCandidateIndex(cacheEntries);
+      const previewRecords = applyMatchPass(afterSkip, plannedIndex);
 
       if (isVerbose) {
         const skippedCount = previewRecords.filter((r) => r.reason === 'Внесена вручную').length;
@@ -146,15 +155,36 @@ program
         }
       }
 
+      if (options.previewPlanned && options.preview) {
+        console.error('--preview-planned and --preview are mutually exclusive; using --preview-planned');
+      }
+
+      if (options.previewPlanned) {
+        const hmAccountIds = new Set(Object.values(tochkaConfig.hmAccounts).map((account) => account.id));
+        const output = buildPreviewPlannedOutput(previewRecords, plannedIndex, hmAccountIds);
+        writeOutput(output);
+
+        if (isVerbose) {
+          console.error(
+            `✓ Preview-planned complete. ${output.records.length} plan-relevant records, ${output.unmatchedPlans.length} unmatched plans.`
+          );
+        }
+        return;
+      }
+
       if (options.preview) {
         if (isVerbose) {
           console.error(`Applying ${source} with preview...`);
           console.error(`Loaded ${records.length} records from sync/${source}`);
         }
 
-        const outputRecords = options.onlyErrors
+        const filteredRecords = options.onlyErrors
           ? previewRecords.filter((r) => !r.identified || !r.save)
           : previewRecords;
+
+        const outputRecords = [...filteredRecords].sort((a, b) =>
+          (a.normalized?.date ?? '').localeCompare(b.normalized?.date ?? '')
+        );
 
         writeOutput(outputRecords);
 
@@ -173,7 +203,9 @@ program
       const readyRecords = previewRecords.filter(isReadyForApply);
       const onlyIds = parseOnlyIdsOption(options.onlyId);
       const selectedRecords = filterApplyRecords(readyRecords, onlyIds);
-      const missingAccountMappings = selectedRecords.filter((record) => record.hmbee.account_id === null);
+      const createDrafts = selectedRecords.filter((r) => r.hmbee.id === null);
+      const deferredConfirmCount = selectedRecords.length - createDrafts.length;
+      const missingAccountMappings = createDrafts.filter((record) => record.hmbee.account_id === null);
 
       if (missingAccountMappings.length > 0) {
         const missingAccounts = [...new Set(missingAccountMappings.map((record) => record.normalized.account))].join(
@@ -188,14 +220,17 @@ program
       if (isVerbose) {
         console.error(`Applying ${source} to Honey Money...`);
         console.error(`Loaded ${records.length} records from sync/${source}`);
-        console.error(`Sending ${selectedRecords.length} identified income/expense records.`);
+        console.error(`Sending ${createDrafts.length} create drafts.`);
+        if (deferredConfirmCount > 0) {
+          console.error(`Deferred ${deferredConfirmCount} planned transaction confirmations (not yet supported).`);
+        }
       }
 
       const createdTransactions = [] as Array<
         HoneyMoneyTransaction & { sourceTransactionId: string; honeyMoneyTransactionId: number }
       >;
 
-      for (const record of selectedRecords) {
+      for (const record of createDrafts) {
         const accountId = record.hmbee.account_id;
         if (accountId === null) {
           throw new Error(`Missing Honey Money account mapping for Tochka account ${record.normalized.account}`);
@@ -213,7 +248,7 @@ program
       writeOutput(createdTransactions);
 
       if (isVerbose) {
-        const skippedCount = previewRecords.length - selectedRecords.length;
+        const skippedCount = previewRecords.length - createDrafts.length;
         console.error(
           `✓ Apply complete. Created ${createdTransactions.length} Honey Money transactions.` +
             (skippedCount > 0 ? ` Skipped ${skippedCount} unsupported records.` : '')
