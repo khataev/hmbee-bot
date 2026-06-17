@@ -1,8 +1,8 @@
 ## 1. Модель данных PlanMatch
 
-- [ ] 1.1 В `src/apply/preview/types.ts` добавить `'beaten-match'` в union `MatchStatus`
-- [ ] 1.2 Объявить интерфейс `PlanMatch { status: MatchStatus; lostPlanId?: number; beatenById?: string }` рядом с `PreviewRecord`
-- [ ] 1.3 Заменить `PreviewRecord.plannedMatchStatus?: MatchStatus` на `planMatch?: PlanMatch`
+- [x] 1.1 В `src/apply/preview/types.ts` добавить `'beaten-match'` в union `MatchStatus`
+- [x] 1.2 Объявить интерфейс `PlanMatch { status: MatchStatus; lostPlanId?: number; beatenById?: string }` рядом с `PreviewRecord`
+- [x] 1.3 Заменить `PreviewRecord.plannedMatchStatus?: MatchStatus` на `planMatch?: PlanMatch`
 
 ## 2. Бакетное разрешение в plannedMatcher
 
