@@ -11,7 +11,19 @@ export interface NormalizedRecord {
   counterpartyAccountId?: string | undefined;
 }
 
-export type MatchStatus = 'matched-exact' | 'matched-tolerance' | 'no-candidate' | 'out-of-tolerance' | 'ambiguous';
+export type MatchStatus =
+  | 'matched-exact'
+  | 'matched-tolerance'
+  | 'no-candidate'
+  | 'out-of-tolerance'
+  | 'ambiguous'
+  | 'beaten-match';
+
+export interface PlanMatch {
+  status: MatchStatus;
+  lostPlanId?: number;
+  beatenById?: string;
+}
 
 export interface HoneyMoneyIncomeExpenseTransaction {
   subtype: 'e' | 'i';
@@ -114,5 +126,5 @@ export interface PreviewRecord {
   sourceRecord: unknown;
   normalized?: NormalizedRecord;
   hmbee?: HoneyMoneyTransaction;
-  plannedMatchStatus?: MatchStatus;
+  planMatch?: PlanMatch;
 }

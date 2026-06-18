@@ -20,7 +20,7 @@ function record(status?: MatchStatus): PreviewRecord {
       currency: 'rub',
       description: 'x'
     },
-    ...(status ? { plannedMatchStatus: status } : {})
+    ...(status ? { planMatch: { status } } : {})
   };
 }
 
@@ -46,11 +46,12 @@ describe('selectPlanRelevantRecords', () => {
       record('matched-tolerance'),
       record('out-of-tolerance'),
       record('ambiguous'),
+      record('beaten-match'),
       record('no-candidate'),
       record(undefined)
     ];
-    const kept = selectPlanRelevantRecords(records).map((r) => r.plannedMatchStatus);
-    expect(kept).toEqual(['matched-exact', 'matched-tolerance', 'out-of-tolerance', 'ambiguous']);
+    const kept = selectPlanRelevantRecords(records).map((r) => r.planMatch?.status);
+    expect(kept).toEqual(['matched-exact', 'matched-tolerance', 'out-of-tolerance', 'ambiguous', 'beaten-match']);
   });
 });
 
