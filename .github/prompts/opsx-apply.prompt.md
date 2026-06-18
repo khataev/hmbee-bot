@@ -57,15 +57,7 @@ Implement tasks from an OpenSpec change.
    - Remaining tasks overview
    - Dynamic instruction from CLI
 
-6. **Ask execution mode**
-
-   Ask the user how to proceed. Skip only if: the user already indicated a preference in the current conversation, or only one top-level task remains.
-
-   Question: "How should I implement the tasks?"
-   - **All at once** — implement all remaining tasks in one session without stopping
-   - **One top-level task at a time** — implement top-level task 1, pause for your review, then continue on request
-
-7. **Implement tasks**
+6. **Implement tasks (loop until done or blocked)**
 
    For each pending task:
    - Show which task is being worked on
@@ -74,18 +66,13 @@ Implement tasks from an OpenSpec change.
    - Mark task complete in the tasks file: `- [ ]` → `- [x]`
    - Continue to next task
 
-   **If mode is "one top-level task at a time":**
-   - Implement all subtasks of the current top-level numbered task (e.g. task 1 with all its sub-items)
-   - After completing that top-level task, stop and show the pause output
-   - Wait for the user to explicitly continue (e.g., by calling `/opsx:apply` again)
-
    **Pause if:**
    - Task is unclear → ask for clarification
    - Implementation reveals a design issue → suggest updating artifacts
    - Error or blocker encountered → report and wait for guidance
    - User interrupts
 
-8. **On completion or pause, show status**
+7. **On completion or pause, show status**
 
    Display:
    - Tasks completed this session

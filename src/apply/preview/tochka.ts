@@ -699,14 +699,14 @@ function mapTochkaCategory(
   mcc: string | undefined,
   categoryMapping: CategoryMapping
 ): MappingEntry | null {
-  if (mcc && categoryMapping.mcc[mcc]) {
-    return categoryMapping.mcc[mcc];
-  }
-
   for (const { pattern, entry } of categoryMapping.title) {
     if (pattern.test(description)) {
       return entry;
     }
+  }
+
+  if (mcc && categoryMapping.mcc[mcc]) {
+    return categoryMapping.mcc[mcc];
   }
 
   return null;

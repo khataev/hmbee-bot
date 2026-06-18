@@ -228,6 +228,33 @@ describe('CardTransactionInfo classification', () => {
     expect(result.hmbee?.category).toBe('Услуги / Аренда самокатов');
   });
 
+  it('title pattern wins over MCC when both match', () => {
+    const record = {
+      ...mockBaseRecord,
+      data: { ...mockBaseRecord.data, mcc: '5411', title: 'WHOOSH' }
+    };
+    const result = normalizeTochkaRecord(record, options);
+    expect(result.hmbee?.category).toBe('Услуги / Аренда самокатов');
+  });
+
+  it('falls back to MCC when no title pattern matches', () => {
+    const record = {
+      ...mockBaseRecord,
+      data: { ...mockBaseRecord.data, mcc: '5411', title: 'Unknown Merchant' }
+    };
+    const result = normalizeTochkaRecord(record, options);
+    expect(result.hmbee?.category).toBe('Покупки / Продукты');
+  });
+
+  it('returns null category when neither title pattern nor MCC matches', () => {
+    const record = {
+      ...mockBaseRecord,
+      data: { ...mockBaseRecord.data, mcc: '9999', title: 'Unknown Merchant' }
+    };
+    const result = normalizeTochkaRecord(record, options);
+    expect(result.hmbee?.category).toBeNull();
+  });
+
   it('does not identify record with no matching include or exclude rule', () => {
     const record = {
       ...mockBaseRecord,
