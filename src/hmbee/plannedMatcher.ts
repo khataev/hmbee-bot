@@ -3,7 +3,6 @@ import type {
   HoneyMoneyConfirmTransferTransaction,
   HoneyMoneyIncomeExpenseTransaction,
   HoneyMoneyTransferTransaction,
-  MatchStatus,
   PlanMatch,
   PreviewRecord
 } from 'src/apply/preview/types.js';
@@ -11,53 +10,11 @@ import { getPlanCandidates, type PlannedCandidateIndex, type UnconfirmedPlannedT
 
 const AMOUNT_MATCH_TOLERANCE = 0.2; // 20% of plan_amount
 
-export interface MatchResult {
-  status: MatchStatus;
-  plan: UnconfirmedPlannedTxn | null;
-}
-
-export function matchPlannedTransaction(
-  index: PlannedCandidateIndex,
-  accountId: number,
-  subtype: 'e' | 'i' | 't',
-  category: string | null,
-  date: string,
-  sourceAmount: number
-): MatchResult {
-  const yearMonth = date.slice(0, 7);
-  const candidates = getPlanCandidates(index, accountId, subtype, category, yearMonth);
-
-  if (candidates.length === 0) {
-    return { status: 'no-candidate', plan: null };
-  }
-
-  const withinTolerance = candidates.filter((plan) => isWithinTolerance(sourceAmount, plan.plan_amount));
-
-  if (withinTolerance.length === 0) {
-    return { status: 'out-of-tolerance', plan: null };
-  }
-
-  const [matched, ...rest] = selectBest(withinTolerance, date, sourceAmount);
-  // candidates.length > 0 was verified above; TS can't track it through selectBest's return type
-  if (!matched || rest.length > 0) {
-    return { status: 'ambiguous', plan: null };
-  }
-  const idx = candidates.indexOf(matched);
-  if (idx !== -1) candidates.splice(idx, 1);
-
-  const sourceNormalized = Math.abs(Math.round(sourceAmount));
-  const planNormalized = Math.abs(matched.plan_amount);
-  return {
-    status: sourceNormalized === planNormalized ? 'matched-exact' : 'matched-tolerance',
-    plan: matched
-  };
-}
-
 interface BucketEntry {
   index: number;
   transactionId: string;
   date: string;
-  amount: number;
+  real_amount: number;
 }
 
 interface Bucket {
@@ -93,7 +50,7 @@ export function applyMatchPass(records: PreviewRecord[], index: PlannedCandidate
       index: recordIndex,
       transactionId: record.normalized?.transactionId ?? '',
       date,
-      amount: real_amount
+      real_amount
     };
     const group = buckets.get(key);
     if (group) {
@@ -172,10 +129,8 @@ function resolveBucket(realEntries: BucketEntry[], plans: UnconfirmedPlannedTxn[
 
   for (const [realIndex, entry] of realEntries.entries()) {
     for (const [planIndex, plan] of plans.entries()) {
-      if (!isWithinTolerance(entry.amount, plan.plan_amount)) continue;
-      const sourceAbs = Math.abs(Math.round(entry.amount));
-      const planAbs = Math.abs(plan.plan_amount);
-      const amountDiff = Math.abs(sourceAbs - planAbs);
+      if (!isWithinTolerance(entry.real_amount, plan.plan_amount)) continue;
+      const amountDiff = Math.abs(entry.real_amount - plan.plan_amount);
       const realTime = new Date(entry.date.slice(0, 10)).getTime();
       const planTime = new Date(plan.date.slice(0, 10)).getTime();
       const dateDiff = Math.abs(realTime - planTime);
@@ -254,12 +209,10 @@ function resolveBucket(realEntries: BucketEntry[], plans: UnconfirmedPlannedTxn[
       const plan = plans[edge.planIndex];
       if (!(entry && plan)) continue;
 
-      const sourceAbs = Math.abs(Math.round(entry.amount));
-      const planAbs = Math.abs(plan.plan_amount);
       outcomes[edge.realIndex] = {
         tag: 'matched',
         plan,
-        status: sourceAbs === planAbs ? 'matched-exact' : 'matched-tolerance'
+        status: entry.real_amount === plan.plan_amount ? 'matched-exact' : 'matched-tolerance'
       };
       consumedBy.set(edge.planIndex, entry.transactionId);
       freeReals.delete(edge.realIndex);
@@ -308,27 +261,5 @@ function buildConfirmHmbee(
 }
 
 function isWithinTolerance(sourceAmount: number, planAmount: number): boolean {
-  const sourceAbs = Math.abs(Math.round(sourceAmount));
-  const planAbs = Math.abs(planAmount);
-  return Math.abs(sourceAbs - planAbs) <= AMOUNT_MATCH_TOLERANCE * planAbs;
-}
-
-function selectBest(
-  candidates: UnconfirmedPlannedTxn[],
-  transactionDate: string,
-  sourceAmount: number
-): UnconfirmedPlannedTxn[] {
-  if (candidates.length === 1) return candidates;
-
-  const sourceAbs = Math.abs(Math.round(sourceAmount));
-  const txTime = new Date(transactionDate.slice(0, 10)).getTime();
-  const dateDiffs = candidates.map((plan) => Math.abs(new Date(plan.date.slice(0, 10)).getTime() - txTime));
-  const minDateDiff = Math.min(...dateDiffs);
-  const byDate = candidates.filter((_, i) => dateDiffs[i] === minDateDiff);
-
-  if (byDate.length === 1) return byDate;
-
-  const amountDiffs = byDate.map((plan) => Math.abs(Math.abs(plan.plan_amount) - sourceAbs));
-  const minAmountDiff = Math.min(...amountDiffs);
-  return byDate.filter((_, i) => amountDiffs[i] === minAmountDiff);
+  return Math.abs(sourceAmount - planAmount) <= AMOUNT_MATCH_TOLERANCE * Math.abs(planAmount);
 }

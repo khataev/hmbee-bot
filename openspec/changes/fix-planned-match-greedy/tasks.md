@@ -37,13 +37,13 @@
 
 `real_amount` и `plan_amount` из объектов HoneyMoney уже нормализованы: `buildHoneyMoneyTransferTransaction` всегда возвращает положительный `real_amount` (делает `abs`), `buildHoneyMoneyIncomeExpenseTransaction` делает `abs` и присваивает знак по типу операции. Внутри одного бакета (одинаковый `subtype`) оба значения гарантированно одного знака и целочисленные (без дробных копеек). Следствие: `Math.round` в `isWithinTolerance` / `selectBest` / `resolveBucket` избыточен, `Math.abs` на обоих слагаемых разности можно заменить одним `Math.abs` на разности.
 
-- [ ] 5.1 В `isWithinTolerance` убрать `Math.round` и упростить до `Math.abs(sourceAmount - planAmount) <= AMOUNT_MATCH_TOLERANCE * Math.abs(planAmount)`
-- [ ] 5.2 В `resolveBucket` упростить `amountDiff` до `Math.abs(entry.real_amount - plan.plan_amount)` и exact-match до `entry.real_amount === plan.plan_amount`; переименовать `BucketEntry.amount` → `BucketEntry.real_amount` с обновлением всех использований
-- [ ] 5.3 В `selectBest` упростить `amountDiffs` до `Math.abs(plan.plan_amount - sourceAmount)` (убрать двойной `Math.abs`)
-- [ ] 5.4 В `matchPlannedTransaction` упростить exact-match до `sourceAmount === matched.plan_amount`
+- [x] 6.1 В `isWithinTolerance` убрать `Math.round` и упростить до `Math.abs(sourceAmount - planAmount) <= AMOUNT_MATCH_TOLERANCE * Math.abs(planAmount)`
+- [x] 6.2 В `resolveBucket` упростить `amountDiff` до `Math.abs(entry.real_amount - plan.plan_amount)` и exact-match до `entry.real_amount === plan.plan_amount`; переименовать `BucketEntry.amount` → `BucketEntry.real_amount` с обновлением всех использований
+- [x] 6.3 В `selectBest` — н/п: функция удалена вместе с `matchPlannedTransaction`
+- [x] 6.4 В `matchPlannedTransaction` — н/п: функция удалена
 
-## 6. Качество и приёмка
+## 7. Качество и приёмка
 
-- [ ] 6.1 Прогнать `npm run check` (Biome lint+format + TypeScript strict) — без ошибок
-- [ ] 6.2 Сверить код со STYLE-GUIDE.md и TRANSACTION-RULES.md
-- [ ] 6.3 Пройти код-ревью через `/opsx:review`, зафиксировать результат в `openspec/changes/fix-planned-match-greedy/review.md`
+- [ ] 7.1 Прогнать `npm run check` (Biome lint+format + TypeScript strict) — без ошибок
+- [ ] 7.2 Сверить код со STYLE-GUIDE.md и TRANSACTION-RULES.md
+- [ ] 7.3 Пройти код-ревью через `/opsx:review`, зафиксировать результат в `openspec/changes/fix-planned-match-greedy/review.md`
