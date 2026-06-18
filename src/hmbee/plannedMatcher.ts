@@ -4,6 +4,7 @@ import type {
   HoneyMoneyIncomeExpenseTransaction,
   HoneyMoneyTransferTransaction,
   MatchStatus,
+  PlanMatch,
   PreviewRecord
 } from 'src/apply/preview/types.js';
 import { getPlanCandidates, type PlannedCandidateIndex, type UnconfirmedPlannedTxn } from 'src/hmbee/plannedIndex.js';
@@ -30,14 +31,13 @@ export function matchPlannedTransaction(
     return { status: 'no-candidate', plan: null };
   }
 
-  const sourceAbs = Math.abs(Math.round(sourceAmount));
-  const withinTolerance = candidates.filter((plan) => isWithinTolerance(sourceAbs, plan.plan_amount));
+  const withinTolerance = candidates.filter((plan) => isWithinTolerance(sourceAmount, plan.plan_amount));
 
   if (withinTolerance.length === 0) {
     return { status: 'out-of-tolerance', plan: null };
   }
 
-  const [matched, ...rest] = selectBest(withinTolerance, date, sourceAbs);
+  const [matched, ...rest] = selectBest(withinTolerance, date, sourceAmount);
   // candidates.length > 0 was verified above; TS can't track it through selectBest's return type
   if (!matched || rest.length > 0) {
     return { status: 'ambiguous', plan: null };
@@ -45,29 +45,249 @@ export function matchPlannedTransaction(
   const idx = candidates.indexOf(matched);
   if (idx !== -1) candidates.splice(idx, 1);
 
-  const planAbs = Math.abs(matched.plan_amount);
+  const sourceNormalized = Math.abs(Math.round(sourceAmount));
+  const planNormalized = Math.abs(matched.plan_amount);
   return {
-    status: sourceAbs === planAbs ? 'matched-exact' : 'matched-tolerance',
+    status: sourceNormalized === planNormalized ? 'matched-exact' : 'matched-tolerance',
     plan: matched
   };
 }
 
+interface BucketEntry {
+  index: number;
+  transactionId: string;
+  date: string;
+  amount: number;
+}
+
+interface Bucket {
+  entries: BucketEntry[];
+  accountId: number;
+  subtype: 'e' | 'i' | 't';
+  category: string | null;
+  yearMonth: string;
+}
+
+interface BucketEdge {
+  realIndex: number;
+  planIndex: number;
+  amountDiff: number;
+  dateDiff: number;
+}
+
+type BucketOutcome =
+  | { tag: 'matched'; plan: UnconfirmedPlannedTxn; status: 'matched-exact' | 'matched-tolerance' }
+  | { tag: 'unmatched'; status: 'no-candidate' | 'out-of-tolerance' | 'ambiguous' }
+  | { tag: 'beaten'; lostPlanId: number; beatenById: string };
+
 export function applyMatchPass(records: PreviewRecord[], index: PlannedCandidateIndex): PreviewRecord[] {
-  return records.map((record) => {
-    if (!record.identified || !record.save || !record.hmbee || record.hmbee.id !== null) {
-      return record;
-    }
+  // Phase 1: group matchable records by bucket key
+  const buckets = new Map<string, Bucket>();
+
+  for (const [recordIndex, record] of records.entries()) {
+    if (!record.identified || !record.save || !record.hmbee || record.hmbee.id !== null) continue;
     const { account_id, subtype, category, date, real_amount } = record.hmbee;
-    const result = matchPlannedTransaction(index, account_id, subtype, category, date, real_amount);
-    if (result.plan !== null) {
+    const yearMonth = date.slice(0, 7);
+    const key = bucketKey(account_id, subtype, category, yearMonth);
+    const entry: BucketEntry = {
+      index: recordIndex,
+      transactionId: record.normalized?.transactionId ?? '',
+      date,
+      amount: real_amount
+    };
+    const group = buckets.get(key);
+    if (group) {
+      group.entries.push(entry);
+    } else {
+      buckets.set(key, { entries: [entry], accountId: account_id, subtype, category, yearMonth });
+    }
+  }
+
+  // Phase 2: resolve each bucket
+  const outcomes = new Map<number, BucketOutcome>();
+  const consumedPlanIds = new Set<number>();
+
+  for (const { entries: realTransactions, accountId, subtype, category, yearMonth } of buckets.values()) {
+    const plans = getPlanCandidates(index, accountId, subtype, category, yearMonth);
+    const bucketResults = resolveBucket(realTransactions, plans);
+
+    for (const [entryIndex, entry] of realTransactions.entries()) {
+      const outcome = bucketResults[entryIndex];
+      if (!outcome) continue;
+
+      outcomes.set(entry.index, outcome);
+      if (outcome.tag === 'matched') consumedPlanIds.add(outcome.plan.id);
+    }
+  }
+
+  // Remove consumed plans from index after all bucket resolutions (batch, not per-record)
+  for (const planList of index.values()) {
+    for (let planIndex = planList.length - 1; planIndex >= 0; planIndex--) {
+      const plan = planList[planIndex];
+      if (plan !== undefined && consumedPlanIds.has(plan.id)) planList.splice(planIndex, 1);
+    }
+  }
+
+  // Phase 3: write outcomes back to records
+  return records.map((record, recordIndex) => {
+    const outcome = outcomes.get(recordIndex);
+    if (!outcome) return record;
+
+    if (outcome.tag === 'matched') {
+      const planMatch: PlanMatch = { status: outcome.status };
       return {
         ...record,
-        hmbee: buildConfirmHmbee(record.hmbee, result.plan),
-        plannedMatchStatus: result.status
+        hmbee: buildConfirmHmbee(
+          record.hmbee as HoneyMoneyIncomeExpenseTransaction | HoneyMoneyTransferTransaction,
+          outcome.plan
+        ),
+        planMatch
       };
     }
-    return { ...record, plannedMatchStatus: result.status };
+
+    if (outcome.tag === 'beaten') {
+      const planMatch: PlanMatch = {
+        status: 'beaten-match',
+        lostPlanId: outcome.lostPlanId,
+        beatenById: outcome.beatenById
+      };
+      return { ...record, planMatch };
+    }
+
+    const planMatch: PlanMatch = { status: outcome.status };
+    return { ...record, planMatch };
   });
+}
+
+function resolveBucket(realEntries: BucketEntry[], plans: UnconfirmedPlannedTxn[]): BucketOutcome[] {
+  const outcomes: BucketOutcome[] = new Array(realEntries.length);
+
+  if (plans.length === 0) {
+    return realEntries.map((): BucketOutcome => ({ tag: 'unmatched', status: 'no-candidate' }));
+  }
+
+  // Build edges for every (real, plan) pair within tolerance
+  const edges: BucketEdge[] = [];
+  const realHasEdge: boolean[] = new Array(realEntries.length).fill(false);
+
+  for (const [realIndex, entry] of realEntries.entries()) {
+    for (const [planIndex, plan] of plans.entries()) {
+      if (!isWithinTolerance(entry.amount, plan.plan_amount)) continue;
+      const sourceAbs = Math.abs(Math.round(entry.amount));
+      const planAbs = Math.abs(plan.plan_amount);
+      const amountDiff = Math.abs(sourceAbs - planAbs);
+      const realTime = new Date(entry.date.slice(0, 10)).getTime();
+      const planTime = new Date(plan.date.slice(0, 10)).getTime();
+      const dateDiff = Math.abs(realTime - planTime);
+      edges.push({ realIndex: realIndex, planIndex: planIndex, amountDiff, dateDiff });
+      realHasEdge[realIndex] = true;
+    }
+  }
+
+  for (const [realIndex, hasEdge] of realHasEdge.entries()) {
+    if (!hasEdge) outcomes[realIndex] = { tag: 'unmatched', status: 'out-of-tolerance' };
+  }
+
+  // Sort by amount distance (primary), date distance (secondary) — quality-first greedy
+  edges.sort((edgeA, edgeB) =>
+    edgeA.amountDiff !== edgeB.amountDiff ? edgeA.amountDiff - edgeB.amountDiff : edgeA.dateDiff - edgeB.dateDiff
+  );
+
+  // freeEdges is recomputed each iteration; `edges` is kept intact — phase 3 searches it for lostPlanId
+  let freeEdges = [...edges];
+  // Indices of plans not yet consumed
+  const freePlans = new Set<number>([...plans.keys()]);
+  // Indices of real entries that have at least one in-tolerance edge and are not yet assigned
+  const freeReals = new Set<number>();
+  // planIndex → transactionId of the winner; used in phase 3 to fill beatenById
+  const consumedBy = new Map<number, string>();
+
+  for (const [realIndex, hasEdge] of realHasEdge.entries()) {
+    if (hasEdge) freeReals.add(realIndex);
+  }
+
+  while (freeEdges.length > 0) {
+    const [minEdge] = freeEdges;
+    if (!minEdge) break;
+
+    // All edges sharing the minimum weight — equally good, cannot be ranked further; check for ties
+    const minEdges = freeEdges.filter(
+      (edge) => edge.amountDiff === minEdge.amountDiff && edge.dateDiff === minEdge.dateDiff
+    );
+
+    // Count how many minEdges each endpoint appears in
+    const realCount = new Map<number, number>();
+    const planCount = new Map<number, number>();
+    for (const edge of minEdges) {
+      realCount.set(edge.realIndex, (realCount.get(edge.realIndex) ?? 0) + 1);
+      planCount.set(edge.planIndex, (planCount.get(edge.planIndex) ?? 0) + 1);
+    }
+
+    // A real appearing in >1 minEdge is equidistant between two plans — genuine tie
+    const tiedReals = new Set(
+      Array.from(realCount.entries())
+        .filter(([, count]) => count > 1)
+        .map(([realIndex]) => realIndex)
+    );
+    // A plan appearing in >1 minEdge is contested by two reals at equal distance — both reals are tied
+    const contestedPlans = new Set(
+      Array.from(planCount.entries())
+        .filter(([, count]) => count > 1)
+        .map(([planIndex]) => planIndex)
+    );
+    for (const edge of minEdges) {
+      if (contestedPlans.has(edge.planIndex)) tiedReals.add(edge.realIndex);
+    }
+
+    // Tied reals → ambiguous; removed from freeReals but their plans stay free for future iterations
+    for (const realIndex of tiedReals) {
+      outcomes[realIndex] = { tag: 'unmatched', status: 'ambiguous' };
+      freeReals.delete(realIndex);
+    }
+
+    // Assign non-tied minEdges where both endpoints are still free
+    for (const edge of minEdges) {
+      if (!freeReals.has(edge.realIndex)) continue;
+      if (!freePlans.has(edge.planIndex)) continue;
+
+      const entry = realEntries[edge.realIndex];
+      const plan = plans[edge.planIndex];
+      if (!(entry && plan)) continue;
+
+      const sourceAbs = Math.abs(Math.round(entry.amount));
+      const planAbs = Math.abs(plan.plan_amount);
+      outcomes[edge.realIndex] = {
+        tag: 'matched',
+        plan,
+        status: sourceAbs === planAbs ? 'matched-exact' : 'matched-tolerance'
+      };
+      consumedBy.set(edge.planIndex, entry.transactionId);
+      freeReals.delete(edge.realIndex);
+      freePlans.delete(edge.planIndex);
+    }
+
+    freeEdges = edges.filter((edge) => freeReals.has(edge.realIndex) && freePlans.has(edge.planIndex));
+  }
+
+  // Free reals still remaining had in-tolerance plans, all of which were taken → beaten-match
+  for (const realIndex of freeReals) {
+    const bestEdge = edges.find((edge) => edge.realIndex === realIndex);
+    const lostPlan = bestEdge ? plans[bestEdge.planIndex] : undefined;
+    const winnerId = bestEdge ? consumedBy.get(bestEdge.planIndex) : undefined;
+
+    if (lostPlan && winnerId) {
+      outcomes[realIndex] = { tag: 'beaten', lostPlanId: lostPlan.id, beatenById: winnerId };
+    } else {
+      outcomes[realIndex] = { tag: 'unmatched', status: 'out-of-tolerance' };
+    }
+  }
+
+  return outcomes;
+}
+
+function bucketKey(accountId: number, subtype: 'e' | 'i' | 't', category: string | null, yearMonth: string): string {
+  const cat = subtype === 't' ? '' : (category ?? '');
+  return `${accountId}|${subtype}|${cat}|${yearMonth}`;
 }
 
 function buildConfirmHmbee(
@@ -87,7 +307,8 @@ function buildConfirmHmbee(
   return { ...createDraft, ...planOverrides } as HoneyMoneyConfirmIncomeExpenseTransaction;
 }
 
-function isWithinTolerance(sourceAbs: number, planAmount: number): boolean {
+function isWithinTolerance(sourceAmount: number, planAmount: number): boolean {
+  const sourceAbs = Math.abs(Math.round(sourceAmount));
   const planAbs = Math.abs(planAmount);
   return Math.abs(sourceAbs - planAbs) <= AMOUNT_MATCH_TOLERANCE * planAbs;
 }
@@ -95,10 +316,11 @@ function isWithinTolerance(sourceAbs: number, planAmount: number): boolean {
 function selectBest(
   candidates: UnconfirmedPlannedTxn[],
   transactionDate: string,
-  sourceAbs: number
+  sourceAmount: number
 ): UnconfirmedPlannedTxn[] {
   if (candidates.length === 1) return candidates;
 
+  const sourceAbs = Math.abs(Math.round(sourceAmount));
   const txTime = new Date(transactionDate.slice(0, 10)).getTime();
   const dateDiffs = candidates.map((plan) => Math.abs(new Date(plan.date.slice(0, 10)).getTime() - txTime));
   const minDateDiff = Math.min(...dateDiffs);
