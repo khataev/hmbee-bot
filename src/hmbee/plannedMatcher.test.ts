@@ -231,6 +231,24 @@ describe('applyMatchPass', () => {
   });
 });
 
+describe('applyMatchPass — single-bucket regression (N=1)', () => {
+  it('one record, one plan within tolerance: matched-tolerance with confirm hmbee', () => {
+    const plan = makePlan({ id: 5, plan_amount: -5000 });
+    const index = buildPlannedCandidateIndex([plan]);
+    const [result] = applyMatchPass([makeExpenseRecord('tx-1', -5200, '2026-05-15')], index);
+    expect(result?.planMatch?.status).toBe('matched-tolerance');
+    expect(result?.hmbee?.id).toBe(5);
+  });
+
+  it('one record, plan outside tolerance: out-of-tolerance, create draft kept', () => {
+    const plan = makePlan({ id: 5, plan_amount: -5000 });
+    const index = buildPlannedCandidateIndex([plan]);
+    const [result] = applyMatchPass([makeExpenseRecord('tx-1', -3000, '2026-05-15')], index);
+    expect(result?.planMatch?.status).toBe('out-of-tolerance');
+    expect(result?.hmbee?.id).toBeNull();
+  });
+});
+
 describe('applyMatchPass — bucket resolution', () => {
   it('exact real beats earlier near-miss: near-miss gets beaten-match (reported bug)', () => {
     // Both reals target the same plan; near-miss appears first in file but must lose to the exact match
