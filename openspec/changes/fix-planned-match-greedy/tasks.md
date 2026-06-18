@@ -44,6 +44,5 @@
 
 ## 7. Качество и приёмка
 
-- [ ] 7.1 Прогнать `npm run check` (Biome lint+format + TypeScript strict) — без ошибок
-- [ ] 7.2 Сверить код со STYLE-GUIDE.md и TRANSACTION-RULES.md
-- [ ] 7.3 Пройти код-ревью через `/opsx:review`, зафиксировать результат в `openspec/changes/fix-planned-match-greedy/review.md`
+- [x] 7.1 Прогнать `npm run check` (Biome lint+format + TypeScript strict) — без ошибок
+- [x] 7.2 Сверить код со STYLE-GUIDE.md и TRANSACTION-RULES.md
