@@ -24,9 +24,9 @@
 
 ## 4. Индекс и planned-view
 
-- [ ] 4.1 В `src/hmbee/plannedIndex.ts` обеспечить корректный учёт потреблённых планов при бакетном разрешении (`collectUnmatchedPlans` возвращает только непотреблённые)
-- [ ] 4.2 В `src/hmbee/previewPlanned.ts` переключить `selectPlanRelevantRecords` на `record.planMatch?.status`
-- [ ] 4.3 Убедиться, что `beaten-match` попадает в planned-view, а `no-candidate` и записи без `planMatch` — исключаются
+- [x] 4.1 В `src/hmbee/plannedIndex.ts` обеспечить корректный учёт потреблённых планов при бакетном разрешении (`collectUnmatchedPlans` возвращает только непотреблённые)
+- [x] 4.2 В `src/hmbee/previewPlanned.ts` переключить `selectPlanRelevantRecords` на `record.planMatch?.status`
+- [x] 4.3 Убедиться, что `beaten-match` попадает в planned-view, а `no-candidate` и записи без `planMatch` — исключаются
 
 ## 5. Тесты
 

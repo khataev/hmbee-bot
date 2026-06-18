@@ -10,13 +10,10 @@ export interface PreviewPlannedOutput {
   unmatchedPlans: UnconfirmedPlannedTxn[];
 }
 
-// Plan-relevant records: matched (matched-exact/matched-tolerance) and candidates
-// (out-of-tolerance/ambiguous). Records with no planned match status or `no-candidate`
-// are ordinary creates and excluded from the planned view.
+// Plan-relevant records: matched, out-of-tolerance, ambiguous, beaten-match.
+// Records without planMatch or with no-candidate are ordinary creates, excluded from planned view.
 export function selectPlanRelevantRecords(records: PreviewRecord[]): PreviewRecord[] {
-  return records.filter(
-    (record) => record.plannedMatchStatus !== undefined && record.plannedMatchStatus !== 'no-candidate'
-  );
+  return records.filter((record) => record.planMatch !== undefined && record.planMatch.status !== 'no-candidate');
 }
 
 export function buildPreviewPlannedOutput(
