@@ -231,6 +231,8 @@ function resolveBucket(realEntries: BucketEntry[], plans: UnconfirmedPlannedTxn[
     if (lostPlan && winnerId) {
       outcomes[realIndex] = { tag: 'beaten', lostPlanId: lostPlan.id, beatenById: winnerId };
     } else {
+      // Unreachable: every real in freeReals has at least one edge (freeReals only contains
+      // reals with realHasEdge=true), and every consumed plan is recorded in consumedBy.
       outcomes[realIndex] = { tag: 'unmatched', status: 'out-of-tolerance' };
     }
   }
