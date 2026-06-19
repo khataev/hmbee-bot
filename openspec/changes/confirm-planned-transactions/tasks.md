@@ -6,9 +6,9 @@
 
 ## 2. Confirm-типы
 
-- [ ] 2.1 `HoneyMoneyConfirm*`: `planned_repeat_days/end/end_date` — реальные типы (`number`/`string`/`string|null`) вместо литералов
-- [ ] 2.2 `common_id: string | null` в confirm-типах
-- [ ] 2.3 Проверить, что `buildConfirmHmbee` типизируется без ошибок (string common_id из кеша)
+- [x] 2.1 `HoneyMoneyConfirm*`: `planned_repeat_days/end/end_date` — реальные типы (`number`/`string`/`string|null`) вместо литералов
+- [x] 2.2 `common_id: string | null` в confirm-типах
+- [x] 2.3 Проверить, что `buildConfirmHmbee` типизируется без ошибок (string common_id из кеша)
 
 ## 3. buildConfirmHmbee: эхо из плана
 
