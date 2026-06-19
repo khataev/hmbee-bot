@@ -103,4 +103,18 @@ describe('getPlanCandidates', () => {
     expect(first).toHaveLength(1);
     expect(second).toHaveLength(1);
   });
+
+  it('repeat fields survive indexing and are present on the candidate', () => {
+    const entry = makeEntry({
+      id: 1,
+      planned_repeat_days: 7,
+      planned_repeat_end: 'date',
+      planned_repeat_end_date: '2026-06-28'
+    });
+    const index = buildPlannedCandidateIndex([entry]);
+    const [candidate] = getPlanCandidates(index, 2053036, 'e', 'Аренда', '2026-05');
+    expect(candidate?.planned_repeat_days).toBe(7);
+    expect(candidate?.planned_repeat_end).toBe('date');
+    expect(candidate?.planned_repeat_end_date).toBe('2026-06-28');
+  });
 });

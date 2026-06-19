@@ -1,8 +1,8 @@
 ## 1. Read-схема кеша: поля повтора
 
-- [ ] 1.1 Добавить в `HoneyMoneyCacheEntrySchema` поля `planned_repeat_days`, `planned_repeat_end`, `planned_repeat_end_date` (nullable/optional)
-- [ ] 1.2 Убедиться, что `UnconfirmedPlannedTxn`/индекс планов несут эти поля
-- [ ] 1.3 Тест: поля повтора переживают парсинг и попадают в кандидата
+- [x] 1.1 Добавить в `HoneyMoneyCacheEntrySchema` поля `planned_repeat_days`, `planned_repeat_end`, `planned_repeat_end_date` (nullable/optional)
+- [x] 1.2 Убедиться, что `UnconfirmedPlannedTxn`/индекс планов несут эти поля
+- [x] 1.3 Тест: поля повтора переживают парсинг и попадают в кандидата
 
 ## 2. Confirm-типы
 
