@@ -6,6 +6,20 @@ export type ReadyApplyRecord = PreviewRecord & {
   hmbee: HoneyMoneyTransaction;
 };
 
+export type PromptAnswer = 'y' | 'n' | 'q' | 'a';
+
+export async function promptSend(
+  summary: string,
+  ask: (prompt: string) => Promise<string>
+): Promise<PromptAnswer> {
+  while (true) {
+    const answer = (await ask(`${summary}\n  → y/n/a/q? `)).trim().toLowerCase();
+    if (answer === 'y' || answer === 'n' || answer === 'q' || answer === 'a') {
+      return answer as PromptAnswer;
+    }
+  }
+}
+
 export function parseOnlyIdsOption(onlyIdOption?: string): Set<string> | null {
   if (!onlyIdOption) {
     return null;

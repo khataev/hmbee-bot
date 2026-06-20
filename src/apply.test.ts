@@ -1,5 +1,5 @@
-import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from 'src/apply/index.js';
-import { describe, expect, it } from 'vitest';
+import { filterApplyRecords, parseOnlyIdsOption, promptSend, type ReadyApplyRecord } from 'src/apply/index.js';
+import { describe, expect, it, vi } from 'vitest';
 
 function createRecord(transactionId: string): ReadyApplyRecord {
   return {
@@ -40,6 +40,32 @@ function createRecord(transactionId: string): ReadyApplyRecord {
     }
   };
 }
+
+describe('promptSend', () => {
+  it('y → returns y', async () => {
+    const ask = vi.fn().mockResolvedValue('y');
+    expect(await promptSend('summary', ask)).toBe('y');
+    expect(ask).toHaveBeenCalledOnce();
+  });
+
+  it('n → returns n', async () => {
+    expect(await promptSend('summary', vi.fn().mockResolvedValue('n'))).toBe('n');
+  });
+
+  it('q → returns q', async () => {
+    expect(await promptSend('summary', vi.fn().mockResolvedValue('q'))).toBe('q');
+  });
+
+  it('a → returns a', async () => {
+    expect(await promptSend('summary', vi.fn().mockResolvedValue('a'))).toBe('a');
+  });
+
+  it('unknown input → re-asks until valid', async () => {
+    const ask = vi.fn().mockResolvedValueOnce('x').mockResolvedValueOnce('').mockResolvedValueOnce('n');
+    expect(await promptSend('summary', ask)).toBe('n');
+    expect(ask).toHaveBeenCalledTimes(3);
+  });
+});
 
 describe('apply selection', () => {
   it('parses only-id as a trimmed id set', () => {

@@ -1,8 +1,9 @@
 import { statSync } from 'node:fs';
+import { createInterface } from 'node:readline';
 import { Command } from 'commander';
 import { TochkaAdapter } from 'src/adapters/tochka.js';
 import type { SourceAdapter } from 'src/adapters/types.js';
-import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from 'src/apply/index.js';
+import { filterApplyRecords, parseOnlyIdsOption, promptSend, type ReadyApplyRecord } from 'src/apply/index.js';
 import { loadSyncFiles } from 'src/apply/preview/loader.js';
 import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
 import type { HoneyMoneyTransaction, PreviewRecord } from 'src/apply/preview/types.js';
@@ -109,6 +110,7 @@ program
   )
   .option('--only-errors', 'When combined with --preview, show only records with identified=false or save=false')
   .option('--only-id <ids>', 'Only save the specified comma-separated source transaction ids')
+  .option('--one-by-one', 'Ask for confirmation before each send (inert in preview modes)')
   .option('--verbose', 'Print informational output')
   .action(async (source, options) => {
     const isVerbose = options.verbose;
@@ -228,22 +230,41 @@ program
       >;
       let createdCount = 0;
       let confirmedCount = 0;
+      let sendAll = false;
 
-      for (const record of selectedRecords) {
-        let honeyMoneyTransactionId: number;
-        if (record.hmbee.id === null) {
-          honeyMoneyTransactionId = await client.createTransaction(record.hmbee);
-          createdCount++;
-        } else {
-          honeyMoneyTransactionId = await client.confirmPlannedTransaction(record.hmbee);
-          confirmedCount++;
+      const rl = options.oneByOne
+        ? createInterface({ input: process.stdin, output: process.stderr })
+        : null;
+
+      try {
+        for (const record of selectedRecords) {
+          if (rl && !sendAll) {
+            const { date, subtype, category, description, id } = record.hmbee;
+            const mode = id === null ? '[create]' : `[confirm #${id}]`;
+            const summary = `${date} · ${subtype} · ${category ?? '—'} · ${description} ${mode}`;
+            const answer = await promptSend(summary, (prompt) => new Promise((resolve) => rl.question(prompt, resolve)));
+            if (answer === 'n') continue;
+            if (answer === 'q') break;
+            if (answer === 'a') sendAll = true;
+          }
+
+          let honeyMoneyTransactionId: number;
+          if (record.hmbee.id === null) {
+            honeyMoneyTransactionId = await client.createTransaction(record.hmbee);
+            createdCount++;
+          } else {
+            honeyMoneyTransactionId = await client.confirmPlannedTransaction(record.hmbee);
+            confirmedCount++;
+          }
+
+          sentTransactions.push({
+            sourceTransactionId: record.normalized.transactionId,
+            honeyMoneyTransactionId,
+            ...record.hmbee
+          });
         }
-
-        sentTransactions.push({
-          sourceTransactionId: record.normalized.transactionId,
-          honeyMoneyTransactionId,
-          ...record.hmbee
-        });
+      } finally {
+        rl?.close();
       }
 
       writeOutput(sentTransactions);
