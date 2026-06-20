@@ -53,6 +53,7 @@ export function consumeMatch(
 export function applySkipPass(records: PreviewRecord[], index: MatchIndex): PreviewRecord[] {
   return records.map((record) => {
     if (!record.hmbee) return record;
+    if (!record.save) return record;
     const { account_id, date, real_amount, subtype, category, currency } = record.hmbee;
     const match = consumeMatch(index, account_id, date, real_amount, subtype, category, currency);
     if (!match) return record;

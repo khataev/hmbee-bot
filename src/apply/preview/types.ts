@@ -79,14 +79,14 @@ export interface HoneyMoneyConfirmIncomeExpenseTransaction {
   virtual_id: number | null;
   category: string | null;
   description: string;
-  planned_repeat_days: 0;
-  planned_repeat_end: 'always';
-  planned_repeat_end_date: null;
+  planned_repeat_days: number;
+  planned_repeat_end: string;
+  planned_repeat_end_date: string | null;
   transfer_to_amount: null;
   transfer_type: 'a';
   real_amount: number;
   plan_amount: number;
-  common_id: number | null;
+  common_id: string | null;
   transfer_to_currency: null;
 }
 
@@ -100,14 +100,14 @@ export interface HoneyMoneyConfirmTransferTransaction {
   virtual_id: number | null;
   category: null;
   description: string;
-  planned_repeat_days: 0;
-  planned_repeat_end: 'always';
-  planned_repeat_end_date: null;
+  planned_repeat_days: number;
+  planned_repeat_end: string;
+  planned_repeat_end_date: string | null;
   transfer_to_amount: number;
   transfer_type: 'a';
   real_amount: number;
   plan_amount: number;
-  common_id: number | null;
+  common_id: string | null;
   transfer_to_currency: null;
   transfer_from_id: number;
   transfer_to_id: number;

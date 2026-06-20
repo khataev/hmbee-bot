@@ -94,20 +94,22 @@ function makePlan(overrides: Partial<HoneyMoneyCacheEntry> & Pick<HoneyMoneyCach
     date: '2026-05-10',
     category: 'Аренда',
     account_id: 2053036,
+    common_id: 'cid-default',
+    virtual_id: 1,
     ...overrides
   };
 }
 
 describe('applyMatchPass', () => {
   it('matched record gets confirm-shaped hmbee with plan id and stays identified and save-ready', () => {
-    const plan = makePlan({ id: 42, plan_amount: -5000, common_id: 7, virtual_id: 3 });
+    const plan = makePlan({ id: 42, plan_amount: -5000, common_id: 'abc123', virtual_id: 3 });
     const index = buildPlannedCandidateIndex([plan]);
     const record = makeCreateRecord();
     const [result] = applyMatchPass([record], index);
     expect(result?.hmbee?.id).toBe(42);
     expect(result?.hmbee?.type).toBe('planned');
     expect(result?.hmbee?.plan_amount).toBe(-5000);
-    expect(result?.hmbee?.common_id).toBe(7);
+    expect(result?.hmbee?.common_id).toBe('abc123');
     expect(result?.hmbee?.virtual_id).toBe(3);
     expect(result?.planMatch?.status).toBe('matched-exact');
     expect(result?.identified).toBe(true);
@@ -131,6 +133,33 @@ describe('applyMatchPass', () => {
     expect(result?.hmbee?.id).toBeNull();
     expect(result?.planMatch).toBeUndefined();
     expect(result?.save).toBe(false);
+  });
+});
+
+describe('buildConfirmHmbee — confirm payload shape', () => {
+  it('echoes plan repeat fields, not createDraft defaults', () => {
+    const plan = makePlan({
+      id: 10,
+      plan_amount: -5000,
+      planned_repeat_days: 7,
+      planned_repeat_end: 'date',
+      planned_repeat_end_date: '2026-06-28'
+    });
+    const index = buildPlannedCandidateIndex([plan]);
+    const [result] = applyMatchPass([makeCreateRecord()], index);
+    expect(result?.hmbee?.planned_repeat_days).toBe(7);
+    expect(result?.hmbee?.planned_repeat_end).toBe('date');
+    expect(result?.hmbee?.planned_repeat_end_date).toBe('2026-06-28');
+  });
+
+  it('injects real_amount and date from bank record, not from plan', () => {
+    const plan = makePlan({ id: 20, plan_amount: -5000, date: '2026-05-10' });
+    const index = buildPlannedCandidateIndex([plan]);
+    const bankRecord = makeExpenseRecord('tx-bank', -5200, '2026-05-15');
+    const [result] = applyMatchPass([bankRecord], index);
+    expect(result?.hmbee?.real_amount).toBe(-5200);
+    expect(result?.hmbee?.date).toBe('2026-05-15');
+    expect(result?.hmbee?.plan_amount).toBe(-5000);
   });
 });
 

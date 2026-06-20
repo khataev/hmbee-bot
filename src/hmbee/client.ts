@@ -5,7 +5,6 @@ import { z } from 'zod';
 const HoneyMoneyCreateTransactionResponseSchema = z.object({
   status: z.string(),
   data: z.object({
-    id: z.number().int().positive(),
     transaction: z.object({
       id: z.number().int().positive()
     })
@@ -23,8 +22,11 @@ export const HoneyMoneyCacheEntrySchema = z.object({
   date: z.string(),
   category: z.string().nullable().optional(),
   account_id: z.number().optional(),
-  common_id: z.union([z.number(), z.string()]).nullable().optional(),
-  virtual_id: z.union([z.number(), z.string()]).nullable().optional()
+  common_id: z.string().nullable().optional(),
+  virtual_id: z.number().nullable().optional(),
+  planned_repeat_days: z.number().nullable().optional(),
+  planned_repeat_end: z.string().nullable().optional(),
+  planned_repeat_end_date: z.string().nullable().optional()
 });
 
 export type HoneyMoneyCacheEntry = z.infer<typeof HoneyMoneyCacheEntrySchema>;
@@ -55,6 +57,32 @@ export class HoneyMoneyClient {
 
     if (payload.status !== 'success') {
       throw new Error(`Honey Money transaction creation returned status ${payload.status}`);
+    }
+
+    return payload.data.transaction.id;
+  }
+
+  async confirmPlannedTransaction(transaction: HoneyMoneyTransaction): Promise<number> {
+    const response = await fetch(`${this.env.HM_API_BASE_URL.replace(/\/$/, '')}/transaction`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'hm-source': this.env.HM_SOURCE,
+        'user-email': this.env.HM_USER_EMAIL,
+        'user-token': this.env.HM_USER_TOKEN,
+        cookie: this.env.HM_COOKIE
+      },
+      body: JSON.stringify({ transaction })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Honey Money confirm request failed with status ${response.status}`);
+    }
+
+    const payload = HoneyMoneyCreateTransactionResponseSchema.parse(await response.json());
+
+    if (payload.status !== 'success') {
+      throw new Error(`Honey Money plan confirmation returned status ${payload.status}`);
     }
 
     return payload.data.transaction.id;

@@ -6,6 +6,8 @@ export type UnconfirmedPlannedTxn = HoneyMoneyCacheEntry & {
   real_amount: null;
   account_id: number;
   subtype: 'e' | 'i' | 't';
+  common_id: string;
+  virtual_id: number;
 };
 
 export type PlannedCandidateIndex = Map<string, UnconfirmedPlannedTxn[]>;
@@ -59,7 +61,10 @@ function isUnconfirmedPlannedTxn(entry: HoneyMoneyCacheEntry): entry is Unconfir
     entry.plan_amount != null &&
     entry.real_amount == null &&
     entry.account_id != null &&
-    isKnownSubtype(entry.subtype)
+    isKnownSubtype(entry.subtype) &&
+    entry.common_id != null &&
+    entry.virtual_id != null &&
+    entry.virtual_id !== -1
   );
 }
 

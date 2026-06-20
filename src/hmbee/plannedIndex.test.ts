@@ -13,6 +13,8 @@ function makeEntry(overrides: Partial<HoneyMoneyCacheEntry> & Pick<HoneyMoneyCac
     date: '2026-05-10',
     category: 'Аренда',
     account_id: 2053036,
+    common_id: 'cid-default',
+    virtual_id: 1,
     ...overrides
   };
 }
@@ -44,6 +46,18 @@ describe('buildPlannedCandidateIndex', () => {
 
   it('excludes entries without account_id', () => {
     const entry = makeEntry({ id: 1, account_id: undefined });
+    const index = buildPlannedCandidateIndex([entry]);
+    expect(index.size).toBe(0);
+  });
+
+  it('excludes entries without common_id', () => {
+    const entry = makeEntry({ id: 1, common_id: undefined });
+    const index = buildPlannedCandidateIndex([entry]);
+    expect(index.size).toBe(0);
+  });
+
+  it('excludes entries with virtual_id -1 (unplanned sentinel)', () => {
+    const entry = makeEntry({ id: 1, virtual_id: -1 });
     const index = buildPlannedCandidateIndex([entry]);
     expect(index.size).toBe(0);
   });
@@ -102,5 +116,19 @@ describe('getPlanCandidates', () => {
     const second = getPlanCandidates(index, 2053036, 'e', 'Аренда', '2026-05');
     expect(first).toHaveLength(1);
     expect(second).toHaveLength(1);
+  });
+
+  it('repeat fields survive indexing and are present on the candidate', () => {
+    const entry = makeEntry({
+      id: 1,
+      planned_repeat_days: 7,
+      planned_repeat_end: 'date',
+      planned_repeat_end_date: '2026-06-28'
+    });
+    const index = buildPlannedCandidateIndex([entry]);
+    const [candidate] = getPlanCandidates(index, 2053036, 'e', 'Аренда', '2026-05');
+    expect(candidate?.planned_repeat_days).toBe(7);
+    expect(candidate?.planned_repeat_end).toBe('date');
+    expect(candidate?.planned_repeat_end_date).toBe('2026-06-28');
   });
 });

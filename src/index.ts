@@ -1,8 +1,15 @@
 import { statSync } from 'node:fs';
+import { createInterface } from 'node:readline';
 import { Command } from 'commander';
 import { TochkaAdapter } from 'src/adapters/tochka.js';
 import type { SourceAdapter } from 'src/adapters/types.js';
-import { filterApplyRecords, parseOnlyIdsOption, type ReadyApplyRecord } from 'src/apply/index.js';
+import {
+  dispatchTransaction,
+  filterApplyRecords,
+  parseOnlyIdsOption,
+  promptSend,
+  type ReadyApplyRecord
+} from 'src/apply/index.js';
 import { loadSyncFiles } from 'src/apply/preview/loader.js';
 import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
 import type { HoneyMoneyTransaction, PreviewRecord } from 'src/apply/preview/types.js';
@@ -109,6 +116,7 @@ program
   )
   .option('--only-errors', 'When combined with --preview, show only records with identified=false or save=false')
   .option('--only-id <ids>', 'Only save the specified comma-separated source transaction ids')
+  .option('--one-by-one', 'Ask for confirmation before each send (inert in preview modes)')
   .option('--verbose', 'Print informational output')
   .action(async (source, options) => {
     const isVerbose = options.verbose;
@@ -127,14 +135,16 @@ program
       }
       const accountRegistry = createAccountRegistry(config);
       const records = loadSyncFiles(source);
-      const normalized = records.map((record) =>
-        normalizeTochkaRecord(record, {
-          accountMappings: tochkaConfig.accountMappings,
-          typeCodeRules: tochkaConfig.typeCodes,
-          accountRegistry,
-          categoryMapping: config.hmbee.categoryMapping
-        })
-      );
+      const normalized = records
+        .map((record) =>
+          normalizeTochkaRecord(record, {
+            accountMappings: tochkaConfig.accountMappings,
+            typeCodeRules: tochkaConfig.typeCodes,
+            accountRegistry,
+            categoryMapping: config.hmbee.categoryMapping
+          })
+        )
+        .sort((a, b) => (a.normalized?.date ?? '').localeCompare(b.normalized?.date ?? ''));
 
       const cacheEntries = loadCache();
       let cacheMtime: string;
@@ -203,9 +213,7 @@ program
       const readyRecords = previewRecords.filter(isReadyForApply);
       const onlyIds = parseOnlyIdsOption(options.onlyId);
       const selectedRecords = filterApplyRecords(readyRecords, onlyIds);
-      const createDrafts = selectedRecords.filter((r) => r.hmbee.id === null);
-      const deferredConfirmCount = selectedRecords.length - createDrafts.length;
-      const missingAccountMappings = createDrafts.filter((record) => record.hmbee.account_id === null);
+      const missingAccountMappings = selectedRecords.filter((record) => record.hmbee.account_id === null);
 
       if (missingAccountMappings.length > 0) {
         const missingAccounts = [...new Set(missingAccountMappings.map((record) => record.normalized.account))].join(
@@ -218,39 +226,60 @@ program
       const client = new HoneyMoneyClient(hmEnv);
 
       if (isVerbose) {
+        const createCount = selectedRecords.filter((r) => r.hmbee.id === null).length;
+        const confirmCount = selectedRecords.length - createCount;
         console.error(`Applying ${source} to Honey Money...`);
         console.error(`Loaded ${records.length} records from sync/${source}`);
-        console.error(`Sending ${createDrafts.length} create drafts.`);
-        if (deferredConfirmCount > 0) {
-          console.error(`Deferred ${deferredConfirmCount} planned transaction confirmations (not yet supported).`);
-        }
+        console.error(`Sending ${createCount} create drafts, ${confirmCount} plan confirmations.`);
       }
 
-      const createdTransactions = [] as Array<
+      const sentTransactions = [] as Array<
         HoneyMoneyTransaction & { sourceTransactionId: string; honeyMoneyTransactionId: number }
       >;
+      let createdCount = 0;
+      let confirmedCount = 0;
+      let sendAll = false;
 
-      for (const record of createDrafts) {
-        const accountId = record.hmbee.account_id;
-        if (accountId === null) {
-          throw new Error(`Missing Honey Money account mapping for Tochka account ${record.normalized.account}`);
+      const rl = options.oneByOne ? createInterface({ input: process.stdin, output: process.stderr }) : null;
+
+      try {
+        for (const record of selectedRecords) {
+          if (rl && !sendAll) {
+            const { date, subtype, category, description, id } = record.hmbee;
+            const mode = id === null ? '[create]' : `[confirm #${id}]`;
+            const summary = `${date} · ${subtype} · ${category ?? '—'} · ${description} ${mode}`;
+            const answer = await promptSend(
+              summary,
+              (prompt) => new Promise((resolve) => rl.question(prompt, resolve))
+            );
+            if (answer === 'n') continue;
+            if (answer === 'q') break;
+            if (answer === 'a') sendAll = true;
+          }
+
+          const honeyMoneyTransactionId = await dispatchTransaction(record.hmbee, client);
+          if (record.hmbee.id === null) {
+            createdCount++;
+          } else {
+            confirmedCount++;
+          }
+
+          sentTransactions.push({
+            sourceTransactionId: record.normalized.transactionId,
+            honeyMoneyTransactionId,
+            ...record.hmbee
+          });
         }
-
-        const honeyMoneyTransactionId = await client.createTransaction(record.hmbee);
-
-        createdTransactions.push({
-          sourceTransactionId: record.normalized.transactionId,
-          honeyMoneyTransactionId,
-          ...record.hmbee
-        });
+      } finally {
+        rl?.close();
       }
 
-      writeOutput(createdTransactions);
+      writeOutput(sentTransactions);
 
       if (isVerbose) {
-        const skippedCount = previewRecords.length - createDrafts.length;
+        const skippedCount = previewRecords.length - selectedRecords.length;
         console.error(
-          `✓ Apply complete. Created ${createdTransactions.length} Honey Money transactions.` +
+          `✓ Apply complete. Created ${createdCount}, confirmed ${confirmedCount} Honey Money transactions.` +
             (skippedCount > 0 ? ` Skipped ${skippedCount} unsupported records.` : '')
         );
       }
