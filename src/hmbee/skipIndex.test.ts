@@ -184,4 +184,21 @@ describe('applySkipPass', () => {
 
     expect(result?.save).toBe(false);
   });
+
+  it('excluded record (save=false) does not consume cache entry — sibling save=true record still gets matched', () => {
+    // Regression: internal bank transfers produce two records for the same transaction
+    // (e.g. PaymentIncome + PaymentAccepted). After sorting by timestamp, the excluded
+    // PaymentIncome may arrive first. It must NOT consume the cache entry so that the
+    // included PaymentAccepted can still be matched and skipped.
+    const excludedRecord = makePreviewRecord({ save: false, reason: 'excluded' });
+    const includedRecord = makePreviewRecord({ save: true, reason: null });
+    const index = indexWith(makeEntry({ id: 1 }));
+
+    const [excludedResult, includedResult] = applySkipPass([excludedRecord, includedRecord], index);
+
+    expect(excludedResult?.save).toBe(false);
+    expect(excludedResult?.reason).toBe('excluded'); // unchanged
+    expect(includedResult?.save).toBe(false);
+    expect(includedResult?.reason).toBe('Внесена вручную');
+  });
 });
