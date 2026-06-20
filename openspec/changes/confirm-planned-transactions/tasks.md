@@ -12,17 +12,17 @@
 
 ## 3. buildConfirmHmbee: эхо из плана
 
-- [ ] 3.1 Эхо-ить из плана `id`, `type=planned`, `plan_amount`, `common_id`, `virtual_id`, `planned_repeat_days/end/end_date`
-- [ ] 3.2 Впрыснуть `real_amount` (сумма банка) и `date` (дата банка)
-- [ ] 3.3 `description` — из create-черновика (маппинг), серверные поля не добавлять
-- [ ] 3.4 Тесты: собранное тело = лин-форма, repeat из плана, real_amount/date из банка
+- [x] 3.1 Эхо-ить из плана `id`, `type=planned`, `plan_amount`, `common_id`, `virtual_id`, `planned_repeat_days/end/end_date`
+- [x] 3.2 Впрыснуть `real_amount` (сумма банка) и `date` (дата банка)
+- [x] 3.3 `description` — из create-черновика (маппинг), серверные поля не добавлять
+- [x] 3.4 Тесты: собранное тело = лин-форма, repeat из плана, real_amount/date из банка
 
 ## 4. Клиент: отправка confirm
 
-- [ ] 4.1 Метод отправки confirm: `POST /transaction` с телом (`id != null`), те же auth-заголовки
-- [ ] 4.2 Парсер ответа confirm-формы → `data.transaction.id`, проверка `status: "success"`
-- [ ] 4.3 Ошибка при не-success без раскрытия секретов
-- [ ] 4.4 Тесты: успешный парс id, ошибка без секретов
+- [x] 4.1 Метод отправки confirm: `POST /transaction` с телом (`id != null`), те же auth-заголовки
+- [x] 4.2 Парсер ответа confirm-формы → `data.transaction.id`, проверка `status: "success"`
+- [x] 4.3 Ошибка при не-success без раскрытия секретов
+- [x] 4.4 Тесты: успешный парс id, ошибка без секретов
 
 ## 5. Раннер: отправлять confirm-черновики
 

@@ -253,8 +253,11 @@ function buildConfirmHmbee(
     id: plan.id,
     type: 'planned' as const,
     plan_amount: plan.plan_amount,
-    common_id: plan.common_id ?? null,
-    virtual_id: plan.virtual_id ?? null
+    common_id: plan.common_id,
+    virtual_id: plan.virtual_id,
+    planned_repeat_days: plan.planned_repeat_days,
+    planned_repeat_end: plan.planned_repeat_end,
+    planned_repeat_end_date: plan.planned_repeat_end_date
   };
   if (createDraft.subtype === 't') {
     return { ...createDraft, ...planOverrides } as HoneyMoneyConfirmTransferTransaction;

@@ -63,6 +63,32 @@ export class HoneyMoneyClient {
     return payload.data.transaction.id;
   }
 
+  async confirmPlannedTransaction(transaction: HoneyMoneyTransaction): Promise<number> {
+    const response = await fetch(`${this.env.HM_API_BASE_URL.replace(/\/$/, '')}/transaction`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'hm-source': this.env.HM_SOURCE,
+        'user-email': this.env.HM_USER_EMAIL,
+        'user-token': this.env.HM_USER_TOKEN,
+        cookie: this.env.HM_COOKIE
+      },
+      body: JSON.stringify({ transaction })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Honey Money confirm request failed with status ${response.status}`);
+    }
+
+    const payload = HoneyMoneyCreateTransactionResponseSchema.parse(await response.json());
+
+    if (payload.status !== 'success') {
+      throw new Error(`Honey Money plan confirmation returned status ${payload.status}`);
+    }
+
+    return payload.data.transaction.id;
+  }
+
   async getAllTransactions(): Promise<HoneyMoneyCacheEntry[]> {
     const response = await fetch(`${this.env.HM_API_BASE_URL.replace(/\/$/, '')}/transaction/all_json.json`, {
       headers: {
