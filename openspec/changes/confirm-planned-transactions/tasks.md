@@ -3,6 +3,7 @@
 - [x] 1.1 Добавить в `HoneyMoneyCacheEntrySchema` поля `planned_repeat_days`, `planned_repeat_end`, `planned_repeat_end_date` (nullable/optional)
 - [x] 1.2 Убедиться, что `UnconfirmedPlannedTxn`/индекс планов несут эти поля
 - [x] 1.3 Тест: поля повтора переживают парсинг и попадают в кандидата
+- [x] 1.4 Уточнить типы в `HoneyMoneyCacheEntrySchema` по анализу истории: `common_id` → только `string` (nullable/optional), `virtual_id` → только `number` (nullable/optional) — вместо текущего `z.union([number, string])`
 
 ## 2. Confirm-типы
 

@@ -1,4 +1,11 @@
-import { filterApplyRecords, parseOnlyIdsOption, promptSend, type ReadyApplyRecord } from 'src/apply/index.js';
+import {
+  dispatchTransaction,
+  filterApplyRecords,
+  parseOnlyIdsOption,
+  promptSend,
+  type ReadyApplyRecord
+} from 'src/apply/index.js';
+import type { HoneyMoneyTransaction } from 'src/apply/preview/types.js';
 import { describe, expect, it, vi } from 'vitest';
 
 function createRecord(transactionId: string): ReadyApplyRecord {
@@ -92,5 +99,71 @@ describe('apply selection', () => {
     const records = [createRecord('1'), createRecord('2'), createRecord('3')];
 
     expect(filterApplyRecords(records, new Set(['2', '3']))).toEqual([records[1], records[2]]);
+  });
+});
+
+describe('dispatchTransaction', () => {
+  const createDraft: HoneyMoneyTransaction = {
+    subtype: 'e',
+    date: '2026-04-27',
+    account_id: 2053036,
+    currency: 'rub',
+    id: null,
+    type: 'unplanned',
+    virtual_id: -1,
+    category: 'Покупки / Продукты',
+    description: '241',
+    planned_repeat_days: 0,
+    planned_repeat_end: 'always',
+    planned_repeat_end_date: null,
+    transfer_to_amount: null,
+    transfer_type: 'a',
+    real_amount: -241,
+    plan_amount: null,
+    common_id: null,
+    transfer_to_currency: null
+  };
+
+  const confirmDraft: HoneyMoneyTransaction = {
+    subtype: 'e',
+    date: '2026-04-27',
+    account_id: 2053036,
+    currency: 'rub',
+    id: 42,
+    type: 'planned',
+    virtual_id: 1,
+    category: 'Покупки / Продукты',
+    description: '500',
+    planned_repeat_days: 30,
+    planned_repeat_end: 'always',
+    planned_repeat_end_date: null,
+    transfer_to_amount: null,
+    transfer_type: 'a',
+    real_amount: -500,
+    plan_amount: -500,
+    common_id: 'abc123',
+    transfer_to_currency: null
+  };
+
+  it('routes id=null to createTransaction', async () => {
+    const client = {
+      createTransaction: vi.fn().mockResolvedValue(101),
+      confirmPlannedTransaction: vi.fn()
+    };
+    const result = await dispatchTransaction(createDraft, client);
+    expect(result).toBe(101);
+    expect(client.createTransaction).toHaveBeenCalledWith(createDraft);
+    expect(client.confirmPlannedTransaction).not.toHaveBeenCalled();
+  });
+
+  it('routes id!=null to confirmPlannedTransaction', async () => {
+    const client = {
+      createTransaction: vi.fn(),
+      confirmPlannedTransaction: vi.fn().mockResolvedValue(202)
+    };
+    const result = await dispatchTransaction(confirmDraft, client);
+    expect(result).toBe(202);
+    expect(client.confirmPlannedTransaction).toHaveBeenCalledWith(confirmDraft);
+    expect(client.createTransaction).not.toHaveBeenCalled();
   });
 });

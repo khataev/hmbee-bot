@@ -3,7 +3,13 @@ import { createInterface } from 'node:readline';
 import { Command } from 'commander';
 import { TochkaAdapter } from 'src/adapters/tochka.js';
 import type { SourceAdapter } from 'src/adapters/types.js';
-import { filterApplyRecords, parseOnlyIdsOption, promptSend, type ReadyApplyRecord } from 'src/apply/index.js';
+import {
+  dispatchTransaction,
+  filterApplyRecords,
+  parseOnlyIdsOption,
+  promptSend,
+  type ReadyApplyRecord
+} from 'src/apply/index.js';
 import { loadSyncFiles } from 'src/apply/preview/loader.js';
 import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
 import type { HoneyMoneyTransaction, PreviewRecord } from 'src/apply/preview/types.js';
@@ -251,12 +257,10 @@ program
             if (answer === 'a') sendAll = true;
           }
 
-          let honeyMoneyTransactionId: number;
+          const honeyMoneyTransactionId = await dispatchTransaction(record.hmbee, client);
           if (record.hmbee.id === null) {
-            honeyMoneyTransactionId = await client.createTransaction(record.hmbee);
             createdCount++;
           } else {
-            honeyMoneyTransactionId = await client.confirmPlannedTransaction(record.hmbee);
             confirmedCount++;
           }
 

@@ -1,5 +1,19 @@
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
 
+type TransactionDispatcher = {
+  createTransaction(t: HoneyMoneyTransaction): Promise<number>;
+  confirmPlannedTransaction(t: HoneyMoneyTransaction): Promise<number>;
+};
+
+export async function dispatchTransaction(
+  hmbee: HoneyMoneyTransaction,
+  client: TransactionDispatcher
+): Promise<number> {
+  if (hmbee.id === null) return client.createTransaction(hmbee);
+
+  return client.confirmPlannedTransaction(hmbee);
+}
+
 export type ReadyApplyRecord = PreviewRecord & {
   identified: true;
   normalized: NormalizedRecord;

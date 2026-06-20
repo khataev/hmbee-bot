@@ -5,7 +5,6 @@ import { z } from 'zod';
 const HoneyMoneyCreateTransactionResponseSchema = z.object({
   status: z.string(),
   data: z.object({
-    id: z.number().int().positive(),
     transaction: z.object({
       id: z.number().int().positive()
     })
@@ -23,8 +22,8 @@ export const HoneyMoneyCacheEntrySchema = z.object({
   date: z.string(),
   category: z.string().nullable().optional(),
   account_id: z.number().optional(),
-  common_id: z.union([z.number(), z.string()]).nullable().optional(),
-  virtual_id: z.union([z.number(), z.string()]).nullable().optional(),
+  common_id: z.string().nullable().optional(),
+  virtual_id: z.number().nullable().optional(),
   planned_repeat_days: z.number().nullable().optional(),
   planned_repeat_end: z.string().nullable().optional(),
   planned_repeat_end_date: z.string().nullable().optional()
