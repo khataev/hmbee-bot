@@ -80,3 +80,9 @@ Tracking identified technical debt and planned simplifications.
 - **Goal**: Подключить [knip](https://knip.dev/) в dev-зависимости и добавить его запуск в CI/pre-commit (или `npm run lint`), чтобы ловить неиспользуемые файлы, экспорты и зависимости.
 - **Why**: Мёртвый код накапливается незаметно; knip даёт полный граф зависимостей проекта и находит то, что линтер на уровне файла пропускает.
 - **Status**: Added 2026-06-20.
+
+### 11. Апгрейд на Node.js 26 и переход на нативный Temporal API
+- **Context**: `toDateInTimezone` в `src/apply/preview/tochka.ts` использует `Intl.DateTimeFormat` вместо `Temporal`, потому что в Node.js 24 `Temporal` доступен только с флагом `--harmony-temporal`, который запрещён в `NODE_OPTIONS`. Node.js 26 (апрель 2026, LTS осень 2026) должен включить Temporal без флага.
+- **Goal**: После апгрейда на Node.js 26 заменить реализацию на `Temporal.Instant.from(isoString).toZonedDateTimeISO(tz).toPlainDate().toString()` и убрать флаг `--harmony-temporal` из `package.json` и `vitest.config.ts`.
+- **Why**: `Temporal` — семантически точный API для работы с датами/таймзонами; `Intl.DateTimeFormat` с локалью `en-CA` — обходной путь.
+- **Status**: Added 2026-06-20.

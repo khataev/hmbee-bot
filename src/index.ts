@@ -141,7 +141,8 @@ program
             accountMappings: tochkaConfig.accountMappings,
             typeCodeRules: tochkaConfig.typeCodes,
             accountRegistry,
-            categoryMapping: config.hmbee.categoryMapping
+            categoryMapping: config.hmbee.categoryMapping,
+            timeZone: config.time_zone
           })
         )
         .sort((a, b) => (a.normalized?.date ?? '').localeCompare(b.normalized?.date ?? ''));

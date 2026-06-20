@@ -11,6 +11,7 @@ const mockReadFileSync = vi.mocked(readFileSync);
 
 function makeSourcesJson(sources: Record<string, unknown>): string {
   return JSON.stringify({
+    time_zone: 'Europe/Moscow',
     hmbee: { currenciesMapping: {}, categoryMapping: { mcc: {}, title: {}, ignored: { mcc: [], title: [] } } },
     sources
   });
@@ -87,6 +88,7 @@ describe('createAccountRegistry — multi-bank allAccountMappings', () => {
   const allAccountMappings = { [tochkaAccount]: 2053036, [tinkoffAccount]: 1000003 };
 
   const config: AppConfig = {
+    time_zone: 'Europe/Moscow',
     hmbee: {
       currenciesMapping: {},
       categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }

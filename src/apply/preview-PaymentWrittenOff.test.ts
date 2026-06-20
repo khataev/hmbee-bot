@@ -23,6 +23,7 @@ describe('PaymentWrittenOff classification', () => {
       ignored: { mcc: [], title: [] }
     },
     accountRegistry: createAccountRegistry({
+      time_zone: 'Europe/Moscow',
       hmbee: {
         currenciesMapping: {
           '810': 'rub'
@@ -46,6 +47,7 @@ describe('PaymentWrittenOff classification', () => {
       },
       allAccountMappings: accountMappings
     } as AppConfig),
+    timeZone: 'Europe/Moscow',
     typeCodeRules: {
       PaymentWrittenOff: {
         conditions: {

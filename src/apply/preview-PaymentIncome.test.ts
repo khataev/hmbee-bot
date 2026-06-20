@@ -23,6 +23,7 @@ describe('PaymentIncome classification', () => {
       ignored: { mcc: [], title: [] }
     },
     accountRegistry: createAccountRegistry({
+      time_zone: 'Europe/Moscow',
       hmbee: {
         currenciesMapping: {
           '810': 'rub'
@@ -46,6 +47,7 @@ describe('PaymentIncome classification', () => {
       },
       allAccountMappings: accountMappings
     } as AppConfig),
+    timeZone: 'Europe/Moscow',
     typeCodeRules: {
       PaymentIncome: {
         conditions: {

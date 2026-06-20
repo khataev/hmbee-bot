@@ -19,6 +19,7 @@ describe('SbpC2BRefund classification', () => {
       ignored: { mcc: [], title: [] }
     },
     accountRegistry: createAccountRegistry({
+      time_zone: 'Europe/Moscow',
       hmbee: {
         currenciesMapping: {},
         categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
@@ -33,6 +34,7 @@ describe('SbpC2BRefund classification', () => {
       },
       allAccountMappings: accountMappings
     } as AppConfig),
+    timeZone: 'Europe/Moscow',
     typeCodeRules: {
       SbpC2BRefund: {
         conditions: {

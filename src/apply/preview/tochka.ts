@@ -2,6 +2,27 @@ import { evaluateRule } from 'src/apply/preview/ruleEngine.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
 import type { AccountRegistry, CategoryMapping, MappingEntry, TypeCodeRule } from 'src/config.js';
 
+function toDateInTimezone(isoString: string, tz: string): string {
+  const date = new Date(isoString);
+  // trick to get the datetime in the specified timezone without using any external libraries. Will be refactored to Temporal after upgrade to node 26
+  const localDt = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }).format(date);
+  const tzName =
+    new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'longOffset' })
+      .formatToParts(date)
+      .find((p) => p.type === 'timeZoneName')?.value ?? 'GMT';
+  const offset = tzName === 'GMT' ? '+00:00' : tzName.slice(3);
+  const ms = String(date.getUTCMilliseconds()).padStart(3, '0');
+  return `${localDt.replace(' ', 'T')}.${ms}${offset}`;
+}
+
 const MISSING_CATEGORY_REASON = 'Category is missing for income or expense transaction';
 
 export interface TochkaNormalizationOptions {
@@ -9,6 +30,7 @@ export interface TochkaNormalizationOptions {
   typeCodeRules: Record<string, TypeCodeRule>;
   accountRegistry: AccountRegistry;
   categoryMapping: CategoryMapping;
+  timeZone: string;
 }
 
 interface TochkaRecordMeta<TTypeCode extends string> {
@@ -550,7 +572,7 @@ export function normalizeTochkaRecord(
       transactionId: String(transactionId),
       account: sourceAccount,
       status,
-      date: timeData.event_date,
+      date: toDateInTimezone(timeData.event_date, options.timeZone),
       type: normalizedType,
       amount,
       currency: sourceCurrency,
