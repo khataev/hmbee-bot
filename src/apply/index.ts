@@ -8,10 +8,7 @@ export type ReadyApplyRecord = PreviewRecord & {
 
 export type PromptAnswer = 'y' | 'n' | 'q' | 'a';
 
-export async function promptSend(
-  summary: string,
-  ask: (prompt: string) => Promise<string>
-): Promise<PromptAnswer> {
+export async function promptSend(summary: string, ask: (prompt: string) => Promise<string>): Promise<PromptAnswer> {
   while (true) {
     const answer = (await ask(`${summary}\n  → y/n/a/q? `)).trim().toLowerCase();
     if (answer === 'y' || answer === 'n' || answer === 'q' || answer === 'a') {

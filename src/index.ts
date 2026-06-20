@@ -232,9 +232,7 @@ program
       let confirmedCount = 0;
       let sendAll = false;
 
-      const rl = options.oneByOne
-        ? createInterface({ input: process.stdin, output: process.stderr })
-        : null;
+      const rl = options.oneByOne ? createInterface({ input: process.stdin, output: process.stderr }) : null;
 
       try {
         for (const record of selectedRecords) {
@@ -242,7 +240,10 @@ program
             const { date, subtype, category, description, id } = record.hmbee;
             const mode = id === null ? '[create]' : `[confirm #${id}]`;
             const summary = `${date} · ${subtype} · ${category ?? '—'} · ${description} ${mode}`;
-            const answer = await promptSend(summary, (prompt) => new Promise((resolve) => rl.question(prompt, resolve)));
+            const answer = await promptSend(
+              summary,
+              (prompt) => new Promise((resolve) => rl.question(prompt, resolve))
+            );
             if (answer === 'n') continue;
             if (answer === 'q') break;
             if (answer === 'a') sendAll = true;

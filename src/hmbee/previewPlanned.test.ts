@@ -35,6 +35,8 @@ function plan(overrides: Partial<HoneyMoneyCacheEntry> & Pick<HoneyMoneyCacheEnt
     date: '2026-05-10',
     category: 'Аренда',
     account_id: 2053036,
+    common_id: 'cid-default',
+    virtual_id: 1,
     ...overrides
   };
 }
