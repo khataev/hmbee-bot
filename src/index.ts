@@ -129,14 +129,16 @@ program
       }
       const accountRegistry = createAccountRegistry(config);
       const records = loadSyncFiles(source);
-      const normalized = records.map((record) =>
-        normalizeTochkaRecord(record, {
-          accountMappings: tochkaConfig.accountMappings,
-          typeCodeRules: tochkaConfig.typeCodes,
-          accountRegistry,
-          categoryMapping: config.hmbee.categoryMapping
-        })
-      );
+      const normalized = records
+        .map((record) =>
+          normalizeTochkaRecord(record, {
+            accountMappings: tochkaConfig.accountMappings,
+            typeCodeRules: tochkaConfig.typeCodes,
+            accountRegistry,
+            categoryMapping: config.hmbee.categoryMapping
+          })
+        )
+        .sort((a, b) => (a.normalized?.date ?? '').localeCompare(b.normalized?.date ?? ''));
 
       const cacheEntries = loadCache();
       let cacheMtime: string;
