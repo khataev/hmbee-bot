@@ -275,13 +275,11 @@ program
         rl?.close();
       }
 
-      writeOutput(sentTransactions);
-
       if (isVerbose) {
         const skippedCount = previewRecords.length - selectedRecords.length;
         console.error(
           `✓ Apply complete. Created ${createdCount}, confirmed ${confirmedCount} Honey Money transactions.` +
-            (skippedCount > 0 ? ` Skipped ${skippedCount} unsupported records.` : '')
+            (skippedCount > 0 ? ` Skipped ${skippedCount} records.` : '')
         );
       }
     } catch (error: unknown) {
