@@ -29,41 +29,51 @@ API Точки возвращает поле `meta_data.time_data.event_date` в
 
 ### 2. Передача timezone в нормализатор: через `TochkaNormalizationOptions`
 
-Добавляем поле `timezone: string` в интерфейс `TochkaNormalizationOptions`. Это согласуется с тем, как уже передаются `accountMappings`, `typeCodeRules` и т.д.
+Добавляем поле `timeZone: string` в интерфейс `TochkaNormalizationOptions`. Это согласуется с тем, как уже передаются `accountMappings`, `typeCodeRules` и т.д.
 
-В `src/index.ts` при сборке options: `timezone: config.time_zone`.
+В `src/index.ts` при сборке options: `timeZone: config.time_zone`.
 
-### 3. Конвертация даты: `Intl.DateTimeFormat` с локалью `en-CA`
+### 3. Конвертация даты: `Intl.DateTimeFormat` с локалью `sv-SE`
 
 ```typescript
 function toDateInTimezone(isoString: string, tz: string): string {
   const date = new Date(isoString);
-  return new Intl.DateTimeFormat('en-CA', {
+  const localDt = new Intl.DateTimeFormat('sv-SE', {
     timeZone: tz,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(date); // Возвращает "YYYY-MM-DD" для локали en-CA
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  }).format(date);
+  const tzName =
+    new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'longOffset' })
+      .formatToParts(date)
+      .find((p) => p.type === 'timeZoneName')?.value ?? 'GMT';
+  const offset = tzName === 'GMT' ? '+00:00' : tzName.slice(3);
+  const ms = String(date.getUTCMilliseconds()).padStart(3, '0');
+  return `${localDt.replace(' ', 'T')}.${ms}${offset}`;
 }
 ```
 
-`en-CA` — стандартный способ получить ISO 8601 дату из `Intl.DateTimeFormat` без внешних зависимостей. Доступен во всех версиях Node.js 12+.
+Функция возвращает полную datetime-строку в целевом часовом поясе формата `"YYYY-MM-DDTHH:mm:ss.mmm±HH:MM"`. Это позволяет сохранить точное время транзакции для будущего использования и упрощает переход на `Temporal` (Node.js 26+), который станет идиоматичным решением.
 
-Альтернатива: `luxon` / `date-fns` — отклонена, внешняя зависимость избыточна для одной операции.
+`sv-SE` — локаль, дающая ISO-совместимый вывод даты и времени через `Intl.DateTimeFormat` без внешних зависимостей.
+
+Альтернатива `en-CA` (возвращает только `YYYY-MM-DD`) — отклонена в пользу сохранения полного datetime: потребители извлекают дату через `.slice(0, 10)`, а само поле остаётся информативным.
+
+Альтернатива `luxon` / `date-fns` — отклонена, внешняя зависимость избыточна для одной операции.
 
 ### 4. Точка применения: при построении `NormalizedRecord`
 
 Конвертация применяется в `normalizeTochkaRecord` при установке `normalized.date`:
 
 ```typescript
-date: toDateInTimezone(timeData.event_date, options.timezone)
+date: toDateInTimezone(timeData.event_date, options.timeZone)
 ```
 
-Тип `NormalizedRecord.date` меняется семантически: теперь это всегда `YYYY-MM-DD`, а не произвольный ISO string. Вызовы `.slice(0, 10)` в builder-ах остаются валидными (первые 10 символов `YYYY-MM-DD` — та же строка), но становятся избыточными. Убирать их в данном изменении нецелесообразно — в рамках этой задачи.
+`NormalizedRecord.date` теперь содержит полную datetime-строку в целевом часовом поясе (`"YYYY-MM-DDTHH:mm:ss.mmm±HH:MM"`). Вызовы `.slice(0, 10)` в builder-ах по-прежнему корректны и необходимы для извлечения части `YYYY-MM-DD` для `HoneyMoneyTransaction.date`.
 
 ## Engineering Constraints
 
-- Строгая типизация: новое поле `timezone: string` в `TochkaNormalizationOptions` — required, не optional. Дефолт применяется только в `index.ts` при вызове
+- Строгая типизация: новое поле `timeZone: string` в `TochkaNormalizationOptions` — required, не optional. Дефолт применяется только в `index.ts` при вызове
 - Zod-схема: `time_zone: z.string()` (required) в `AppConfigSchema`; нет валидации IANA-имени часового пояса (невалидный tz приведёт к runtime-ошибке `RangeError` из `Intl.DateTimeFormat` — приемлемо; существующие конфиги без `time_zone` упадут с ошибкой Zod при загрузке)
 - `npm run check` (`typecheck` + `lint` + `test`) должен проходить после изменений
 - `toDateInTimezone` размещается в `src/apply/preview/tochka.ts` как module-private функция (не экспортируется, пока нет других потребителей)
