@@ -17,6 +17,7 @@ const allAccountMappings = {
 };
 
 const accountRegistry = createAccountRegistry({
+  time_zone: 'Europe/Moscow',
   hmbee: {
     currenciesMapping: {},
     categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
@@ -53,6 +54,7 @@ const options = {
     ignored: { mcc: [], title: [] }
   },
   accountRegistry,
+  timeZone: 'Europe/Moscow',
   typeCodeRules
 };
 

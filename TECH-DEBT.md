@@ -66,17 +66,14 @@ Tracking identified technical debt and planned simplifications.
 - **Why**: Под допуском ±20% по разным суммам планов обездоливающая конфигурация маловероятна, поэтому A выбран ради простоты. C держим наготове как точечную замену одной функции (разрешение бакета), если корректность потребует.
 - **Status**: Added 2026-06-17. (OpenSpec: fix-planned-match-greedy, design.md)
 
-### 9. Уязвимости в dev-зависимостях (form-data, vite)
-- **Context**: `npm audit` фиксирует 2 high-severity уязвимости в транзитивных dev-зависимостях:
-  - `form-data` 4.0.0–4.0.5 — CRLF injection via unescaped multipart field names/filenames (GHSA-hmw2-7cc7-3qxx)
-  - `vite` 8.0.0–8.0.15 — NTLMv2 hash disclosure via UNC paths (Windows) и `server.fs.deny` bypass (GHSA-v6wh-96g9-6wx3, GHSA-fx2h-pf6j-xcff)
-  - Обе уязвимости не затрагивают production runtime: `form-data` — транзитивная зависимость тестового окружения, `vite` — runner для vitest. Обнаружены в рамках верификации `fix-planned-match-greedy`, но существовали до него.
-- **Goal**: Запустить `npm audit fix`, убедиться что обновление vitest/vite до ≥8.0.16 не ломает тесты.
-- **Why**: Держать dev-зависимости без известных high-severity уязвимостей — стандартная гигиена; сейчас не критично (production не затронут), но откладывать не стоит.
-- **Status**: Added 2026-06-18.
-
-### 10. Добавить knip для обнаружения неиспользуемых экспортов
+### 9. Добавить knip для обнаружения неиспользуемых экспортов
 - **Context**: Biome (`noUnusedVariables`) не трогает `export`-символы — он анализирует файлы по отдельности и не знает, импортируется ли экспорт где-то ещё. Пример: `routeRecord` в `src/apply/index.ts` объявлена, нигде не вызывается, но Biome её не видит.
 - **Goal**: Подключить [knip](https://knip.dev/) в dev-зависимости и добавить его запуск в CI/pre-commit (или `npm run lint`), чтобы ловить неиспользуемые файлы, экспорты и зависимости.
 - **Why**: Мёртвый код накапливается незаметно; knip даёт полный граф зависимостей проекта и находит то, что линтер на уровне файла пропускает.
+- **Status**: Added 2026-06-20.
+
+### 10. Апгрейд на Node.js 26 и переход на нативный Temporal API
+- **Context**: `toDateInTimezone` в `src/apply/preview/tochka.ts` использует `Intl.DateTimeFormat` вместо `Temporal`, потому что в Node.js 24 `Temporal` доступен только с флагом `--harmony-temporal`, который запрещён в `NODE_OPTIONS`. Node.js 26 (апрель 2026, LTS осень 2026) должен включить Temporal без флага.
+- **Goal**: После апгрейда на Node.js 26 заменить реализацию на `Temporal.Instant.from(isoString).toZonedDateTimeISO(tz).toPlainDate().toString()` и убрать флаг `--harmony-temporal` из `package.json` и `vitest.config.ts`.
+- **Why**: `Temporal` — семантически точный API для работы с датами/таймзонами; `Intl.DateTimeFormat` с локалью `en-CA` — обходной путь.
 - **Status**: Added 2026-06-20.

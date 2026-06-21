@@ -53,6 +53,7 @@ const HmbeeConfigSchema = z.object({
 });
 
 const AppConfigSchema = z.object({
+  time_zone: z.string(),
   hmbee: HmbeeConfigSchema,
   sources: z
     .record(z.string(), BankConfigSchema)
@@ -83,6 +84,7 @@ const ResolvedHmbeeConfigSchema = z.object({
 });
 
 const ResolvedAppConfigSchema = z.object({
+  time_zone: z.string(),
   hmbee: ResolvedHmbeeConfigSchema,
   sources: z.record(z.string(), ResolvedBankConfigSchema),
   allAccountMappings: z.record(z.string(), z.number().int().positive())
@@ -160,6 +162,7 @@ export function loadConfig(): AppConfig {
   });
 
   return ResolvedAppConfigSchema.parse({
+    time_zone: config.time_zone,
     hmbee: {
       currenciesMapping: config.hmbee.currenciesMapping,
       categoryMapping: {

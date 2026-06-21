@@ -24,6 +24,7 @@ describe('CardTransactionInfo classification', () => {
     accountMappings,
     categoryMapping,
     accountRegistry: createAccountRegistry({
+      time_zone: 'Europe/Moscow',
       hmbee: {
         currenciesMapping: {},
         categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
@@ -38,6 +39,7 @@ describe('CardTransactionInfo classification', () => {
       },
       allAccountMappings: accountMappings
     } as AppConfig),
+    timeZone: 'Europe/Moscow',
     typeCodeRules: {
       CardTransactionInfo: {
         conditions: {

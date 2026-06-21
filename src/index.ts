@@ -141,7 +141,8 @@ program
             accountMappings: tochkaConfig.accountMappings,
             typeCodeRules: tochkaConfig.typeCodes,
             accountRegistry,
-            categoryMapping: config.hmbee.categoryMapping
+            categoryMapping: config.hmbee.categoryMapping,
+            timeZone: config.time_zone
           })
         )
         .sort((a, b) => (a.normalized?.date ?? '').localeCompare(b.normalized?.date ?? ''));
@@ -274,13 +275,11 @@ program
         rl?.close();
       }
 
-      writeOutput(sentTransactions);
-
       if (isVerbose) {
         const skippedCount = previewRecords.length - selectedRecords.length;
         console.error(
           `✓ Apply complete. Created ${createdCount}, confirmed ${confirmedCount} Honey Money transactions.` +
-            (skippedCount > 0 ? ` Skipped ${skippedCount} unsupported records.` : '')
+            (skippedCount > 0 ? ` Skipped ${skippedCount} records.` : '')
         );
       }
     } catch (error: unknown) {

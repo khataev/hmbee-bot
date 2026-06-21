@@ -21,6 +21,7 @@ describe('SbpB2CPayment classification', () => {
       ignored: { mcc: [], title: [] }
     },
     accountRegistry: createAccountRegistry({
+      time_zone: 'Europe/Moscow',
       hmbee: {
         currenciesMapping: {},
         categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
@@ -35,6 +36,7 @@ describe('SbpB2CPayment classification', () => {
       },
       allAccountMappings: accountMappings
     } as AppConfig),
+    timeZone: 'Europe/Moscow',
     typeCodeRules: {
       SbpB2CPayment: {
         conditions: {
@@ -142,6 +144,7 @@ describe('SbpB2CPayment cross-bank transfer (multi-bank registry)', () => {
   const allAccountMappings = { ...tochkaAccountMappings, ...tinkoffAccountMappings };
 
   const multiRegistry = createAccountRegistry({
+    time_zone: 'Europe/Moscow',
     hmbee: {
       currenciesMapping: {},
       categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
@@ -165,6 +168,7 @@ describe('SbpB2CPayment cross-bank transfer (multi-bank registry)', () => {
       ignored: { mcc: [], title: [] }
     },
     accountRegistry: multiRegistry,
+    timeZone: 'Europe/Moscow',
     typeCodeRules: {
       SbpB2CPayment: {
         conditions: {

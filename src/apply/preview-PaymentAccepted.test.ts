@@ -21,6 +21,7 @@ describe('PaymentAccepted classification', () => {
       ignored: { mcc: [], title: [] }
     },
     accountRegistry: createAccountRegistry({
+      time_zone: 'Europe/Moscow',
       hmbee: {
         currenciesMapping: {},
         categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
@@ -35,6 +36,7 @@ describe('PaymentAccepted classification', () => {
       },
       allAccountMappings: accountMappings
     } as AppConfig),
+    timeZone: 'Europe/Moscow',
     typeCodeRules: {
       PaymentAccepted: {
         conditions: {

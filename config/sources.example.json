@@ -839,5 +839,6 @@
         "40817810000000000020": "tinkoff-debetovaya"
       }
     }
-  }
+  },
+  "time_zone": "Europe/Moscow"
 }
