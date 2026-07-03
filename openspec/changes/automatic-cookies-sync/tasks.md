@@ -14,10 +14,10 @@
 
 ## 3. Доменная фильтрация и сборка cookie-строки
 
-- [ ] 3.1 Отфильтровать cookie по cookie-domain-matching для `i.tochka.com` (хосты `i.tochka.com`, `.tochka.com`, `tochka.com`); исключить `id.tochka.com`-scoped
-- [ ] 3.2 Дедуплицировать по паре `(host, name)`
-- [ ] 3.3 Собрать строку `name=value; name=value`
-- [ ] 3.4 Юнит-тесты: правильный отбор доменов, исключение `id.tochka.com`, схлопывание дублей
+- [x] 3.1 Отфильтровать cookie по cookie-domain-matching для `i.tochka.com` (хосты `i.tochka.com`, `.tochka.com`, `tochka.com`); исключить `id.tochka.com`-scoped
+- [x] 3.2 Дедуплицировать по паре `(host, name)`
+- [x] 3.3 Собрать строку `name=value; name=value`
+- [x] 3.4 Юнит-тесты: правильный отбор доменов, исключение `id.tochka.com`, схлопывание дублей
 
 ## 4. Шов CredentialProvider
 
