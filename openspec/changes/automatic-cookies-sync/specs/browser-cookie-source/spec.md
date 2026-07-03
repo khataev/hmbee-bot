@@ -21,9 +21,10 @@
 - **THEN** провайдер извлекает из sessionstore session-cookie, включая `X-CSRF-TOKEN`, `RsRememberMeToken` и `JSESSIONID`
 - **AND** собранная cookie-строка достаточна для запроса к `https://i.tochka.com/api/v1/timeline`
 
-#### Scenario: Единственный Firefox-профиль
-- **WHEN** провайдер определяет путь профиля из `profiles.ini`
-- **THEN** он берёт единственный доступный профиль без дополнительной конфигурации выбора
+#### Scenario: Выбор профиля при нескольких записях в profiles.ini
+- **WHEN** провайдер определяет путь профиля из `profiles.ini`, и там присутствует несколько профилей (например, пустой legacy-профиль наравне с реально используемым)
+- **THEN** он выбирает по приоритету: install-lock `Default=` из `[InstallXXXXXXXX]`, затем легаси `[ProfileN].Default=1`, затем остальные профили по убыванию mtime директории
+- **AND** если кандидат с более высоким приоритетом не содержит рабочего sessionstore, используется следующий по приоритету
 
 #### Scenario: Выбор файла sessionstore при работающем Firefox
 - **WHEN** провайдер ищет данные sessionstore в профиле
