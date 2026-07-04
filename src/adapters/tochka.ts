@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { SourceAdapter, SyncOptions, SyncResult } from 'src/adapters/types.js';
+import { credentialProvider } from 'src/credentials/credentialProvider.js';
 import { validateTochkaEnv } from 'src/env.js';
 import { z } from 'zod';
 
@@ -81,14 +82,15 @@ export class TochkaAdapter implements SourceAdapter {
   name = 'tochka';
 
   async sync(options: SyncOptions): Promise<SyncResult> {
-    const { TOCHKA_COOKIE: cookie, TOCHKA_CUSTOMER_ID: customerId } = validateTochkaEnv();
+    const { TOCHKA_CUSTOMER_ID: customerId } = validateTochkaEnv();
+    const cookie = credentialProvider.getSession('tochka');
 
     const cookies = parseCookies(cookie);
     const csrfToken = cookies['X-CSRF-TOKEN'];
 
     if (!csrfToken) {
       throw new TochkaError(
-        'X-CSRF-TOKEN not found in TOCHKA_COOKIE. Ensure your session cookie is complete.',
+        'X-CSRF-TOKEN not found in credentials from the provider. Ensure Firefox is open with an active Tochka session, or that TOCHKA_COOKIE is complete.',
         'authentication'
       );
     }
