@@ -35,8 +35,8 @@
 
 ## 6. Окружение и документация
 
-- [ ] 6.1 Сделать `TOCHKA_COOKIE` опциональным в `src/env.ts` (fallback, не обязательный секрет)
-- [ ] 6.2 Обновить `.env.example` и `README.md`: описать автоматический забор cookie из Firefox и режим fallback
+- [x] 6.1 Сделать `TOCHKA_COOKIE` опциональным в `src/env.ts` (fallback, не обязательный секрет)
+- [x] 6.2 Обновить `.env.example` и `README.md`: описать автоматический забор cookie из Firefox и режим fallback
 
 ## 7. Проверка
 
