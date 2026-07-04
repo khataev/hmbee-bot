@@ -1,9 +1,4 @@
-import {
-  buildCookieHeader,
-  buildCookieHeaderForHost,
-  dedupeCookies,
-  selectCookiesForHost
-} from 'src/credentials/cookieString.js';
+import { buildCookieHeader, dedupeCookies, selectCookiesForHost } from 'src/credentials/cookieString.js';
 import type { BrowserCookie } from 'src/credentials/types.js';
 import { describe, expect, it } from 'vitest';
 
@@ -77,20 +72,5 @@ describe('buildCookieHeader', () => {
 
   it('returns an empty string for no cookies', () => {
     expect(buildCookieHeader([])).toBe('');
-  });
-});
-
-describe('buildCookieHeaderForHost', () => {
-  it('filters, dedupes, and assembles the cookie header for the target host', () => {
-    const cookies = [
-      cookie('i.tochka.com', 'JSESSIONID', 'session-value'),
-      cookie('.tochka.com', 'X-CSRF-TOKEN', 'csrf-value'),
-      cookie('.tochka.com', 'X-CSRF-TOKEN', 'csrf-value'), // duplicate from a second window
-      cookie('id.tochka.com', 't_uid', 'unrelated-value')
-    ];
-
-    const header = buildCookieHeaderForHost(cookies, 'i.tochka.com');
-
-    expect(header).toBe('JSESSIONID=session-value; X-CSRF-TOKEN=csrf-value');
   });
 });

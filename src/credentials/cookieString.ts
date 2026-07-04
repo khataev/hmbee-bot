@@ -40,13 +40,3 @@ export function dedupeCookies(cookies: BrowserCookie[]): BrowserCookie[] {
 export function buildCookieHeader(cookies: BrowserCookie[]): string {
   return cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join('; ');
 }
-
-/**
- * Selects the cookies relevant to `targetHost`, deduplicates them, and assembles the
- * resulting `Cookie` header string.
- */
-export function buildCookieHeaderForHost(cookies: BrowserCookie[], targetHost: string): string {
-  const matched = selectCookiesForHost(cookies, targetHost);
-  const deduped = dedupeCookies(matched);
-  return buildCookieHeader(deduped);
-}
