@@ -40,8 +40,8 @@
 
 ## 7. Проверка
 
-- [ ] 7.1 Ручная проверка end-to-end: синк Точки берёт свежую cookie из работающего Firefox без правки `.env`
-- [ ] 7.2 `npm run check` (Biome + TypeScript strict) проходит
+- [x] 7.1 Ручная проверка end-to-end: синк Точки берёт свежую cookie из работающего Firefox без правки `.env`
+- [x] 7.2 `npm run check` (Biome + TypeScript strict) проходит
 
 ## 8. Очистка HM-cookie (последним)
 
