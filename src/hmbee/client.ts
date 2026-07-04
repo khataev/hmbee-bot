@@ -43,8 +43,7 @@ export class HoneyMoneyClient {
         'content-type': 'application/json',
         'hm-source': this.env.HM_SOURCE,
         'user-email': this.env.HM_USER_EMAIL,
-        'user-token': this.env.HM_USER_TOKEN,
-        cookie: this.env.HM_COOKIE
+        'user-token': this.env.HM_USER_TOKEN
       },
       body: JSON.stringify({ transaction })
     });
@@ -69,8 +68,7 @@ export class HoneyMoneyClient {
         'content-type': 'application/json',
         'hm-source': this.env.HM_SOURCE,
         'user-email': this.env.HM_USER_EMAIL,
-        'user-token': this.env.HM_USER_TOKEN,
-        cookie: this.env.HM_COOKIE
+        'user-token': this.env.HM_USER_TOKEN
       },
       body: JSON.stringify({ transaction })
     });
@@ -94,8 +92,7 @@ export class HoneyMoneyClient {
         'content-type': 'application/json',
         'hm-source': this.env.HM_SOURCE,
         'user-email': this.env.HM_USER_EMAIL,
-        'user-token': this.env.HM_USER_TOKEN,
-        cookie: this.env.HM_COOKIE
+        'user-token': this.env.HM_USER_TOKEN
       }
     });
 

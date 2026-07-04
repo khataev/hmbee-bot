@@ -5,8 +5,7 @@ const mockEnv = {
   HM_USER_EMAIL: 'user@example.com',
   HM_USER_TOKEN: 'secret-token',
   HM_API_BASE_URL: 'https://app.hmbee.ru/api',
-  HM_SOURCE: 'HM3',
-  HM_COOKIE: 'session=super-secret-cookie'
+  HM_SOURCE: 'HM3'
 };
 
 describe('HoneyMoneyClient.confirmPlannedTransaction', () => {
@@ -14,17 +13,15 @@ describe('HoneyMoneyClient.confirmPlannedTransaction', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns the confirmed transaction id on success', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          status: 'success',
-          data: { id: 1, transaction: { id: 2580985713 } }
-        })
+  it('returns the confirmed transaction id on success, without sending a cookie header', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'success',
+        data: { id: 1, transaction: { id: 2580985713 } }
       })
-    );
+    });
+    vi.stubGlobal('fetch', mockFetch);
 
     const client = new HoneyMoneyClient(mockEnv);
     const id = await client.confirmPlannedTransaction({
@@ -49,6 +46,10 @@ describe('HoneyMoneyClient.confirmPlannedTransaction', () => {
     });
 
     expect(id).toBe(2580985713);
+    const [, requestInit] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const headers = requestInit.headers as Record<string, string>;
+    expect(headers).not.toHaveProperty('cookie');
+    expect(headers['user-token']).toBe('secret-token');
   });
 
   it('throws when status is not success', async () => {
@@ -119,7 +120,7 @@ describe('HoneyMoneyClient.getAllTransactions', () => {
     vi.restoreAllMocks();
   });
 
-  it('parses array response and returns array of entries', async () => {
+  it('parses array response and returns array of entries, without sending a cookie header', async () => {
     const entry = {
       id: 737481,
       type: 'unplanned',
@@ -131,19 +132,20 @@ describe('HoneyMoneyClient.getAllTransactions', () => {
       category: 'Спорт',
       account_id: 5695
     };
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => [entry]
-      })
-    );
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [entry]
+    });
+    vi.stubGlobal('fetch', mockFetch);
 
     const client = new HoneyMoneyClient(mockEnv);
     const result = await client.getAllTransactions();
 
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({ id: 737481 });
+    const [, requestInit] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const headers = requestInit.headers as Record<string, string>;
+    expect(headers).not.toHaveProperty('cookie');
   });
 
   it('accepts entries without description', async () => {

@@ -45,6 +45,6 @@
 
 ## 8. Очистка HM-cookie (последним)
 
-- [ ] 8.1 Убрать заголовок `cookie` из HM-запросов в `src/hmbee/client.ts` (`createTransaction`, `confirmPlannedTransaction`, чтение `all_json`)
-- [ ] 8.2 Убрать `HM_COOKIE` из обязательной схемы в `src/env.ts` и из `.env.example`
-- [ ] 8.3 Обновить/поправить тесты HM-клиента под отсутствие cookie; `npm run check` проходит
+- [x] 8.1 Убрать заголовок `cookie` из HM-запросов в `src/hmbee/client.ts` (`createTransaction`, `confirmPlannedTransaction`, чтение `all_json`)
+- [x] 8.2 Убрать `HM_COOKIE` из обязательной схемы в `src/env.ts` и из `.env.example`
+- [x] 8.3 Обновить/поправить тесты HM-клиента под отсутствие cookie; `npm run check` проходит

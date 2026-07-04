@@ -15,8 +15,7 @@ const HoneyMoneyEnvSchema = z.object({
   HM_USER_EMAIL: z.string().min(1, 'HM_USER_EMAIL is required'),
   HM_USER_TOKEN: z.string().min(1, 'HM_USER_TOKEN is required'),
   HM_API_BASE_URL: z.string().min(1, 'HM_API_BASE_URL is required'),
-  HM_SOURCE: z.string().min(1, 'HM_SOURCE is required'),
-  HM_COOKIE: z.string().min(1, 'HM_COOKIE is required')
+  HM_SOURCE: z.string().min(1, 'HM_SOURCE is required')
 });
 
 export type THoneyMoneyEnvSchema = z.infer<typeof HoneyMoneyEnvSchema>;
