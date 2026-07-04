@@ -1,10 +1,10 @@
 ## 1. Config schema и типы
 
-- [ ] 1.1 Добавить `RuleEntrySchema` (`{ when: JsonLogicRule; category: string; description?: string }`) в `src/config.ts`, переиспользуя существующий `JsonLogicRuleSchema`
-- [ ] 1.2 Расширить `categoryMappingSchema` полем `rules` (массив `RuleEntrySchema`, default `[]`)
-- [ ] 1.3 Расширить `ResolvedCategoryMappingSchema` полем `rules` и обновить дефолт `categoryMapping` в `HmbeeConfigSchema`
-- [ ] 1.4 Обновить тип `CategoryMapping` (`Omit<..., 'ignored'>`) так, чтобы он включал `rules`; экспортировать тип правила (`RuleEntry`)
-- [ ] 1.5 Проброс `rules` в `loadConfig()` при сборке `ResolvedAppConfigSchema` (сырой JSON Logic, без предкомпиляции regex)
+- [x] 1.1 Добавить `RuleEntrySchema` (`{ when: JsonLogicRule; category: string; description?: string }`) в `src/config.ts`, переиспользуя существующий `JsonLogicRuleSchema`
+- [x] 1.2 Расширить `categoryMappingSchema` полем `rules` (массив `RuleEntrySchema`, default `[]`)
+- [x] 1.3 Расширить `ResolvedCategoryMappingSchema` полем `rules` и обновить дефолт `categoryMapping` в `HmbeeConfigSchema`
+- [x] 1.4 Обновить тип `CategoryMapping` (`Omit<..., 'ignored'>`) так, чтобы он включал `rules`; экспортировать тип правила (`RuleEntry`)
+- [x] 1.5 Проброс `rules` в `loadConfig()` при сборке `ResolvedAppConfigSchema` (сырой JSON Logic, без предкомпиляции regex)
 
 ## 2. Оператор matches в ruleEngine
 

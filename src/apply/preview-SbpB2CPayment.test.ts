@@ -18,13 +18,14 @@ describe('SbpB2CPayment classification', () => {
     categoryMapping: {
       mcc: {},
       title: [{ pattern: /.*/, entry: { category: 'Прочее' } }],
+      rules: [],
       ignored: { mcc: [], title: [] }
     },
     accountRegistry: createAccountRegistry({
       time_zone: 'Europe/Moscow',
       hmbee: {
         currenciesMapping: {},
-        categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
+        categoryMapping: { mcc: {}, title: [], rules: [], ignored: { mcc: [], title: [] } }
       },
       sources: {
         tochka: {
@@ -124,7 +125,7 @@ describe('SbpB2CPayment classification', () => {
     const fixture = loadFixture('sbp-b2c-payment-own-transfer.json');
     const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, {
       ...options,
-      categoryMapping: { mcc: {}, title: [] }
+      categoryMapping: { mcc: {}, title: [], rules: [] }
     }) as ReadyApplyRecord;
 
     expect(result.identified).toBe(true);
@@ -147,7 +148,7 @@ describe('SbpB2CPayment cross-bank transfer (multi-bank registry)', () => {
     time_zone: 'Europe/Moscow',
     hmbee: {
       currenciesMapping: {},
-      categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
+      categoryMapping: { mcc: {}, title: [], rules: [], ignored: { mcc: [], title: [] } }
     },
     sources: {
       tochka: {
@@ -165,6 +166,7 @@ describe('SbpB2CPayment cross-bank transfer (multi-bank registry)', () => {
     categoryMapping: {
       mcc: {},
       title: [{ pattern: /.*/, entry: { category: 'Прочее' } }],
+      rules: [],
       ignored: { mcc: [], title: [] }
     },
     accountRegistry: multiRegistry,

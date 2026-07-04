@@ -18,13 +18,14 @@ describe('PaymentAccepted classification', () => {
     categoryMapping: {
       mcc: {},
       title: [{ pattern: /.*/, entry: { category: 'Прочее' } }],
+      rules: [],
       ignored: { mcc: [], title: [] }
     },
     accountRegistry: createAccountRegistry({
       time_zone: 'Europe/Moscow',
       hmbee: {
         currenciesMapping: {},
-        categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
+        categoryMapping: { mcc: {}, title: [], rules: [], ignored: { mcc: [], title: [] } }
       },
       sources: {
         tochka: {

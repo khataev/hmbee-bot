@@ -17,6 +17,7 @@ describe('CardTransactionInfo classification', () => {
       '4121': { category: 'Проезд / Такси' }
     },
     title: [{ pattern: /WHOOSH/i, entry: { category: 'Услуги / Аренда самокатов' } }],
+    rules: [],
     ignored: { mcc: [], title: [] }
   };
 
@@ -27,7 +28,7 @@ describe('CardTransactionInfo classification', () => {
       time_zone: 'Europe/Moscow',
       hmbee: {
         currenciesMapping: {},
-        categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
+        categoryMapping: { mcc: {}, title: [], rules: [], ignored: { mcc: [], title: [] } }
       },
       sources: {
         tochka: {
@@ -274,7 +275,7 @@ describe('CardTransactionInfo classification', () => {
   it('fails identification on included/excluded ambiguity', () => {
     const optionsWithAmbiguity = {
       ...options,
-      categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } },
+      categoryMapping: { mcc: {}, title: [], rules: [], ignored: { mcc: [], title: [] } },
       typeCodeRules: {
         CardTransactionInfo: {
           conditions: {
@@ -333,7 +334,8 @@ describe('CardTransactionInfo classification', () => {
       ...options,
       categoryMapping: {
         mcc: { '5912': { category: 'Покупки / Аптека и БАДы', description: 'аптека' } },
-        title: []
+        title: [],
+        rules: []
       }
     });
     expect(result.hmbee?.category).toBe('Покупки / Аптека и БАДы');
@@ -349,7 +351,8 @@ describe('CardTransactionInfo classification', () => {
       ...options,
       categoryMapping: {
         mcc: { '5912': { category: 'Покупки / Аптека и БАДы' } },
-        title: []
+        title: [],
+        rules: []
       }
     });
     expect(result.hmbee?.category).toBe('Покупки / Аптека и БАДы');
@@ -359,7 +362,7 @@ describe('CardTransactionInfo classification', () => {
   it('returns null category and amount-only description when categoryMapping is empty', () => {
     const result = normalizeTochkaRecord(mockBaseRecord, {
       ...options,
-      categoryMapping: { mcc: {}, title: [] }
+      categoryMapping: { mcc: {}, title: [], rules: [] }
     });
     expect(result.identified).toBe(true);
     expect(result.save).toBe(false);
@@ -371,7 +374,7 @@ describe('CardTransactionInfo classification', () => {
   it('downgrades identified expense with missing category: hmbee is still present', () => {
     const result = normalizeTochkaRecord(mockBaseRecord, {
       ...options,
-      categoryMapping: { mcc: {}, title: [] }
+      categoryMapping: { mcc: {}, title: [], rules: [] }
     });
     expect(result.identified).toBe(true);
     expect(result.save).toBe(false);

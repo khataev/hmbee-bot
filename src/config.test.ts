@@ -91,7 +91,7 @@ describe('createAccountRegistry — multi-bank allAccountMappings', () => {
     time_zone: 'Europe/Moscow',
     hmbee: {
       currenciesMapping: {},
-      categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
+      categoryMapping: { mcc: {}, title: [], rules: [], ignored: { mcc: [], title: [] } }
     },
     sources: {
       tochka: {

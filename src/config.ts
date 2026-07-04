@@ -36,6 +36,12 @@ const MappingEntrySchema = z.object({
   description: z.string().optional()
 });
 
+const RuleEntrySchema = z.object({
+  when: JsonLogicRuleSchema,
+  category: z.string(),
+  description: z.string().optional()
+});
+
 const ignoredMappingSchema = z.object({
   mcc: z.array(z.string()).default([]),
   title: z.array(z.string()).default([])
@@ -44,12 +50,13 @@ const ignoredMappingSchema = z.object({
 const categoryMappingSchema = z.object({
   mcc: z.record(z.string(), MappingEntrySchema).default({}),
   title: z.record(z.string(), MappingEntrySchema).default({}),
+  rules: z.array(RuleEntrySchema).default([]),
   ignored: ignoredMappingSchema.default({ mcc: [], title: [] })
 });
 
 const HmbeeConfigSchema = z.object({
   currenciesMapping: z.record(z.string(), z.string()).default({}),
-  categoryMapping: categoryMappingSchema.default({ mcc: {}, title: {}, ignored: { mcc: [], title: [] } })
+  categoryMapping: categoryMappingSchema.default({ mcc: {}, title: {}, rules: [], ignored: { mcc: [], title: [] } })
 });
 
 const AppConfigSchema = z.object({
@@ -75,6 +82,7 @@ const TitlePatternSchema = z.object({
 const ResolvedCategoryMappingSchema = z.object({
   mcc: z.record(z.string(), MappingEntrySchema),
   title: z.array(TitlePatternSchema),
+  rules: z.array(RuleEntrySchema),
   ignored: ignoredMappingSchema
 });
 
@@ -94,6 +102,7 @@ export type HoneyMoneyAccountConfig = z.infer<typeof HoneyMoneyAccountSchema>;
 export type TypeCodeRule = z.infer<typeof TypeCodeRuleSchema>;
 export type TypeCodeConditionsConfig = z.infer<typeof TypeCodeConditionsSchema>;
 export type MappingEntry = z.infer<typeof MappingEntrySchema>;
+export type RuleEntry = z.infer<typeof RuleEntrySchema>;
 export type TitlePattern = z.infer<typeof TitlePatternSchema>;
 export type BankConfig = z.infer<typeof BankConfigSchema>;
 export type TochkaBankConfig = z.infer<typeof TochkaBankConfigSchema>;
@@ -168,6 +177,7 @@ export function loadConfig(): AppConfig {
       categoryMapping: {
         mcc: config.hmbee.categoryMapping.mcc,
         title: titlePatterns,
+        rules: config.hmbee.categoryMapping.rules,
         ignored: config.hmbee.categoryMapping.ignored
       }
     },
