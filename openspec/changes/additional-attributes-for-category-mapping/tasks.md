@@ -8,8 +8,8 @@
 
 ## 2. Оператор matches в ruleEngine
 
-- [ ] 2.1 Добавить кастомную json-logic операцию `matches` в `src/apply/preview/ruleEngine.ts`: `[pattern, value] => new RegExp(pattern, 'i').test(String(value))`, по образцу `is_owned`/`is_deposit`
-- [ ] 2.2 Убедиться, что некорректный regex ловится существующим `try/catch` в `evaluateRule` и приводит к `false`
+- [x] 2.1 Добавить кастомную json-logic операцию `matches` в `src/apply/preview/ruleEngine.ts`: `[pattern, value] => new RegExp(pattern, 'i').test(String(value))`, по образцу `is_owned`/`is_deposit`
+- [x] 2.2 Убедиться, что некорректный regex ловится существующим `try/catch` в `evaluateRule` и приводит к `false`
 
 ## 3. Слой rules в резолюции категории
 
