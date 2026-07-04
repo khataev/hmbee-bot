@@ -21,12 +21,12 @@
 
 ## 4. Шов CredentialProvider
 
-- [ ] 4.1 Определить интерфейс `CredentialProvider` с `getSession(system)` → cookie-строка
-- [ ] 4.2 Реализовать Firefox-sessionstore-бэкенд для `tochka` поверх групп 2–3
-- [ ] 4.3 Fallback на `TOCHKA_COOKIE` из окружения, если бэкенд недоступен/пуст
-- [ ] 4.4 Ошибка, если нет ни браузерного источника, ни `TOCHKA_COOKIE`
-- [ ] 4.5 Логировать только имена cookie, никогда значения
-- [ ] 4.6 Юнит-тесты: успех из sessionstore, fallback на env, ошибка при отсутствии обоих
+- [x] 4.1 Определить интерфейс `CredentialProvider` с `getSession(system)` → cookie-строка
+- [x] 4.2 Реализовать Firefox-sessionstore-бэкенд для `tochka` поверх групп 2–3
+- [x] 4.3 Fallback на `TOCHKA_COOKIE` из окружения, если бэкенд недоступен/пуст
+- [x] 4.4 Ошибка, если нет ни браузерного источника, ни `TOCHKA_COOKIE`
+- [x] 4.5 Логировать только имена cookie, никогда значения
+- [x] 4.6 Юнит-тесты: успех из sessionstore, fallback на env, ошибка при отсутствии обоих
 
 ## 5. Подключение к адаптеру Точки
 

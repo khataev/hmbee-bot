@@ -225,7 +225,7 @@ export function collectCookies(sessionstoreData: unknown): BrowserCookie[] {
  * Reads all cookies found in the Firefox sessionstore, trying candidate profile directories
  * (see `getProfileDirCandidates`) in priority order until one yields a readable sessionstore.
  */
-export function readCookiesFromFirefoxSessionstore(): BrowserCookie[] {
+export function readCookiesFromFirefoxSessionStore(): BrowserCookie[] {
   const profileDirs = getProfileDirCandidates();
 
   for (const profileDir of profileDirs) {
