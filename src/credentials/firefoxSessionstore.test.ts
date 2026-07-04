@@ -3,10 +3,10 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   collectCookies,
-  FirefoxSessionstoreError,
+  FirefoxSessionStoreError,
   getProfileDirCandidates,
   readSessionstoreData
-} from 'src/credentials/firefoxSessionstore.js';
+} from 'src/credentials/firefoxSessionStore.js';
 import { buildMozLz4JsonFile } from 'src/credentials/test-helpers.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -88,14 +88,14 @@ describe('getProfileDirCandidates', () => {
     expect(candidates).toEqual([newerDir, olderDir]);
   });
 
-  it('throws a FirefoxSessionstoreError when profiles.ini is missing', () => {
-    expect(() => getProfileDirCandidates(tempDir)).toThrow(FirefoxSessionstoreError);
+  it('throws a FirefoxSessionStoreError when profiles.ini is missing', () => {
+    expect(() => getProfileDirCandidates(tempDir)).toThrow(FirefoxSessionStoreError);
   });
 
-  it('throws a FirefoxSessionstoreError when profiles.ini has no profile section', () => {
+  it('throws a FirefoxSessionStoreError when profiles.ini has no profile section', () => {
     fs.writeFileSync(path.join(tempDir, 'profiles.ini'), '[General]\nStartWithLastProfile=1\n');
 
-    expect(() => getProfileDirCandidates(tempDir)).toThrow(FirefoxSessionstoreError);
+    expect(() => getProfileDirCandidates(tempDir)).toThrow(FirefoxSessionStoreError);
   });
 });
 
@@ -131,8 +131,8 @@ describe('readSessionstoreData', () => {
     expect(data).toEqual({ marker: 'backup' });
   });
 
-  it('throws a FirefoxSessionstoreError with guidance when neither file exists', () => {
-    expect(() => readSessionstoreData(tempDir)).toThrow(FirefoxSessionstoreError);
+  it('throws a FirefoxSessionStoreError with guidance when neither file exists', () => {
+    expect(() => readSessionstoreData(tempDir)).toThrow(FirefoxSessionStoreError);
     expect(() => readSessionstoreData(tempDir)).toThrow(/открой firefox/i);
   });
 });

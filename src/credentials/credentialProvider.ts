@@ -1,5 +1,5 @@
 import { buildCookieHeader, dedupeCookies, selectCookiesForHost } from 'src/credentials/cookieString.js';
-import { readCookiesFromFirefoxSessionStore } from 'src/credentials/firefoxSessionstore.js';
+import { readCookiesFromFirefoxSessionStore } from 'src/credentials/firefoxSessionStore.js';
 import type { BrowserCookie } from 'src/credentials/types.js';
 
 export class CredentialError extends Error {

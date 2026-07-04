@@ -5,10 +5,10 @@ import path from 'node:path';
 import { decodeMozLz4ToJson } from 'src/credentials/mozlz4.js';
 import type { BrowserCookie } from 'src/credentials/types.js';
 
-export class FirefoxSessionstoreError extends Error {
+export class FirefoxSessionStoreError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'FirefoxSessionstoreError';
+    this.name = 'FirefoxSessionStoreError';
   }
 }
 
@@ -111,7 +111,7 @@ export function getProfileDirCandidates(firefoxRootDir: string = getFirefoxRootD
   try {
     iniContent = fs.readFileSync(profilesIniPath, 'utf-8');
   } catch {
-    throw new FirefoxSessionstoreError(`Firefox profiles.ini не найден (${profilesIniPath}). ${OPEN_FIREFOX_HINT}`);
+    throw new FirefoxSessionStoreError(`Firefox profiles.ini не найден (${profilesIniPath}). ${OPEN_FIREFOX_HINT}`);
   }
 
   const { profiles, installDefaultPaths } = parseProfilesIni(iniContent);
@@ -147,7 +147,7 @@ export function getProfileDirCandidates(firefoxRootDir: string = getFirefoxRootD
   for (const { dir } of remainingWithMtime) pushUnique(dir);
 
   if (ordered.length === 0) {
-    throw new FirefoxSessionstoreError(`В ${profilesIniPath} не найден ни один профиль Firefox. ${OPEN_FIREFOX_HINT}`);
+    throw new FirefoxSessionStoreError(`В ${profilesIniPath} не найден ни один профиль Firefox. ${OPEN_FIREFOX_HINT}`);
   }
 
   return ordered;
@@ -183,7 +183,7 @@ export function readSessionstoreData(profileDir: string): unknown {
     }
   }
 
-  throw new FirefoxSessionstoreError(
+  throw new FirefoxSessionStoreError(
     `Не удалось прочитать ни recovery.jsonlz4, ни recovery.baklz4 в ${backupsDir}. ${OPEN_FIREFOX_HINT}`
   );
 }
@@ -237,7 +237,7 @@ export function readCookiesFromFirefoxSessionStore(): BrowserCookie[] {
     }
   }
 
-  throw new FirefoxSessionstoreError(
+  throw new FirefoxSessionStoreError(
     `Не удалось прочитать sessionstore ни в одном из профилей Firefox (${profileDirs.join(', ')}). ${OPEN_FIREFOX_HINT}`
   );
 }

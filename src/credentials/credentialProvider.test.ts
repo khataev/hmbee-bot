@@ -1,9 +1,9 @@
 import { CredentialError, type CredentialSystem, credentialProvider } from 'src/credentials/credentialProvider.js';
-import { readCookiesFromFirefoxSessionStore } from 'src/credentials/firefoxSessionstore.js';
+import { readCookiesFromFirefoxSessionStore } from 'src/credentials/firefoxSessionStore.js';
 import type { BrowserCookie } from 'src/credentials/types.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('src/credentials/firefoxSessionstore.js', () => ({
+vi.mock('src/credentials/firefoxSessionStore.js', () => ({
   readCookiesFromFirefoxSessionStore: vi.fn()
 }));
 
