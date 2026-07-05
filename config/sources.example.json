@@ -16,6 +16,28 @@
         "TIMEWEB\\.CLOUD": { "category": "Услуги / Хостинги и облака", "description": "TimeWeb" },
         "YANDEX.+PLUS": { "category": "Подписки и донаты / Яндекс Плюс" }
       },
+      "rules": [
+        {
+          "when": {
+            "and": [
+              { "==": [{ "var": "record.meta_data.system_data.type_code" }, "PaymentWrittenOff"] },
+              { "matches": ["смс-информирование", { "var": "record.data.purpose" }] }
+            ]
+          },
+          "category": "Банки / Периодические списания",
+          "description": "СМС-информирование"
+        },
+        {
+          "when": {
+            "and": [
+              { "==": [{ "var": "record.meta_data.system_data.type_code" }, "PaymentWrittenOff"] },
+              { "matches": ["оплата лицензионного вознаграждения", { "var": "record.data.purpose" }] }
+            ]
+          },
+          "category": "Банки / Периодические списания",
+          "description": "Оплата лицензионного вознаграждения"
+        }
+      ],
       "ignored": {
         "mcc": [],
         "title": ["АКЦИОНЕРНОЕ ОБЩЕСТВО \"ТОЧКА\""]
