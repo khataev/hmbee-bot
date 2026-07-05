@@ -9,13 +9,23 @@ vi.mock('node:fs', () => ({
 
 const mockReadFileSync = vi.mocked(readFileSync);
 
-function makeSourcesJson(sources: Record<string, unknown>): string {
+function makeSourcesJson(
+  sources: Record<string, unknown>,
+  categoryMapping: Record<string, unknown> = { mcc: {}, title: {}, ignored: { mcc: [], title: [] } }
+): string {
   return JSON.stringify({
     time_zone: 'Europe/Moscow',
-    hmbee: { currenciesMapping: {}, categoryMapping: { mcc: {}, title: {}, ignored: { mcc: [], title: [] } } },
+    hmbee: { currenciesMapping: {}, categoryMapping },
     sources
   });
 }
+
+const singleBankSources = {
+  sber: {
+    hmAccounts: { 'sber-zarpl': { id: 1000001, name: 'Сбер', currency: 'rub' } },
+    accountMappings: { '40817810000000000010': 'sber-zarpl' }
+  }
+};
 
 describe('loadConfig — schema validation', () => {
   beforeEach(() => {
@@ -38,6 +48,55 @@ describe('loadConfig — schema validation', () => {
       })
     );
     expect(() => loadConfig()).not.toThrow();
+  });
+});
+
+describe('loadConfig — categoryMapping.rules', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('accepts config without rules and defaults them to an empty array', () => {
+    mockReadFileSync.mockReturnValue(makeSourcesJson(singleBankSources));
+
+    const config = loadConfig();
+
+    expect(config.hmbee.categoryMapping.rules).toEqual([]);
+  });
+
+  it('parses config with rules', () => {
+    const rules = [
+      {
+        when: {
+          and: [
+            { '==': [{ var: 'record.meta_data.system_data.type_code' }, 'PaymentWrittenOff'] },
+            { matches: ['смс-информирование', { var: 'record.data.purpose' }] }
+          ]
+        },
+        category: 'Банки / Периодические списания',
+        description: 'СМС-информирование'
+      },
+      {
+        when: { '==': [{ var: 'record.data.phoneNumber' }, '+79000000000'] },
+        category: 'Услуги'
+      }
+    ];
+    mockReadFileSync.mockReturnValue(
+      makeSourcesJson(singleBankSources, { mcc: {}, title: {}, rules, ignored: { mcc: [], title: [] } })
+    );
+
+    const config = loadConfig();
+
+    expect(config.hmbee.categoryMapping.rules).toEqual(rules);
+  });
+
+  it('rejects a rule without category', () => {
+    const rules = [{ when: { '==': [1, 1] } }];
+    mockReadFileSync.mockReturnValue(
+      makeSourcesJson(singleBankSources, { mcc: {}, title: {}, rules, ignored: { mcc: [], title: [] } })
+    );
+
+    expect(() => loadConfig()).toThrow();
   });
 });
 
