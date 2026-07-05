@@ -37,8 +37,8 @@
 
 ## 6. Quality gate
 
-- [ ] 6.1 Прогнать `npm run check` (typecheck + Biome lint + vitest), устранить замечания
-- [ ] 6.2 Свериться со STYLE-GUIDE.md и TRANSACTION-RULES.md
+- [x] 6.1 Прогнать `npm run check` (typecheck + Biome lint + vitest), устранить замечания
+- [x] 6.2 Свериться со STYLE-GUIDE.md и TRANSACTION-RULES.md (в TRANSACTION-RULES.md добавлена секция о слоях резолюции категории)
 
 ## 7. Out-of-scope (follow-up, НЕ в этом change)
 

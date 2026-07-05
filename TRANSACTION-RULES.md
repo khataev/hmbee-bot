@@ -63,6 +63,17 @@
 | --- | --- | --- | --- | --- |
 | Missing category downgrade | Любой identified income/expense record (`subtype = i` или `e`) | `hmbee.category === null` после маппинга категорий И `save = true` по итогам `included`/`excluded`-классификации | `identified = true`, `save = false`, `reason = "Category is missing for income or expense transaction"`, `hmbee` сохраняется в выводе | Проверка происходит после построения `hmbee` в `normalizeTochkaRecord`. Transfer-записи (`subtype = t`) и excluded-записи не затрагиваются. Источник истины: `src/apply/preview/tochka.ts` (`MISSING_CATEGORY_REASON`). |
 
+## Маппинг категории honeymoney (`hmbee.categoryMapping`)
+
+Резолюция категории для income/expense записей выполняется в `mapTochkaCategory` (`src/apply/preview/tochka.ts`) по слоям, от специфичного к общему; побеждает первый совпавший слой:
+
+1. `rules` — массив расширенных правил `{ when, category, description? }` на JSON Logic над сырой записью (контекст `{ record }`, доступ `{"var": "record.data.<поле>"}`, как у `typeCodes`). Порядок в массиве = приоритет, применяется первое совпавшее правило. Доступен регистронезависимый regex-оператор `{"matches": [pattern, value]}` (`src/apply/preview/ruleEngine.ts`). Некорректный regex или условие не бросает исключение — правило просто не матчится, резолюция продолжается.
+2. `title` — regex (case-insensitive) по `description` записи, первый совпавший паттерн.
+3. `mcc` — lookup по MCC-коду.
+4. Ничего не совпало → `category = null` → срабатывает «Missing category downgrade» (см. сквозные правила).
+
+Дисциплина авторинга `rules`: правила должны быть узкими — включать проверку `type_code` (`{"==":[{"var":"record.meta_data.system_data.type_code"},"..."]}`) в дополнение к содержательному условию, иначе широкое правило перехватит записи, которые сейчас корректно ловятся `title`/`mcc`. Тесты: `src/apply/preview-category-rules.test.ts`.
+
 ## Что сейчас особенно важно помнить
 
 - `PaymentIncome` — три явные OR-ветки в `included` (deposit return, deposit interest, external). `excluded` явно использует `NOT DEPOSIT_PAYER`, чтобы не захватить возврат тела депозита. Источник истины — `sources.json` и `preview-PaymentIncome.test.ts`.
