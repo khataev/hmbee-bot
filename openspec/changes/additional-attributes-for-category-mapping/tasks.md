@@ -13,10 +13,10 @@
 
 ## 3. Слой rules в резолюции категории
 
-- [ ] 3.1 Изменить сигнатуру `mapTochkaCategory` в `src/apply/preview/tochka.ts` на `(sourceRecord, description, mcc, categoryMapping, accountRegistry)` (или эквивалентный проброс `accountRegistry`)
-- [ ] 3.2 Добавить проверку `rules` первым слоем: для каждого правила вызвать `evaluateRule(rule.when, { record: sourceRecord, accountRegistry })`, вернуть `MappingEntry` первого совпавшего
-- [ ] 3.3 Сохранить существующий порядок `title → mcc` как fallback после `rules`
-- [ ] 3.4 Обновить вызов `mapTochkaCategory` в `buildHoneyMoneyIncomeExpenseTransaction`, пробросив `sourceRecord` и `accountRegistry`
+- [x] 3.1 Изменить сигнатуру `mapTochkaCategory` в `src/apply/preview/tochka.ts` на `(sourceRecord, description, mcc, categoryMapping, accountRegistry)` (или эквивалентный проброс `accountRegistry`)
+- [x] 3.2 Добавить проверку `rules` первым слоем: для каждого правила вызвать `evaluateRule(rule.when, { record: sourceRecord, accountRegistry })`, вернуть `MappingEntry` первого совпавшего
+- [x] 3.3 Сохранить существующий порядок `title → mcc` как fallback после `rules`
+- [x] 3.4 Обновить вызов `mapTochkaCategory` в `buildHoneyMoneyIncomeExpenseTransaction`, пробросив `sourceRecord` и `accountRegistry`
 
 ## 4. Конфиг-файлы
 
