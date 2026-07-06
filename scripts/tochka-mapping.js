@@ -170,6 +170,7 @@ async function main() {
     console.log(`Файл: ${path.relative(PROJECT_ROOT, inputPath)}`);
     console.log(`Записываться будет в: config/sources.json`);
     console.log('Формат ввода: m(cc)|t(itle), "Название категории"[, Описание]');
+    console.log('Правило (rule): r, <field>, "Название категории"[, Описание] — matches по полному значению record.data.<field> с guard по type_code');
     console.log("Нажмите Enter для пропуска записи. Введите i(gnore)/im/it для игнорирования. Введите q для остановки.\n");
 
     for (let index = 0; index < parsed.length; index += 1) {
@@ -178,6 +179,9 @@ async function main() {
       const titleValue = entry?.data?.title ?? "";
       const mccKey = String(mccValue ?? "");
       const titleKey = String(titleValue ?? "");
+      const typeCode = entry?.meta_data?.system_data?.type_code ?? "";
+      const eventDate = entry?.meta_data?.time_data?.event_date ?? "";
+      const infoLine = `[${index + 1}/${parsed.length}] mcc: ${mccKey || "-"}, title: ${titleKey || "-"}, type_code: ${typeCode || "-"}, event_date: ${eventDate || "-"}`;
 
       const alreadyMapped =
         (mccKey && existingMcc.has(mccKey)) ||
@@ -187,15 +191,13 @@ async function main() {
         (titleKey && ignoredTitleRegexes.some((rx) => rx.test(titleKey)));
 
       if (alreadyMapped || ignored) {
-        console.log(
-          `[${index + 1}/${parsed.length}] mcc: ${mccKey || "-"}, title: ${titleKey || "-"}`,
-        );
+        console.log(infoLine);
         const reason = ignored ? "в списке игнорирования" : "уже есть в маппинге";
         console.log(`Пропущено автоматически: mcc или title ${reason}\n`);
         continue;
       }
 
-      console.log(`[${index + 1}/${parsed.length}] mcc: ${mccKey || "-"}, title: ${titleKey || "-"}`);
+      console.log(infoLine);
 
       while (true) {
         const answer = (await rl.question("> ")).trim();
