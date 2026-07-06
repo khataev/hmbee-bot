@@ -616,7 +616,13 @@ export function normalizeTochkaRecord(
     if (!tochkaAccountId)
       throw new Error(`No Honey Money account mapping found for Tochka account ${normalized.account}`);
 
-    const hmbee = buildHoneyMoneyIncomeExpenseTransaction(normalized, tochkaAccountId, options.categoryMapping);
+    const hmbee = buildHoneyMoneyIncomeExpenseTransaction(
+      sourceRecord,
+      normalized,
+      tochkaAccountId,
+      options.categoryMapping,
+      options.accountRegistry
+    );
 
     if (classification.save && hmbee.category === null) {
       return {
@@ -648,11 +654,19 @@ export function normalizeTochkaRecord(
 }
 
 function buildHoneyMoneyIncomeExpenseTransaction(
+  sourceRecord: TochkaSyncRecord,
   normalized: NormalizedRecord,
   accountId: number,
-  categoryMapping: CategoryMapping
+  categoryMapping: CategoryMapping,
+  accountRegistry: AccountRegistry
 ): HoneyMoneyTransaction {
-  const entry = mapTochkaCategory(normalized.description, normalized.mcc, categoryMapping);
+  const entry = mapTochkaCategory(
+    sourceRecord,
+    normalized.description,
+    normalized.mcc,
+    categoryMapping,
+    accountRegistry
+  );
   const subtype = normalized.type === 'income' ? 'i' : 'e';
   const normalizedAmount = normalizeHoneyMoneyAmount(normalized.amount, subtype);
   const absAmount = Math.abs(normalizedAmount);
@@ -717,10 +731,18 @@ export function normalizeHoneyMoneyAmount(amount: number, subtype: 'e' | 'i'): n
 }
 
 function mapTochkaCategory(
+  sourceRecord: TochkaSyncRecord,
   description: string,
   mcc: string | undefined,
-  categoryMapping: CategoryMapping
+  categoryMapping: CategoryMapping,
+  accountRegistry: AccountRegistry
 ): MappingEntry | null {
+  for (const rule of categoryMapping.rules) {
+    if (evaluateRule(rule.when, { record: sourceRecord, accountRegistry })) {
+      return { category: rule.category, description: rule.description };
+    }
+  }
+
   for (const { pattern, entry } of categoryMapping.title) {
     if (pattern.test(description)) {
       return entry;

@@ -16,13 +16,14 @@ describe('SbpC2BRefund classification', () => {
     categoryMapping: {
       mcc: {},
       title: [{ pattern: /.*/, entry: { category: 'Прочее' } }],
+      rules: [],
       ignored: { mcc: [], title: [] }
     },
     accountRegistry: createAccountRegistry({
       time_zone: 'Europe/Moscow',
       hmbee: {
         currenciesMapping: {},
-        categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
+        categoryMapping: { mcc: {}, title: [], rules: [], ignored: { mcc: [], title: [] } }
       },
       sources: {
         tochka: {
@@ -96,7 +97,7 @@ describe('SbpC2BRefund classification', () => {
     const fixture = loadFixture('sbp-c2b-refund.json');
     const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, {
       ...options,
-      categoryMapping: { mcc: {}, title: [] }
+      categoryMapping: { mcc: {}, title: [], rules: [] }
     });
     expect(result.identified).toBe(true);
     expect(result.save).toBe(false);

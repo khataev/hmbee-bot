@@ -12,11 +12,15 @@ describe('toDateInTimezone via normalizeTochkaRecord', () => {
     categoryMapping: {
       mcc: {},
       title: [{ pattern: /.*/, entry: { category: 'Прочее' } }],
+      rules: [],
       ignored: { mcc: [], title: [] }
     },
     accountRegistry: createAccountRegistry({
       time_zone: 'Europe/Moscow',
-      hmbee: { currenciesMapping: {}, categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } } },
+      hmbee: {
+        currenciesMapping: {},
+        categoryMapping: { mcc: {}, title: [], rules: [], ignored: { mcc: [], title: [] } }
+      },
       sources: {
         tochka: { bankBic: '044525104', accountMappings, hmAccounts: {}, typeCodes: {} }
       },

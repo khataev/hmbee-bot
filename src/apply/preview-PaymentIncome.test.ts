@@ -20,6 +20,7 @@ describe('PaymentIncome classification', () => {
     categoryMapping: {
       mcc: {},
       title: [{ pattern: /.*/, entry: { category: 'Прочее' } }],
+      rules: [],
       ignored: { mcc: [], title: [] }
     },
     accountRegistry: createAccountRegistry({
@@ -28,7 +29,7 @@ describe('PaymentIncome classification', () => {
         currenciesMapping: {
           '810': 'rub'
         },
-        categoryMapping: { mcc: {}, title: [], ignored: { mcc: [], title: [] } }
+        categoryMapping: { mcc: {}, title: [], rules: [], ignored: { mcc: [], title: [] } }
       },
       sources: {
         tochka: {

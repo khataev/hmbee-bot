@@ -27,6 +27,10 @@ jsonLogic.add_operation('is_deposit', (account: string, bic: string, registry: A
   return registry.isDeposit(account, bic);
 });
 
+jsonLogic.add_operation('matches', (pattern: string, value: unknown) => {
+  return new RegExp(pattern, 'i').test(String(value));
+});
+
 /**
  * Evaluates a JSON Logic expression against a given context and returns a boolean result.
  *
