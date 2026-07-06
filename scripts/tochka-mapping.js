@@ -10,6 +10,7 @@ const DEFAULT_DIR = path.join(PROJECT_ROOT, "sync", "tochka");
 const CONFIG_PATH = path.join(PROJECT_ROOT, "config", "sources.json");
 const MCC_INPUT = "m";
 const TITLE_INPUT = "t";
+const RULE_INPUT = "r";
 
 function normalizeCategory(raw) {
   const trimmed = raw.trim();
@@ -27,14 +28,31 @@ function parseInputLine(line) {
   const firstComma = line.indexOf(",");
 
   if (firstComma === -1) {
-    return { error: 'Ожидается запятая: m|t, "Категория"' };
+    return { error: 'Ожидается запятая: m|t, "Категория"[, Описание] или r, <field>, "Категория"[, Описание]' };
   }
 
   const mappingField = line.slice(0, firstComma).trim().toLowerCase();
-  const rest = line.slice(firstComma + 1);
+  let rest = line.slice(firstComma + 1);
 
-  if (mappingField !== MCC_INPUT && mappingField !== TITLE_INPUT) {
-    return { error: `Первое значение должно быть ${MCC_INPUT} или ${TITLE_INPUT}` };
+  if (mappingField !== MCC_INPUT && mappingField !== TITLE_INPUT && mappingField !== RULE_INPUT) {
+    return { error: `Первое значение должно быть ${MCC_INPUT}, ${TITLE_INPUT} или ${RULE_INPUT}` };
+  }
+
+  let ruleField;
+  if (mappingField === RULE_INPUT) {
+    const fieldComma = rest.indexOf(",");
+
+    if (fieldComma === -1) {
+      return { error: 'Ожидается: r, <field>, "Категория"[, Описание]' };
+    }
+
+    ruleField = rest.slice(0, fieldComma).trim();
+
+    if (!ruleField) {
+      return { error: "Имя поля не должно быть пустым" };
+    }
+
+    rest = rest.slice(fieldComma + 1);
   }
 
   const secondComma = rest.indexOf(",");
@@ -56,6 +74,7 @@ function parseInputLine(line) {
 
   return {
     mappingField,
+    ruleField,
     category,
     description: descriptionRaw,
   };
@@ -79,6 +98,7 @@ function getCategoryMapping(config) {
   if (!config.hmbee.categoryMapping.ignored) config.hmbee.categoryMapping.ignored = { mcc: [], title: [] };
   if (!config.hmbee.categoryMapping.ignored.mcc) config.hmbee.categoryMapping.ignored.mcc = [];
   if (!config.hmbee.categoryMapping.ignored.title) config.hmbee.categoryMapping.ignored.title = [];
+  if (!config.hmbee.categoryMapping.rules) config.hmbee.categoryMapping.rules = [];
   return config.hmbee.categoryMapping;
 }
 
@@ -103,6 +123,13 @@ async function saveMappingEntry(mappingField, key, entry) {
   await saveJsonFile(CONFIG_PATH, config);
 }
 
+async function saveRuleEntry(rule) {
+  const config = await loadJsonFile(CONFIG_PATH);
+  const mapping = getCategoryMapping(config);
+  mapping.rules.push(rule);
+  await saveJsonFile(CONFIG_PATH, config);
+}
+
 async function saveIgnoredEntry(field, key) {
   const config = await loadJsonFile(CONFIG_PATH);
   const mapping = getCategoryMapping(config);
@@ -110,6 +137,44 @@ async function saveIgnoredEntry(field, key) {
     mapping.ignored[field].push(key);
   }
   await saveJsonFile(CONFIG_PATH, config);
+}
+
+function buildRule(typeCode, ruleField, fieldValue, category, description) {
+  const rule = {
+    when: {
+      and: [
+        { "==": [{ var: "record.meta_data.system_data.type_code" }, typeCode] },
+        { matches: [String(fieldValue), { var: `record.data.${ruleField}` }] },
+      ],
+    },
+    category,
+  };
+
+  if (description) {
+    rule.description = description;
+  }
+
+  return rule;
+}
+
+async function handleRuleCommand(entry, typeCode, parsedLine) {
+  const { ruleField, category, description } = parsedLine;
+  const fieldValue = entry?.data?.[ruleField];
+
+  if (fieldValue === undefined || fieldValue === null || String(fieldValue).trim() === "") {
+    console.log(`⚠ Поле data.${ruleField} отсутствует или пустое — правило не создано`);
+    return false;
+  }
+
+  if (!typeCode) {
+    console.log("⚠ У записи нет meta_data.system_data.type_code — правило не создано");
+    return false;
+  }
+
+  const rule = buildRule(typeCode, ruleField, fieldValue, category, description);
+  await saveRuleEntry(rule);
+  console.log(`Сохранено правило: ${JSON.stringify(rule)}\n`);
+  return true;
 }
 
 async function resolveInputFile(inputArg) {
@@ -170,6 +235,7 @@ async function main() {
     console.log(`Файл: ${path.relative(PROJECT_ROOT, inputPath)}`);
     console.log(`Записываться будет в: config/sources.json`);
     console.log('Формат ввода: m(cc)|t(itle), "Название категории"[, Описание]');
+    console.log('Правило (rule): r, <field>, "Название категории"[, Описание] — matches по полному значению record.data.<field> с guard по type_code');
     console.log("Нажмите Enter для пропуска записи. Введите i(gnore)/im/it для игнорирования. Введите q для остановки.\n");
 
     for (let index = 0; index < parsed.length; index += 1) {
@@ -178,6 +244,9 @@ async function main() {
       const titleValue = entry?.data?.title ?? "";
       const mccKey = String(mccValue ?? "");
       const titleKey = String(titleValue ?? "");
+      const typeCode = entry?.meta_data?.system_data?.type_code ?? "";
+      const eventDate = entry?.meta_data?.time_data?.event_date ?? "";
+      const infoLine = `[${index + 1}/${parsed.length}] mcc: ${mccKey || "-"}, title: ${titleKey || "-"}, type_code: ${typeCode || "-"}, event_date: ${eventDate || "-"}`;
 
       const alreadyMapped =
         (mccKey && existingMcc.has(mccKey)) ||
@@ -187,15 +256,13 @@ async function main() {
         (titleKey && ignoredTitleRegexes.some((rx) => rx.test(titleKey)));
 
       if (alreadyMapped || ignored) {
-        console.log(
-          `[${index + 1}/${parsed.length}] mcc: ${mccKey || "-"}, title: ${titleKey || "-"}`,
-        );
+        console.log(infoLine);
         const reason = ignored ? "в списке игнорирования" : "уже есть в маппинге";
         console.log(`Пропущено автоматически: mcc или title ${reason}\n`);
         continue;
       }
 
-      console.log(`[${index + 1}/${parsed.length}] mcc: ${mccKey || "-"}, title: ${titleKey || "-"}`);
+      console.log(infoLine);
 
       while (true) {
         const answer = (await rl.question("> ")).trim();
@@ -251,6 +318,17 @@ async function main() {
           console.log(`Ошибка: ${parsedLine.error}`);
           console.log("Повторите ввод или нажмите Enter для пропуска.");
           continue;
+        }
+
+        if (parsedLine.mappingField === RULE_INPUT) {
+          const created = await handleRuleCommand(entry, typeCode, parsedLine);
+
+          if (!created) {
+            console.log("Повторите ввод или нажмите Enter для пропуска.");
+            continue;
+          }
+
+          break;
         }
 
         let sourceKey =
