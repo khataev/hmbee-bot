@@ -39,7 +39,3 @@
 
 - [x] 6.1 Прогнать `npm run check` (typecheck + Biome lint + vitest), устранить замечания
 - [x] 6.2 Свериться со STYLE-GUIDE.md и TRANSACTION-RULES.md (в TRANSACTION-RULES.md добавлена секция о слоях резолюции категории)
-
-## 7. Out-of-scope (follow-up, НЕ в этом change)
-
-- [ ] 7.1 Отдельная задача: доработка `scripts/tochka-mapping.js` (`map:tochka`) — интерактивное создание расширенных правил и авто-пропуск записей, уже покрытых `rules[]`. Обсудить отдельно.
