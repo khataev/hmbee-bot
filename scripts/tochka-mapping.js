@@ -131,9 +131,42 @@ async function saveIgnoredEntry(field, key) {
   await saveJsonFile(CONFIG_PATH, config);
 }
 
+function buildRule(typeCode, ruleField, fieldValue, category, description) {
+  const rule = {
+    when: {
+      and: [
+        { "==": [{ var: "record.meta_data.system_data.type_code" }, typeCode] },
+        { matches: [String(fieldValue), { var: `record.data.${ruleField}` }] },
+      ],
+    },
+    category,
+  };
+
+  if (description) {
+    rule.description = description;
+  }
+
+  return rule;
+}
+
 async function handleRuleCommand(entry, typeCode, parsedLine) {
-  console.log("Создание правил будет реализовано в следующих задачах (валидация и запись)");
-  return false;
+  const { ruleField, category, description } = parsedLine;
+  const fieldValue = entry?.data?.[ruleField];
+
+  if (fieldValue === undefined || fieldValue === null || String(fieldValue).trim() === "") {
+    console.log(`⚠ Поле data.${ruleField} отсутствует или пустое — правило не создано`);
+    return false;
+  }
+
+  if (!typeCode) {
+    console.log("⚠ У записи нет meta_data.system_data.type_code — правило не создано");
+    return false;
+  }
+
+  const rule = buildRule(typeCode, ruleField, fieldValue, category, description);
+  await saveRuleEntry(rule);
+  console.log(`Сохранено правило: ${JSON.stringify(rule)}\n`);
+  return true;
 }
 
 async function resolveInputFile(inputArg) {
