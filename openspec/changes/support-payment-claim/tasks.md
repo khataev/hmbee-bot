@@ -1,10 +1,10 @@
 ## 1. Нормализация PaymentClaim в preview
 
-- [ ] 1.1 Добавить интерфейсы `PaymentClaimData` и `PaymentClaimRecord extends TochkaRecordMeta<'PaymentClaim'>` в `src/apply/preview/tochka.ts` (поля: `claimId`, `objectState`, `sum`, `currency`, `payerAccountId`, `payeeAccountId`, `purpose`, `direction`)
-- [ ] 1.2 Добавить `PaymentClaimRecord` в union `TochkaSyncRecord` и `type guard` `isPaymentClaimRecord`
-- [ ] 1.3 Добавить `'PaymentClaim'` в `SupportedTochkaTypeCode` и в `isSupportedTochkaTypeCode`
-- [ ] 1.4 Развести `PaymentClaim` по диспетчерам: `getTransactionId → claimId`, `getStatus → objectState`, `getAmount → sum`, `getSourceCurrency → currency`, `getSourceAccount → payerAccountId`, `getDescription → purpose`, `getMcc → undefined`
-- [ ] 1.5 Добавить в `getNormalizedType` ветку `PaymentClaim → 'expense'` (до transfer-детекции); НЕ добавлять `PaymentClaim` в `isBankPaymentRecord`, `getCounterpartyAccount` для неё возвращает `undefined`
+- [x] 1.1 Добавить интерфейсы `PaymentClaimData` и `PaymentClaimRecord extends TochkaRecordMeta<'PaymentClaim'>` в `src/apply/preview/tochka.ts` (поля: `claimId`, `objectState`, `sum`, `currency`, `payerAccountId`, `payeeAccountId`, `purpose`, `direction`)
+- [x] 1.2 Добавить `PaymentClaimRecord` в union `TochkaSyncRecord` и `type guard` `isPaymentClaimRecord`
+- [x] 1.3 Добавить `'PaymentClaim'` в `SupportedTochkaTypeCode` и в `isSupportedTochkaTypeCode`
+- [x] 1.4 Развести `PaymentClaim` по диспетчерам: `getTransactionId → claimId`, `getStatus → objectState`, `getAmount → sum`, `getSourceCurrency → currency`, `getSourceAccount → payerAccountId`, `getDescription → purpose`, `getMcc → undefined`
+- [x] 1.5 Добавить в `getNormalizedType` ветку `PaymentClaim → 'expense'` (до transfer-детекции); НЕ добавлять `PaymentClaim` в `isBankPaymentRecord`, `getCounterpartyAccount` для неё возвращает `undefined`
 
 ## 2. Конфиг: правила типа и категории
 

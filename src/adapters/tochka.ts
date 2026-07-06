@@ -186,6 +186,7 @@ export class TochkaAdapter implements SourceAdapter {
                   { service: 'nspk-sbp-core-c2b', type: 'SbpC2GOUTPayment' },
                   { service: 'nspk-sbp-core-c2b', type: 'SbpDisputePayment' },
                   { service: 'sam', type: 'CardTransactionInfo' },
+                  { service: 'rs', type: 'PaymentClaim' },
                   { service: 'rs', type: 'PaymentIncome' },
                   { service: 'rs', type: 'PaymentWrittenOff' },
                   { service: 'rs', type: 'CardTransactionWithdraw' },
