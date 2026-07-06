@@ -98,6 +98,7 @@ function getCategoryMapping(config) {
   if (!config.hmbee.categoryMapping.ignored) config.hmbee.categoryMapping.ignored = { mcc: [], title: [] };
   if (!config.hmbee.categoryMapping.ignored.mcc) config.hmbee.categoryMapping.ignored.mcc = [];
   if (!config.hmbee.categoryMapping.ignored.title) config.hmbee.categoryMapping.ignored.title = [];
+  if (!config.hmbee.categoryMapping.rules) config.hmbee.categoryMapping.rules = [];
   return config.hmbee.categoryMapping;
 }
 
@@ -119,6 +120,13 @@ async function saveMappingEntry(mappingField, key, entry) {
   const config = await loadJsonFile(CONFIG_PATH);
   const mapping = getCategoryMapping(config);
   mapping[mappingField][key] = entry;
+  await saveJsonFile(CONFIG_PATH, config);
+}
+
+async function saveRuleEntry(rule) {
+  const config = await loadJsonFile(CONFIG_PATH);
+  const mapping = getCategoryMapping(config);
+  mapping.rules.push(rule);
   await saveJsonFile(CONFIG_PATH, config);
 }
 
