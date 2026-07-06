@@ -8,9 +8,9 @@
 
 ## 2. Конфиг: правила типа и категории
 
-- [ ] 2.1 В `config/sources.json` добавить `sources.tochka.typeCodes.PaymentClaim` с `conditions.included = { "==": [{ "var": "record.data.objectState" }, "Processed"] }` и `conditions.excluded = { "or": [] }`
-- [ ] 2.2 В `config/sources.json` в двух правилах `hmbee.categoryMapping.rules` (СМС-информирование, лицензионное вознаграждение) заменить guard `type_code == "PaymentWrittenOff"` на `"PaymentClaim"`
-- [ ] 2.3 Синхронно повторить изменения 2.1 и 2.2 в `config/sources.example.json`
+- [x] 2.1 В `config/sources.json` добавить `sources.tochka.typeCodes.PaymentClaim` с `conditions.included = { "==": [{ "var": "record.data.objectState" }, "Processed"] }` и `conditions.excluded = { "or": [] }`
+- [x] 2.2 В `config/sources.json` в двух правилах `hmbee.categoryMapping.rules` (СМС-информирование, лицензионное вознаграждение) заменить guard `type_code == "PaymentWrittenOff"` на `"PaymentClaim"`
+- [x] 2.3 Синхронно повторить изменения 2.1 и 2.2 в `config/sources.example.json`
 
 ## 3. Тесты и фикстуры
 
