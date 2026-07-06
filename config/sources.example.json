@@ -20,7 +20,7 @@
         {
           "when": {
             "and": [
-              { "==": [{ "var": "record.meta_data.system_data.type_code" }, "PaymentWrittenOff"] },
+              { "==": [{ "var": "record.meta_data.system_data.type_code" }, "PaymentClaim"] },
               { "matches": ["смс-информирование", { "var": "record.data.purpose" }] }
             ]
           },
@@ -30,7 +30,7 @@
         {
           "when": {
             "and": [
-              { "==": [{ "var": "record.meta_data.system_data.type_code" }, "PaymentWrittenOff"] },
+              { "==": [{ "var": "record.meta_data.system_data.type_code" }, "PaymentClaim"] },
               { "matches": ["оплата лицензионного вознаграждения", { "var": "record.data.purpose" }] }
             ]
           },
@@ -826,6 +826,21 @@
                   }
                 }
               ]
+            }
+          }
+        },
+        "PaymentClaim": {
+          "conditions": {
+            "included": {
+              "==": [
+                {
+                  "var": "record.data.objectState"
+                },
+                "Processed"
+              ]
+            },
+            "excluded": {
+              "or": []
             }
           }
         }

@@ -2,6 +2,7 @@ import type {
   HoneyMoneyConfirmIncomeExpenseTransaction,
   HoneyMoneyConfirmTransferTransaction,
   HoneyMoneyIncomeExpenseTransaction,
+  HoneyMoneySubtype,
   HoneyMoneyTransferTransaction,
   PlanMatch,
   PreviewRecord
@@ -20,7 +21,7 @@ interface BucketEntry {
 interface Bucket {
   entries: BucketEntry[];
   accountId: number;
-  subtype: 'e' | 'i' | 't';
+  subtype: HoneyMoneySubtype;
   category: string | null;
   yearMonth: string;
 }
@@ -240,7 +241,7 @@ function resolveBucket(realEntries: BucketEntry[], plans: UnconfirmedPlannedTxn[
   return outcomes;
 }
 
-function bucketKey(accountId: number, subtype: 'e' | 'i' | 't', category: string | null, yearMonth: string): string {
+function bucketKey(accountId: number, subtype: HoneyMoneySubtype, category: string | null, yearMonth: string): string {
   const cat = subtype === 't' ? '' : (category ?? '');
   return `${accountId}|${subtype}|${cat}|${yearMonth}`;
 }

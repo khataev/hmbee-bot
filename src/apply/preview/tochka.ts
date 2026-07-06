@@ -184,6 +184,21 @@ export interface VedPaymentIncomeRecord extends TochkaRecordMeta<'VedPaymentInco
   data: VedPaymentIncomeData;
 }
 
+export interface PaymentClaimData {
+  claimId: string;
+  objectState: string;
+  sum: number;
+  currency: string;
+  payerAccountId: string;
+  payeeAccountId: string;
+  purpose: string;
+  direction: string;
+}
+
+export interface PaymentClaimRecord extends TochkaRecordMeta<'PaymentClaim'> {
+  data: PaymentClaimData;
+}
+
 // TODO(HMB-13): Add dedicated families for remaining known type_code groups
 // - RS family: PaymentIncome | PaymentAccepted | PaymentWrittenOff
 // - VED family: VedPaymentIncome
@@ -199,6 +214,7 @@ export type TochkaSyncRecord =
   | PaymentIncomeRecord
   | PaymentAcceptedRecord
   | VedPaymentIncomeRecord
+  | PaymentClaimRecord
   | UnsupportedTochkaRecord;
 
 type SbpTypeCode = 'SbpB2CPayment' | 'SbpC2BPayment' | 'SbpC2BRefund' | 'SbpC2CPayment';
@@ -208,7 +224,8 @@ type SupportedTochkaTypeCode =
   | 'PaymentWrittenOff'
   | 'PaymentIncome'
   | 'PaymentAccepted'
-  | 'VedPaymentIncome';
+  | 'VedPaymentIncome'
+  | 'PaymentClaim';
 
 function isSupportedTochkaTypeCode(typeCode: string): typeCode is SupportedTochkaTypeCode {
   return (
@@ -220,7 +237,8 @@ function isSupportedTochkaTypeCode(typeCode: string): typeCode is SupportedTochk
     typeCode === 'PaymentWrittenOff' ||
     typeCode === 'PaymentIncome' ||
     typeCode === 'PaymentAccepted' ||
-    typeCode === 'VedPaymentIncome'
+    typeCode === 'VedPaymentIncome' ||
+    typeCode === 'PaymentClaim'
   );
 }
 
@@ -254,6 +272,10 @@ function isVedPaymentIncomeRecord(record: TochkaSyncRecord): record is VedPaymen
   return record.meta_data.system_data.type_code === 'VedPaymentIncome';
 }
 
+function isPaymentClaimRecord(record: TochkaSyncRecord): record is PaymentClaimRecord {
+  return record.meta_data.system_data.type_code === 'PaymentClaim';
+}
+
 type BankPaymentRecord = SbpTransactionRecord | PaymentWrittenOffRecord | PaymentIncomeRecord | PaymentAcceptedRecord;
 
 function isBankPaymentRecord(record: TochkaSyncRecord): record is BankPaymentRecord {
@@ -280,6 +302,10 @@ function getTransactionId(record: TochkaSyncRecord): string | number | undefined
 
   if (isVedPaymentIncomeRecord(record)) {
     return record.data.incomeId;
+  }
+
+  if (isPaymentClaimRecord(record)) {
+    return record.data.claimId;
   }
 
   return undefined;
@@ -310,6 +336,10 @@ function getSourceAccount(record: TochkaSyncRecord): string | undefined {
     return record.data.recipientAccountId;
   }
 
+  if (isPaymentClaimRecord(record)) {
+    return record.data.payerAccountId;
+  }
+
   return undefined;
 }
 
@@ -335,7 +365,8 @@ function getSourceCurrency(record: TochkaSyncRecord): string | undefined {
     isPaymentWrittenOffRecord(record) ||
     isPaymentIncomeRecord(record) ||
     isPaymentAcceptedRecord(record) ||
-    isVedPaymentIncomeRecord(record)
+    isVedPaymentIncomeRecord(record) ||
+    isPaymentClaimRecord(record)
   ) {
     return record.data.currency;
   }
@@ -365,6 +396,10 @@ function getStatus(record: TochkaSyncRecord): string | undefined {
     return record.data.state;
   }
 
+  if (isPaymentClaimRecord(record)) {
+    return record.data.objectState;
+  }
+
   return undefined;
 }
 
@@ -375,7 +410,8 @@ function getAmount(record: TochkaSyncRecord): number | undefined {
     isPaymentWrittenOffRecord(record) ||
     isPaymentIncomeRecord(record) ||
     isPaymentAcceptedRecord(record) ||
-    isVedPaymentIncomeRecord(record)
+    isVedPaymentIncomeRecord(record) ||
+    isPaymentClaimRecord(record)
   ) {
     return record.data.sum;
   }
@@ -384,6 +420,10 @@ function getAmount(record: TochkaSyncRecord): number | undefined {
 }
 
 function getDescription(record: TochkaSyncRecord): string | undefined {
+  if (isPaymentClaimRecord(record)) {
+    return record.data.purpose;
+  }
+
   if (
     isCardTransactionInfoRecord(record) ||
     isSbpTransactionRecord(record) ||
@@ -404,6 +444,10 @@ function getNormalizedType(
 ): 'income' | 'expense' | 'transfer' {
   if (isCardTransactionInfoRecord(sourceRecord)) {
     return sourceRecord.data.tranCode === 'ReverseByCard' ? 'income' : 'expense';
+  }
+
+  if (isPaymentClaimRecord(sourceRecord)) {
+    return 'expense';
   }
 
   // By transfer we mean transaction between two accounts that belong to me and are registered as such in honey money.
