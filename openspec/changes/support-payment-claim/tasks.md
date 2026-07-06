@@ -14,9 +14,9 @@
 
 ## 3. Тесты и фикстуры
 
-- [ ] 3.1 Создать фикстуры `src/apply/preview/fixtures/payment-claim-sms.json` и `payment-claim-license.json` на основе примеров из `sync/tochka/2026-06-22_2026-07-06.json`
-- [ ] 3.2 Создать `src/apply/preview-PaymentClaim.test.ts`: happy-path нормализация обеих фикстур в expense с `identified/save = true`, корректной категорией «Банки / Периодические списания» и `description` из `purpose`; кейс не-`Processed` статуса → `identified = false`
-- [ ] 3.3 Обновить `src/apply/preview-category-rules.test.ts`: guard/фикстуры двух правил перевести с `PaymentWrittenOff` на `PaymentClaim`
+- [x] 3.1 Создать фикстуры `src/apply/preview/fixtures/payment-claim-sms.json` и `payment-claim-license.json` на основе примеров из `sync/tochka/2026-06-22_2026-07-06.json`
+- [x] 3.2 Создать `src/apply/preview-PaymentClaim.test.ts`: happy-path нормализация обеих фикстур в expense с `identified/save = true`, корректной категорией «Банки / Периодические списания» и `description` из `purpose`; кейс не-`Processed` статуса → `identified = false`
+- [x] 3.3 Обновить `src/apply/preview-category-rules.test.ts`: guard/фикстуры двух правил перевести с `PaymentWrittenOff` на `PaymentClaim`
 
 ## 4. Документация и проверка
 

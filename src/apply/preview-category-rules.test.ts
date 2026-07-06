@@ -2,7 +2,7 @@ import type { ReadyApplyRecord } from 'src/apply/index.js';
 import { loadFixture } from 'src/apply/preview/test-helpers.js';
 import type {
   CardTransactionInfoRecord,
-  PaymentWrittenOffRecord,
+  PaymentClaimRecord,
   SbpB2CPaymentRecord,
   TochkaSyncRecord
 } from 'src/apply/preview/tochka.js';
@@ -16,7 +16,7 @@ const PERIODIC_CATEGORY = 'Банки / Периодические списан�
 const smsRule: RuleEntry = {
   when: {
     and: [
-      { '==': [{ var: 'record.meta_data.system_data.type_code' }, 'PaymentWrittenOff'] },
+      { '==': [{ var: 'record.meta_data.system_data.type_code' }, 'PaymentClaim'] },
       { matches: ['смс-информирование', { var: 'record.data.purpose' }] }
     ]
   },
@@ -27,7 +27,7 @@ const smsRule: RuleEntry = {
 const licenseRule: RuleEntry = {
   when: {
     and: [
-      { '==': [{ var: 'record.meta_data.system_data.type_code' }, 'PaymentWrittenOff'] },
+      { '==': [{ var: 'record.meta_data.system_data.type_code' }, 'PaymentClaim'] },
       { matches: ['лицензионного вознаграждения', { var: 'record.data.purpose' }] }
     ]
   },
@@ -35,8 +35,8 @@ const licenseRule: RuleEntry = {
   description: 'Оплата лицензионного вознаграждения'
 };
 
-describe('categoryMapping.rules — PaymentWrittenOff by purpose', () => {
-  const accountMappings = { '40802810100000000001': 2053036 };
+describe('categoryMapping.rules — PaymentClaim by purpose', () => {
+  const accountMappings = { '40802810309500023530': 2053036 };
 
   const makeOptions = (rules: RuleEntry[], title: { pattern: RegExp; entry: { category: string } }[] = []) => ({
     accountMappings,
@@ -59,16 +59,9 @@ describe('categoryMapping.rules — PaymentWrittenOff by purpose', () => {
     } as AppConfig),
     timeZone: 'Europe/Moscow',
     typeCodeRules: {
-      PaymentWrittenOff: {
+      PaymentClaim: {
         conditions: {
-          included: {
-            and: [
-              { '==': [{ var: 'record.data.incoming' }, false] },
-              { '==': [{ var: 'record.data.objectState' }, 'Processed'] },
-              { '==': [{ var: 'record.data.failed' }, false] },
-              { '==': [{ var: 'record.data.isComission' }, true] }
-            ]
-          },
+          included: { '==': [{ var: 'record.data.objectState' }, 'Processed'] },
           excluded: { or: [] }
         }
       }
@@ -76,7 +69,7 @@ describe('categoryMapping.rules — PaymentWrittenOff by purpose', () => {
   });
 
   const makeRecord = (purpose: string): TochkaSyncRecord => {
-    const base = loadFixture('payment-written-off-commission.json') as PaymentWrittenOffRecord;
+    const base = loadFixture('payment-claim-sms.json') as PaymentClaimRecord;
     return { ...base, data: { ...base.data, purpose } };
   };
 

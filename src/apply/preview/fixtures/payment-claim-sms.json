@@ -1,0 +1,20 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "PaymentClaim"
+    },
+    "time_data": {
+      "event_date": "2026-07-01T13:42:22.105+05:00"
+    }
+  },
+  "data": {
+    "claimId": "14123076",
+    "objectState": "Processed",
+    "sum": 100,
+    "currency": "RUB",
+    "payerAccountId": "40802810309500023530",
+    "payeeAccountId": "40702810720000000004",
+    "purpose": "Плата за смс-информирование с 1 по 30 июня 2026 года на тарифе \"Начало\" согласно Правилам дистанционного обслуживания, в том числе НДС 22%",
+    "direction": "IN"
+  }
+}
