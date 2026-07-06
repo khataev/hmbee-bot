@@ -1,3 +1,5 @@
+export type HoneyMoneySubtype = 'e' | 'i' | 't';
+
 export interface NormalizedRecord {
   transactionId: string;
   account: string;

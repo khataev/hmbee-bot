@@ -1,3 +1,4 @@
+import type { HoneyMoneySubtype } from 'src/apply/preview/types.js';
 import type { HoneyMoneyCacheEntry } from 'src/hmbee/client.js';
 
 export type UnconfirmedPlannedTxn = HoneyMoneyCacheEntry & {
@@ -5,7 +6,7 @@ export type UnconfirmedPlannedTxn = HoneyMoneyCacheEntry & {
   plan_amount: number;
   real_amount: null;
   account_id: number;
-  subtype: 'e' | 'i' | 't';
+  subtype: HoneyMoneySubtype;
   common_id: string;
   virtual_id: number;
 };
@@ -30,7 +31,7 @@ export function buildPlannedCandidateIndex(entries: HoneyMoneyCacheEntry[]): Pla
 export function getPlanCandidates(
   index: PlannedCandidateIndex,
   accountId: number,
-  subtype: 'e' | 'i' | 't',
+  subtype: HoneyMoneySubtype,
   category: string | null,
   yearMonth: string
 ): UnconfirmedPlannedTxn[] {
@@ -68,11 +69,11 @@ function isUnconfirmedPlannedTxn(entry: HoneyMoneyCacheEntry): entry is Unconfir
   );
 }
 
-function isKnownSubtype(subtype: string): subtype is 'e' | 'i' | 't' {
+function isKnownSubtype(subtype: string): subtype is HoneyMoneySubtype {
   return subtype === 'e' || subtype === 'i' || subtype === 't';
 }
 
-function makeKey(accountId: number, subtype: 'e' | 'i' | 't', category: string | null, yearMonth: string): string {
+function makeKey(accountId: number, subtype: HoneyMoneySubtype, category: string | null, yearMonth: string): string {
   const cat = subtype === 't' ? '' : (category ?? '');
   return `${accountId}|${subtype}|${cat}|${yearMonth}`;
 }
