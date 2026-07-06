@@ -10,6 +10,7 @@ const DEFAULT_DIR = path.join(PROJECT_ROOT, "sync", "tochka");
 const CONFIG_PATH = path.join(PROJECT_ROOT, "config", "sources.json");
 const MCC_INPUT = "m";
 const TITLE_INPUT = "t";
+const RULE_INPUT = "r";
 
 function normalizeCategory(raw) {
   const trimmed = raw.trim();
@@ -27,14 +28,31 @@ function parseInputLine(line) {
   const firstComma = line.indexOf(",");
 
   if (firstComma === -1) {
-    return { error: 'Ожидается запятая: m|t, "Категория"' };
+    return { error: 'Ожидается запятая: m|t, "Категория"[, Описание] или r, <field>, "Категория"[, Описание]' };
   }
 
   const mappingField = line.slice(0, firstComma).trim().toLowerCase();
-  const rest = line.slice(firstComma + 1);
+  let rest = line.slice(firstComma + 1);
 
-  if (mappingField !== MCC_INPUT && mappingField !== TITLE_INPUT) {
-    return { error: `Первое значение должно быть ${MCC_INPUT} или ${TITLE_INPUT}` };
+  if (mappingField !== MCC_INPUT && mappingField !== TITLE_INPUT && mappingField !== RULE_INPUT) {
+    return { error: `Первое значение должно быть ${MCC_INPUT}, ${TITLE_INPUT} или ${RULE_INPUT}` };
+  }
+
+  let ruleField;
+  if (mappingField === RULE_INPUT) {
+    const fieldComma = rest.indexOf(",");
+
+    if (fieldComma === -1) {
+      return { error: 'Ожидается: r, <field>, "Категория"[, Описание]' };
+    }
+
+    ruleField = rest.slice(0, fieldComma).trim();
+
+    if (!ruleField) {
+      return { error: "Имя поля не должно быть пустым" };
+    }
+
+    rest = rest.slice(fieldComma + 1);
   }
 
   const secondComma = rest.indexOf(",");
@@ -56,6 +74,7 @@ function parseInputLine(line) {
 
   return {
     mappingField,
+    ruleField,
     category,
     description: descriptionRaw,
   };
@@ -110,6 +129,11 @@ async function saveIgnoredEntry(field, key) {
     mapping.ignored[field].push(key);
   }
   await saveJsonFile(CONFIG_PATH, config);
+}
+
+async function handleRuleCommand(entry, typeCode, parsedLine) {
+  console.log("Создание правил будет реализовано в следующих задачах (валидация и запись)");
+  return false;
 }
 
 async function resolveInputFile(inputArg) {
@@ -253,6 +277,17 @@ async function main() {
           console.log(`Ошибка: ${parsedLine.error}`);
           console.log("Повторите ввод или нажмите Enter для пропуска.");
           continue;
+        }
+
+        if (parsedLine.mappingField === RULE_INPUT) {
+          const created = await handleRuleCommand(entry, typeCode, parsedLine);
+
+          if (!created) {
+            console.log("Повторите ввод или нажмите Enter для пропуска.");
+            continue;
+          }
+
+          break;
         }
 
         let sourceKey =
