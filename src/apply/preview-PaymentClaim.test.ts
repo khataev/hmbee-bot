@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 const PERIODIC_CATEGORY = 'Банки / Периодические списания';
 
 describe('PaymentClaim classification', () => {
-  const accountMappings = { '40802810309500023530': 2053036 };
+  const accountMappings = { '40802810100000000001': 2053036 };
 
   const options = {
     accountMappings,

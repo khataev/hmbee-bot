@@ -36,7 +36,7 @@ const licenseRule: RuleEntry = {
 };
 
 describe('categoryMapping.rules — PaymentClaim by purpose', () => {
-  const accountMappings = { '40802810309500023530': 2053036 };
+  const accountMappings = { '40802810100000000001': 2053036 };
 
   const makeOptions = (rules: RuleEntry[], title: { pattern: RegExp; entry: { category: string } }[] = []) => ({
     accountMappings,
