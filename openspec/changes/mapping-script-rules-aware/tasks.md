@@ -18,9 +18,9 @@
 
 ## 4. Проверка вручную и quality gate
 
-- [ ] 4.1 Прогнать скрипт на `sync/tochka/*.json`: убедиться, что записи, покрытые существующими `rules` (`PaymentClaim` по `purpose`, `SbpB2CPayment` по `phoneNumber`), авто-пропускаются, а не переспрашиваются
-- [ ] 4.2 Создать правило `r` по полю с regex-спецсимволом (например значение с ведущим `+`) — убедиться, что скрипт уведомляет и пишет `==`, а не битый `matches`
-- [ ] 4.3 Создать правило `r` по обычному значению (без спецсимволов) — убедиться, что по-прежнему пишется `matches`
-- [ ] 4.4 Прогнать `npm run check` (typecheck + Biome lint + vitest)
-- [ ] 4.5 Свериться со STYLE-GUIDE.md и TRANSACTION-RULES.md
-- [ ] 4.6 Провести ревью через `/opsx:review`, результат — в `openspec/changes/mapping-script-rules-aware/review.md`
+- [x] 4.1 Прогнать скрипт на `sync/tochka/*.json`: убедиться, что записи, покрытые существующими `rules` (`PaymentClaim` по `purpose`, `SbpB2CPayment` по `phoneNumber`), авто-пропускаются, а не переспрашиваются
+- [x] 4.2 Создать правило `r` по полю с regex-спецсимволом (например значение с ведущим `+`) — убедиться, что скрипт уведомляет и пишет `==`, а не битый `matches`
+- [x] 4.3 Создать правило `r` по обычному значению (без спецсимволов) — убедиться, что по-прежнему пишется `matches`
+- [x] 4.4 Прогнать `npm run check` (typecheck + Biome lint + vitest)
+- [x] 4.5 Свериться со STYLE-GUIDE.md и TRANSACTION-RULES.md
+- [x] 4.6 Провести ревью через `/opsx:review`, результат — в `openspec/changes/mapping-script-rules-aware/review.md`
