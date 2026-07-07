@@ -12,9 +12,9 @@
 
 ## 3. Валидация паттерна и авто-== в rule-пути (пункт 1)
 
-- [ ] 3.1 В rule-пути (`handleRuleCommand`/`buildRule`) проверить, является ли `record.data.<field>` валидным self-matching regex (try/catch вокруг `new RegExp(value, 'i').test(value)`, как в `validateAndGetPattern`)
-- [ ] 3.2 При валидном regex — строить условие `{ matches: [value, { var: "record.data.<field>" }] }` (прежнее поведение)
-- [ ] 3.3 При невалидном/несовпадающем regex — печатать уведомление и строить `{ "==": [{ var: "record.data.<field>" }, value] }`; guard по `type_code` добавляется в обоих случаях
+- [x] 3.1 В rule-пути (`handleRuleCommand`/`buildRule`) проверить, является ли `record.data.<field>` валидным self-matching regex (try/catch вокруг `new RegExp(value, 'i').test(value)`, как в `validateAndGetPattern`)
+- [x] 3.2 При валидном regex — строить условие `{ matches: [value, { var: "record.data.<field>" }] }` (прежнее поведение)
+- [x] 3.3 При невалидном/несовпадающем regex — печатать уведомление и строить `{ "==": [{ var: "record.data.<field>" }, value] }`; guard по `type_code` добавляется в обоих случаях
 
 ## 4. Проверка вручную и quality gate
 

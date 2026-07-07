@@ -136,12 +136,22 @@ async function saveIgnoredEntry(field, key) {
   await saveJsonFile(CONFIG_PATH, config);
 }
 
-function buildRule(typeCode, ruleField, fieldValue, category, description) {
+function isSelfMatchingRegex(value) {
+  try {
+    return new RegExp(value, "i").test(value);
+  } catch {
+    return false;
+  }
+}
+
+function buildRule(typeCode, ruleField, fieldValue, category, description, useMatches) {
+  const value = String(fieldValue);
+  const fieldVar = { var: `record.data.${ruleField}` };
   const rule = {
     when: {
       and: [
         { "==": [{ var: "record.meta_data.system_data.type_code" }, typeCode] },
-        { matches: [String(fieldValue), { var: `record.data.${ruleField}` }] },
+        useMatches ? { matches: [value, fieldVar] } : { "==": [fieldVar, value] },
       ],
     },
     category,
@@ -168,7 +178,15 @@ async function handleRuleCommand(entry, typeCode, parsedLine, categoryMapping) {
     return false;
   }
 
-  const rule = buildRule(typeCode, ruleField, fieldValue, category, description);
+  const useMatches = isSelfMatchingRegex(String(fieldValue));
+
+  if (!useMatches) {
+    console.log(
+      `⚠ Значение «${fieldValue}» не является валидным self-matching regex — используется точное сравнение (==) вместо matches`
+    );
+  }
+
+  const rule = buildRule(typeCode, ruleField, fieldValue, category, description, useMatches);
   await saveRuleEntry(rule);
   categoryMapping.rules.push(rule);
   console.log(`Сохранено правило: ${JSON.stringify(rule)}\n`);
@@ -196,14 +214,7 @@ async function resolveInputFile(inputArg) {
 }
 
 async function validateAndGetPattern(rl, titleValue) {
-  let selfMatches = false;
-  try {
-    selfMatches = new RegExp(titleValue, "i").test(titleValue);
-  } catch {
-    selfMatches = false;
-  }
-
-  if (selfMatches) {
+  if (isSelfMatchingRegex(titleValue)) {
     return titleValue;
   }
 
@@ -238,7 +249,7 @@ async function main() {
     console.log(`Файл: ${path.relative(PROJECT_ROOT, inputPath)}`);
     console.log(`Записываться будет в: config/sources.json`);
     console.log('Формат ввода: m(cc)|t(itle), "Название категории"[, Описание]');
-    console.log('Правило (rule): r, <field>, "Название категории"[, Описание] — matches по полному значению record.data.<field> с guard по type_code');
+    console.log('Правило (rule): r, <field>, "Название категории"[, Описание] — matches по полному значению record.data.<field> (или ==, если значение не валидный regex) с guard по type_code');
     console.log("Нажмите Enter для пропуска записи. Введите i(gnore)/im/it для игнорирования. Введите q для остановки.\n");
 
     for (let index = 0; index < parsed.length; index += 1) {
