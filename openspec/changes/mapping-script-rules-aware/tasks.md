@@ -5,10 +5,10 @@
 
 ## 2. Учёт rules в авто-пропуске скрипта (пункт 3)
 
-- [ ] 2.1 В `scripts/tochka-mapping.js` импортировать `loadConfig`, `createAccountRegistry` (`src/config.js`) и `mapTochkaCategory`, `getDescription`, `getMcc` (`src/apply/preview/tochka.js`)
-- [ ] 2.2 Построить резолвнутый `categoryMapping` и `accountRegistry` из `loadConfig()` (в дополнение к сырому JSON, используемому для записи)
-- [ ] 2.3 Заменить вычисление `alreadyMapped`: считать запись покрытой, если `mapTochkaCategory(record, getDescription(record), getMcc(record), categoryMapping, accountRegistry) !== null` (сохранив отдельную проверку `ignored`)
-- [ ] 2.4 Переключить `map:tochka` в `package.json` на `npx tsx scripts/tochka-mapping.js`
+- [x] 2.1 В `scripts/tochka-mapping.js` импортировать `loadConfig`, `createAccountRegistry` (`src/config.js`) и `mapTochkaCategory`, `getDescription`, `getMcc` (`src/apply/preview/tochka.js`)
+- [x] 2.2 Построить резолвнутый `categoryMapping` и `accountRegistry` из `loadConfig()` (в дополнение к сырому JSON, используемому для записи)
+- [x] 2.3 Заменить вычисление `alreadyMapped`: считать запись покрытой, если `mapTochkaCategory(record, getDescription(record), getMcc(record), categoryMapping, accountRegistry) !== null` (сохранив отдельную проверку `ignored`)
+- [x] 2.4 Переключить `map:tochka` в `package.json` на `npx tsx scripts/tochka-mapping.js`
 
 ## 3. Валидация паттерна и авто-== в rule-пути (пункт 1)
 
