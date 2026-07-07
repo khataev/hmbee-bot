@@ -1,7 +1,7 @@
 ## 1. Экспорт резолвера в основном коде
 
-- [ ] 1.1 Добавить `export` к функциям `mapTochkaCategory`, `getDescription`, `getMcc` в `src/apply/preview/tochka.ts` (без изменения сигнатур и тел)
-- [ ] 1.2 Прогнать `npm run typecheck` — убедиться, что экспорт не ломает типы/сборку
+- [x] 1.1 Добавить `export` к функциям `mapTochkaCategory`, `getDescription`, `getMcc` в `src/apply/preview/tochka.ts` (без изменения сигнатур и тел)
+- [x] 1.2 Прогнать `npm run typecheck` — убедиться, что экспорт не ломает типы/сборку
 
 ## 2. Учёт rules в авто-пропуске скрипта (пункт 3)
 

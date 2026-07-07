@@ -374,7 +374,7 @@ function getSourceCurrency(record: TochkaSyncRecord): string | undefined {
   return undefined;
 }
 
-function getMcc(record: TochkaSyncRecord): string | undefined {
+export function getMcc(record: TochkaSyncRecord): string | undefined {
   if (isCardTransactionInfoRecord(record)) {
     return record.data.mcc;
   }
@@ -419,7 +419,7 @@ function getAmount(record: TochkaSyncRecord): number | undefined {
   return undefined;
 }
 
-function getDescription(record: TochkaSyncRecord): string | undefined {
+export function getDescription(record: TochkaSyncRecord): string | undefined {
   if (isPaymentClaimRecord(record)) {
     return record.data.purpose;
   }
@@ -774,7 +774,7 @@ export function normalizeHoneyMoneyAmount(amount: number, subtype: 'e' | 'i'): n
   return subtype === 'e' ? -normalizedAmount : normalizedAmount;
 }
 
-function mapTochkaCategory(
+export function mapTochkaCategory(
   sourceRecord: TochkaSyncRecord,
   description: string,
   mcc: string | undefined,
