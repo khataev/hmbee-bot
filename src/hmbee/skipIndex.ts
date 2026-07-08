@@ -6,6 +6,8 @@ import { z } from 'zod';
 
 export type MatchIndex = Map<string, HoneyMoneyCacheEntry[]>;
 
+export const MANUALLY_ENTERED_REASON = 'Внесена вручную';
+
 type MatchableEntry = HoneyMoneyCacheEntry & { real_amount: number; account_id: number };
 
 function isMatchable(entry: HoneyMoneyCacheEntry): entry is MatchableEntry {
@@ -57,7 +59,7 @@ export function applySkipPass(records: PreviewRecord[], index: MatchIndex): Prev
     const { account_id, date, real_amount, subtype, category, currency } = record.hmbee;
     const match = consumeMatch(index, account_id, date, real_amount, subtype, category, currency);
     if (!match) return record;
-    return { ...record, identified: true, save: false, reason: 'Внесена вручную' };
+    return { ...record, identified: true, save: false, reason: MANUALLY_ENTERED_REASON };
   });
 }
 

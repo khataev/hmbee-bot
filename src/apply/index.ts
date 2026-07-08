@@ -1,4 +1,6 @@
+import { EXCLUDED_REASON } from 'src/apply/preview/tochka.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
+import { MANUALLY_ENTERED_REASON } from 'src/hmbee/skipIndex.js';
 
 type TransactionDispatcher = {
   createTransaction(t: HoneyMoneyTransaction): Promise<number>;
@@ -54,4 +56,30 @@ export function filterApplyRecords(records: ReadyApplyRecord[], onlyIds: Set<str
   }
 
   return records.filter((record) => onlyIds.has(record.normalized.transactionId));
+}
+
+const EXPECTED_SKIP_REASONS = new Set<string>([EXCLUDED_REASON, MANUALLY_ENTERED_REASON]);
+
+export function findProblematicRecords(records: PreviewRecord[]): PreviewRecord[] {
+  return records.filter(
+    (record) => !record.identified || (!record.save && !EXPECTED_SKIP_REASONS.has(record.reason ?? ''))
+  );
+}
+
+function isReadyForApply(record: PreviewRecord): record is ReadyApplyRecord {
+  return record.identified && record.save && record.normalized !== undefined && record.hmbee !== undefined;
+}
+
+export type ApplySelection =
+  | { blocked: true; problematicRecords: PreviewRecord[] }
+  | { blocked: false; records: ReadyApplyRecord[] };
+
+export function selectRecordsForApply(previewRecords: PreviewRecord[], onlyIds: Set<string> | null): ApplySelection {
+  const problematicRecords = findProblematicRecords(previewRecords);
+  if (problematicRecords.length > 0) {
+    return { blocked: true, problematicRecords };
+  }
+
+  const readyRecords = previewRecords.filter(isReadyForApply);
+  return { blocked: false, records: filterApplyRecords(readyRecords, onlyIds) };
 }

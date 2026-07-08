@@ -5,6 +5,9 @@ import path from "node:path";
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 
+import { getDescription, getMcc, mapTochkaCategory } from "src/apply/preview/tochka.js";
+import { createAccountRegistry, loadConfig } from "src/config.js";
+
 const PROJECT_ROOT = process.cwd();
 const DEFAULT_DIR = path.join(PROJECT_ROOT, "sync", "tochka");
 const CONFIG_PATH = path.join(PROJECT_ROOT, "config", "sources.json");
@@ -105,15 +108,9 @@ function getCategoryMapping(config) {
 async function loadExistingMappings() {
   const config = await loadJsonFile(CONFIG_PATH);
   const mapping = getCategoryMapping(config);
-  const titleRegexes = Object.keys(mapping.title).map((pat) => new RegExp(pat, "i"));
   const ignoredMcc = new Set(mapping.ignored.mcc);
   const ignoredTitleRegexes = mapping.ignored.title.map((pat) => new RegExp(pat, "i"));
-  return {
-    existingMcc: new Set(Object.keys(mapping.mcc)),
-    titleRegexes,
-    ignoredMcc,
-    ignoredTitleRegexes,
-  };
+  return { ignoredMcc, ignoredTitleRegexes };
 }
 
 async function saveMappingEntry(mappingField, key, entry) {
@@ -139,12 +136,22 @@ async function saveIgnoredEntry(field, key) {
   await saveJsonFile(CONFIG_PATH, config);
 }
 
-function buildRule(typeCode, ruleField, fieldValue, category, description) {
+function isSelfMatchingRegex(value) {
+  try {
+    return new RegExp(value, "i").test(value);
+  } catch {
+    return false;
+  }
+}
+
+function buildRule(typeCode, ruleField, fieldValue, category, description, useMatches) {
+  const value = String(fieldValue);
+  const fieldVar = { var: `record.data.${ruleField}` };
   const rule = {
     when: {
       and: [
         { "==": [{ var: "record.meta_data.system_data.type_code" }, typeCode] },
-        { matches: [String(fieldValue), { var: `record.data.${ruleField}` }] },
+        useMatches ? { matches: [value, fieldVar] } : { "==": [fieldVar, value] },
       ],
     },
     category,
@@ -157,7 +164,7 @@ function buildRule(typeCode, ruleField, fieldValue, category, description) {
   return rule;
 }
 
-async function handleRuleCommand(entry, typeCode, parsedLine) {
+async function handleRuleCommand(entry, typeCode, parsedLine, categoryMapping) {
   const { ruleField, category, description } = parsedLine;
   const fieldValue = entry?.data?.[ruleField];
 
@@ -171,8 +178,17 @@ async function handleRuleCommand(entry, typeCode, parsedLine) {
     return false;
   }
 
-  const rule = buildRule(typeCode, ruleField, fieldValue, category, description);
+  const useMatches = isSelfMatchingRegex(String(fieldValue));
+
+  if (!useMatches) {
+    console.log(
+      `⚠ Значение «${fieldValue}» не является валидным self-matching regex — используется точное сравнение (==) вместо matches`
+    );
+  }
+
+  const rule = buildRule(typeCode, ruleField, fieldValue, category, description, useMatches);
   await saveRuleEntry(rule);
+  categoryMapping.rules.push(rule);
   console.log(`Сохранено правило: ${JSON.stringify(rule)}\n`);
   return true;
 }
@@ -198,14 +214,7 @@ async function resolveInputFile(inputArg) {
 }
 
 async function validateAndGetPattern(rl, titleValue) {
-  let selfMatches = false;
-  try {
-    selfMatches = new RegExp(titleValue, "i").test(titleValue);
-  } catch {
-    selfMatches = false;
-  }
-
-  if (selfMatches) {
+  if (isSelfMatchingRegex(titleValue)) {
     return titleValue;
   }
 
@@ -227,7 +236,12 @@ async function main() {
     throw new Error("Ожидался массив записей в JSON-файле");
   }
 
-  const { existingMcc, titleRegexes, ignoredMcc, ignoredTitleRegexes } = await loadExistingMappings();
+  const { ignoredMcc, ignoredTitleRegexes } = await loadExistingMappings();
+
+  // Резолвнутый конфиг — только для решения «покрыта ли запись»; запись правок идёт в сырой JSON.
+  const appConfig = loadConfig();
+  const categoryMapping = appConfig.hmbee.categoryMapping;
+  const accountRegistry = createAccountRegistry(appConfig);
 
   const rl = readline.createInterface({ input, output });
 
@@ -235,7 +249,7 @@ async function main() {
     console.log(`Файл: ${path.relative(PROJECT_ROOT, inputPath)}`);
     console.log(`Записываться будет в: config/sources.json`);
     console.log('Формат ввода: m(cc)|t(itle), "Название категории"[, Описание]');
-    console.log('Правило (rule): r, <field>, "Название категории"[, Описание] — matches по полному значению record.data.<field> с guard по type_code');
+    console.log('Правило (rule): r, <field>, "Название категории"[, Описание] — matches по полному значению record.data.<field> (или ==, если значение не валидный regex) с guard по type_code');
     console.log("Нажмите Enter для пропуска записи. Введите i(gnore)/im/it для игнорирования. Введите q для остановки.\n");
 
     for (let index = 0; index < parsed.length; index += 1) {
@@ -249,16 +263,17 @@ async function main() {
       const infoLine = `[${index + 1}/${parsed.length}] mcc: ${mccKey || "-"}, title: ${titleKey || "-"}, type_code: ${typeCode || "-"}, event_date: ${eventDate || "-"}`;
 
       const alreadyMapped =
-        (mccKey && existingMcc.has(mccKey)) ||
-        (titleKey && titleRegexes.some((rx) => rx.test(titleKey)));
+        mapTochkaCategory(entry, getDescription(entry) ?? "", getMcc(entry), categoryMapping, accountRegistry) !== null;
       const ignored =
         (mccKey && ignoredMcc.has(mccKey)) ||
         (titleKey && ignoredTitleRegexes.some((rx) => rx.test(titleKey)));
 
       if (alreadyMapped || ignored) {
         console.log(infoLine);
-        const reason = ignored ? "в списке игнорирования" : "уже есть в маппинге";
-        console.log(`Пропущено автоматически: mcc или title ${reason}\n`);
+        const reason = ignored
+          ? "mcc или title в списке игнорирования"
+          : "уже покрыто категорией (rules/title/mcc)";
+        console.log(`Пропущено автоматически: ${reason}\n`);
         continue;
       }
 
@@ -321,7 +336,7 @@ async function main() {
         }
 
         if (parsedLine.mappingField === RULE_INPUT) {
-          const created = await handleRuleCommand(entry, typeCode, parsedLine);
+          const created = await handleRuleCommand(entry, typeCode, parsedLine, categoryMapping);
 
           if (!created) {
             console.log("Повторите ввод или нажмите Enter для пропуска.");
@@ -347,11 +362,11 @@ async function main() {
         await saveMappingEntry(mappingKey, sourceKey, mappingEntry);
 
         if (parsedLine.mappingField === MCC_INPUT && sourceKey) {
-          existingMcc.add(sourceKey);
+          categoryMapping.mcc[sourceKey] = mappingEntry;
         }
 
         if (parsedLine.mappingField === TITLE_INPUT && sourceKey) {
-          titleRegexes.push(new RegExp(sourceKey, "i"));
+          categoryMapping.title.push({ pattern: new RegExp(sourceKey, "i"), entry: mappingEntry });
         }
 
         const entryJson = JSON.stringify({ [mappingKey]: sourceKey, ...mappingEntry });

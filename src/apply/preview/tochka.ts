@@ -23,7 +23,8 @@ function toDateInTimezone(isoString: string, tz: string): string {
   return `${localDt.replace(' ', 'T')}.${ms}${offset}`;
 }
 
-const MISSING_CATEGORY_REASON = 'Category is missing for income or expense transaction';
+export const MISSING_CATEGORY_REASON = 'Category is missing for income or expense transaction';
+export const EXCLUDED_REASON = 'excluded';
 
 export interface TochkaNormalizationOptions {
   accountMappings: Record<string, number>;
@@ -374,7 +375,7 @@ function getSourceCurrency(record: TochkaSyncRecord): string | undefined {
   return undefined;
 }
 
-function getMcc(record: TochkaSyncRecord): string | undefined {
+export function getMcc(record: TochkaSyncRecord): string | undefined {
   if (isCardTransactionInfoRecord(record)) {
     return record.data.mcc;
   }
@@ -419,7 +420,7 @@ function getAmount(record: TochkaSyncRecord): number | undefined {
   return undefined;
 }
 
-function getDescription(record: TochkaSyncRecord): string | undefined {
+export function getDescription(record: TochkaSyncRecord): string | undefined {
   if (isPaymentClaimRecord(record)) {
     return record.data.purpose;
   }
@@ -436,6 +437,15 @@ function getDescription(record: TochkaSyncRecord): string | undefined {
   }
 
   return undefined;
+}
+
+export function describeSourceRecord(sourceRecord: TochkaSyncRecord): { id: string; description: string } {
+  const id = getTransactionId(sourceRecord);
+  const description = getDescription(sourceRecord);
+  return {
+    id: id ? String(id) : '(unknown id)',
+    description: description ?? '(no description)'
+  };
 }
 
 function getNormalizedType(
@@ -524,7 +534,7 @@ function classifyByRule(
     return {
       identified: true,
       save: false,
-      reason: 'excluded'
+      reason: EXCLUDED_REASON
     };
   }
 
@@ -774,7 +784,7 @@ export function normalizeHoneyMoneyAmount(amount: number, subtype: 'e' | 'i'): n
   return subtype === 'e' ? -normalizedAmount : normalizedAmount;
 }
 
-function mapTochkaCategory(
+export function mapTochkaCategory(
   sourceRecord: TochkaSyncRecord,
   description: string,
   mcc: string | undefined,
