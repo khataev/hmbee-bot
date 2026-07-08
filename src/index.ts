@@ -10,7 +10,7 @@ import { describeSourceRecord, normalizeTochkaRecord } from 'src/apply/preview/t
 import type { HoneyMoneyTransaction } from 'src/apply/preview/types.js';
 import { createAccountRegistry, loadConfig } from 'src/config.js';
 import { loadEnv, validateHoneyMoneyEnv, validateTochkaEnv } from 'src/env.js';
-import { CACHE_PATH, trimEntries, writeCache } from 'src/hmbee/cache.js';
+import { CACHE_PATH, refreshCache, trimEntries, writeCache } from 'src/hmbee/cache.js';
 import { HoneyMoneyClient } from 'src/hmbee/client.js';
 import { buildPlannedCandidateIndex } from 'src/hmbee/plannedIndex.js';
 import { applyMatchPass } from 'src/hmbee/plannedMatcher.js';
@@ -110,6 +110,10 @@ program
   .option('--only-id <ids>', 'Only save the specified comma-separated source transaction ids')
   .option('--one-by-one', 'Ask for confirmation before each send (inert in preview modes)')
   .option('--verbose', 'Print informational output')
+  .option(
+    '--skip-hmbee-cache-update',
+    'Skip refreshing the Honey Money cache before the skip pass (offline/test runs on the existing cache)'
+  )
   .action(async (source, options) => {
     const isVerbose = options.verbose;
 
@@ -138,6 +142,16 @@ program
           })
         )
         .sort((a, b) => (a.normalized?.date ?? '').localeCompare(b.normalized?.date ?? ''));
+
+      if (!options.skipHmbeeCacheUpdate) {
+        try {
+          const hmEnv = validateHoneyMoneyEnv();
+          const client = new HoneyMoneyClient(hmEnv);
+          await refreshCache(client, syncFrom);
+        } catch (error: unknown) {
+          throw new Error(`Honey Money cache refresh failed: ${getErrorMessage(error)}`);
+        }
+      }
 
       const cacheEntries = loadCache();
       let cacheMtime: string;

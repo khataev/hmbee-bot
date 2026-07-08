@@ -15,6 +15,16 @@ export function writeCache(entries: HoneyMoneyCacheEntry[]): void {
   writeFileSync(CACHE_PATH, JSON.stringify(entries, null, 2), 'utf8');
 }
 
+export interface HoneyMoneyFetcher {
+  getAllTransactions(): Promise<HoneyMoneyCacheEntry[]>;
+}
+
+/** Fetches current Honey Money transactions, trims them against `from`, and overwrites the cache. */
+export async function refreshCache(client: HoneyMoneyFetcher, from: string): Promise<void> {
+  const all = await client.getAllTransactions();
+  writeCache(trimEntries(all, from));
+}
+
 function subtractDays(dateStr: string, days: number): string {
   const date = new Date(`${dateStr}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() - days);

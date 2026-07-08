@@ -18,11 +18,11 @@
 
 ## 4. Apply форсит обновление HM-кэша
 
-- [ ] 4.1 Добавить опцию `--skip-hmbee-cache-update` на команду `apply` в `src/index.ts`
-- [ ] 4.2 Перед `loadCache()` (до skip-pass) выполнять refresh кэша: `validateHoneyMoneyEnv()` → `getAllTransactions()` → `trimEntries(all, from)` → `writeCache(...)`, где `from` берётся из результата loader; выполнять на всех режимах (включая `--preview`/`--preview-planned`), кроме случая `--skip-hmbee-cache-update`
-- [ ] 4.3 При отказе refresh прерывать `apply` с классифицированной ошибкой (без утечки секретов), ничего не отправляя и не превьюя
-- [ ] 4.4 Переиспользовать `trimEntries`/`writeCache` из `src/hmbee/cache.ts` без дублирования логики
-- [ ] 4.5 Добавить тесты: refresh идёт до skip-pass; повторный apply не создаёт дублей; refresh идёт в preview; `--skip-hmbee-cache-update` не трогает кэш; отказ refresh прерывает run
+- [x] 4.1 Добавить опцию `--skip-hmbee-cache-update` на команду `apply` в `src/index.ts`
+- [x] 4.2 Перед `loadCache()` (до skip-pass) выполнять refresh кэша: `validateHoneyMoneyEnv()` → `getAllTransactions()` → `trimEntries(all, from)` → `writeCache(...)`, где `from` берётся из результата loader; выполнять на всех режимах (включая `--preview`/`--preview-planned`), кроме случая `--skip-hmbee-cache-update`
+- [x] 4.3 При отказе refresh прерывать `apply` с классифицированной ошибкой (без утечки секретов), ничего не отправляя и не превьюя
+- [x] 4.4 Переиспользовать `trimEntries`/`writeCache` из `src/hmbee/cache.ts` без дублирования логики
+- [x] 4.5 Добавить тесты: refresh идёт до skip-pass; повторный apply не создаёт дублей; refresh идёт в preview; `--skip-hmbee-cache-update` не трогает кэш; отказ refresh прерывает run
 
 ## 5. Удаление --update-hmbee-cache из sync
 
