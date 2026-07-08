@@ -32,5 +32,5 @@
 
 ## 6. Документация и quality gate
 
-- [ ] 6.1 Обновить упоминания `--update-hmbee-cache` и описания флоу в README/скриптах; при необходимости отметить в TECH-DEBT
-- [ ] 6.2 Прогнать `npm run check` (Biome + tsc strict) и весь тестовый набор — зелёный
+- [x] 6.1 Обновить упоминания `--update-hmbee-cache` и описания флоу в README/скриптах; при необходимости отметить в TECH-DEBT
+- [x] 6.2 Прогнать `npm run check` (Biome + tsc strict) и весь тестовый набор — зелёный
