@@ -125,7 +125,7 @@ program
         process.exit(1);
       }
       const accountRegistry = createAccountRegistry(config);
-      const records = loadSyncFiles(source);
+      const { records, from: syncFrom } = loadSyncFiles(source);
       const normalized = records
         .map((record) =>
           normalizeTochkaRecord(record, {
