@@ -10,13 +10,14 @@ import { describeSourceRecord, normalizeTochkaRecord } from 'src/apply/preview/t
 import type { HoneyMoneyTransaction } from 'src/apply/preview/types.js';
 import { createAccountRegistry, loadConfig } from 'src/config.js';
 import { loadEnv, validateHoneyMoneyEnv, validateTochkaEnv } from 'src/env.js';
-import { CACHE_PATH, trimEntries, writeCache } from 'src/hmbee/cache.js';
+import { CACHE_PATH, refreshCache } from 'src/hmbee/cache.js';
 import { HoneyMoneyClient } from 'src/hmbee/client.js';
 import { buildPlannedCandidateIndex } from 'src/hmbee/plannedIndex.js';
 import { applyMatchPass } from 'src/hmbee/plannedMatcher.js';
 import { buildPreviewPlannedOutput } from 'src/hmbee/previewPlanned.js';
 import { applySkipPass, buildMatchIndex, loadCache } from 'src/hmbee/skipIndex.js';
 import { writeOutput } from 'src/output.js';
+import { writeSyncOutput } from 'src/sync/cleanup.js';
 
 loadEnv();
 
@@ -48,7 +49,6 @@ program
   .option('--format <type>', 'Output format (adapted|raw)', 'adapted')
   .option('--verbose', 'Print informational output')
   .option('--stdout', 'Write output to stdout instead of file')
-  .option('--update-hmbee-cache', 'After source sync, also fetch and write the Honey Money transaction cache')
   .action(async (source, options) => {
     const isVerbose = options.verbose;
     const writeToStdout = options.stdout;
@@ -72,27 +72,12 @@ program
 
       const outputData = options.format === 'raw' ? result.raw : result.records;
       const outputPath = writeToStdout ? undefined : `sync/${source}/${options.from}_${options.to}.json`;
-      writeOutput(outputData, outputPath);
+      writeSyncOutput(source, outputData, outputPath);
 
       if (isVerbose) console.log(`✓ Sync complete. Fetched ${result.records.length} records.`);
     } catch (error: unknown) {
       console.error(`Sync failed: ${getErrorMessage(error)}`);
       process.exit(1);
-    }
-
-    if (options.updateHmbeeCache) {
-      if (isVerbose) console.log('Updating Honey Money cache...');
-      try {
-        const hmEnv = validateHoneyMoneyEnv();
-        const client = new HoneyMoneyClient(hmEnv);
-        const all = await client.getAllTransactions();
-        const trimmed = trimEntries(all, options.from);
-        writeCache(trimmed);
-        if (isVerbose) console.log(`✓ Honey Money cache updated. ${trimmed.length} records written to cache.`);
-      } catch (error: unknown) {
-        console.error(`Honey Money cache update failed: ${getErrorMessage(error)}`);
-        process.exit(1);
-      }
     }
   });
 
@@ -109,6 +94,10 @@ program
   .option('--only-id <ids>', 'Only save the specified comma-separated source transaction ids')
   .option('--one-by-one', 'Ask for confirmation before each send (inert in preview modes)')
   .option('--verbose', 'Print informational output')
+  .option(
+    '--skip-hmbee-cache-update',
+    'Skip refreshing the Honey Money cache before the skip pass (offline/test runs on the existing cache)'
+  )
   .action(async (source, options) => {
     const isVerbose = options.verbose;
 
@@ -125,7 +114,7 @@ program
         process.exit(1);
       }
       const accountRegistry = createAccountRegistry(config);
-      const records = loadSyncFiles(source);
+      const { records, from: syncFrom } = loadSyncFiles(source);
       const normalized = records
         .map((record) =>
           normalizeTochkaRecord(record, {
@@ -137,6 +126,16 @@ program
           })
         )
         .sort((a, b) => (a.normalized?.date ?? '').localeCompare(b.normalized?.date ?? ''));
+
+      if (!options.skipHmbeeCacheUpdate) {
+        try {
+          const hmEnv = validateHoneyMoneyEnv();
+          const client = new HoneyMoneyClient(hmEnv);
+          await refreshCache(client, syncFrom);
+        } catch (error: unknown) {
+          throw new Error(`Honey Money cache refresh failed: ${getErrorMessage(error)}`);
+        }
+      }
 
       const cacheEntries = loadCache();
       let cacheMtime: string;
@@ -210,9 +209,7 @@ program
           `Apply aborted: ${selection.problematicRecords.length} problematic record(s) found. Resolve them before applying (use --preview --only-errors to inspect):`
         );
         for (const record of selection.problematicRecords) {
-          const { id, description } = record.normalized
-            ? { id: record.normalized.transactionId, description: record.normalized.description }
-            : describeSourceRecord(record.sourceRecord as TochkaSyncRecord);
+          const { id, description } = describeSourceRecord(record.sourceRecord as TochkaSyncRecord);
           console.error(`  - ${id}: ${description} — ${record.reason ?? '(no reason)'}`);
         }
         process.exit(1);
