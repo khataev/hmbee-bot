@@ -4,9 +4,11 @@ import {
   findProblematicRecords,
   parseOnlyIdsOption,
   promptSend,
-  type ReadyApplyRecord
+  type ReadyApplyRecord,
+  selectRecordsForApply
 } from 'src/apply/index.js';
-import { MISSING_CATEGORY_REASON } from 'src/apply/preview/tochka.js';
+import type { CardTransactionInfoRecord, SbpC2CPaymentRecord } from 'src/apply/preview/tochka.js';
+import { describeSourceRecord, MISSING_CATEGORY_REASON } from 'src/apply/preview/tochka.js';
 import type { HoneyMoneyTransaction, PreviewRecord } from 'src/apply/preview/types.js';
 import { MANUALLY_ENTERED_REASON } from 'src/hmbee/skipIndex.js';
 import { describe, expect, it, vi } from 'vitest';
@@ -213,48 +215,69 @@ describe('findProblematicRecords', () => {
   });
 });
 
-describe('apply gate — problematic records block dispatch', () => {
-  it('when a problematic record is present, the ready records are not dispatched', async () => {
+describe('selectRecordsForApply', () => {
+  it('blocks and reports problematic records instead of selecting anything to send', () => {
     const readyRecord = createRecord('1');
     const problematicRecord = makePreviewRecord({
       identified: true,
       save: false,
       reason: MISSING_CATEGORY_REASON
     });
-    const previewRecords: PreviewRecord[] = [readyRecord, problematicRecord];
 
-    const client = {
-      createTransaction: vi.fn().mockResolvedValue(101),
-      confirmPlannedTransaction: vi.fn().mockResolvedValue(202)
-    };
+    const selection = selectRecordsForApply([readyRecord, problematicRecord], null);
 
-    const problematic = findProblematicRecords(previewRecords);
-    expect(problematic).toEqual([problematicRecord]);
-
-    if (problematic.length === 0) {
-      await dispatchTransaction(readyRecord.hmbee, client);
-    }
-
-    expect(client.createTransaction).not.toHaveBeenCalled();
-    expect(client.confirmPlannedTransaction).not.toHaveBeenCalled();
+    expect(selection).toEqual({ blocked: true, problematicRecords: [problematicRecord] });
+    expect('records' in selection).toBe(false);
   });
 
-  it('when there are no problematic records, apply dispatches the save-ready records as before', async () => {
+  it('blocks even when the problematic record is outside --only-id', () => {
     const readyRecord = createRecord('1');
-    const previewRecords: PreviewRecord[] = [readyRecord];
+    const problematicRecord = makePreviewRecord({
+      identified: true,
+      save: false,
+      reason: MISSING_CATEGORY_REASON
+    });
 
-    const client = {
-      createTransaction: vi.fn().mockResolvedValue(101),
-      confirmPlannedTransaction: vi.fn().mockResolvedValue(202)
+    const selection = selectRecordsForApply([readyRecord, problematicRecord], new Set(['1']));
+
+    expect(selection).toEqual({ blocked: true, problematicRecords: [problematicRecord] });
+  });
+
+  it('selects save-ready records, filtered by --only-id, when nothing is problematic', () => {
+    const readyRecord1 = createRecord('1');
+    const readyRecord2 = createRecord('2');
+
+    const selection = selectRecordsForApply([readyRecord1, readyRecord2], new Set(['2']));
+
+    expect(selection).toEqual({ blocked: false, records: [readyRecord2] });
+  });
+});
+
+describe('describeSourceRecord', () => {
+  it('extracts id and description for a CardTransactionInfo record', () => {
+    const record: CardTransactionInfoRecord = {
+      meta_data: { system_data: { type_code: 'CardTransactionInfo' }, time_data: { event_date: '2026-04-27' } },
+      data: {
+        tranId: 12345,
+        account: '40802810309500023530',
+        status: 'Withdraw',
+        tranCode: 'Purchase',
+        sum: 241.07,
+        currency: 'RUB',
+        title: 'Coffee shop',
+        mcc: '5411'
+      }
     };
 
-    const problematic = findProblematicRecords(previewRecords);
-    expect(problematic).toEqual([]);
+    expect(describeSourceRecord(record)).toEqual({ id: '12345', description: 'Coffee shop' });
+  });
 
-    if (problematic.length === 0) {
-      await dispatchTransaction(readyRecord.hmbee, client);
-    }
+  it('falls back to placeholders when id/description cannot be extracted', () => {
+    const record = {
+      meta_data: { system_data: { type_code: 'TotallyUnsupportedTypeCode' }, time_data: { event_date: '2026-04-27' } },
+      data: {}
+    } as unknown as SbpC2CPaymentRecord;
 
-    expect(client.createTransaction).toHaveBeenCalledWith(readyRecord.hmbee);
+    expect(describeSourceRecord(record)).toEqual({ id: '(unknown id)', description: '(no description)' });
   });
 });

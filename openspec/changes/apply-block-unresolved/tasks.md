@@ -18,6 +18,7 @@
 
 ## 4. Quality gate
 
-- [ ] 4.1 Прогнать `npm run check` (typecheck + Biome lint + vitest)
-- [ ] 4.2 Проверить вручную на `sync/tochka/*.json`: при наличии записи с отсутствующей категорией `apply tochka` падает со списком и ничего не отправляет
-- [ ] 4.3 Свериться со STYLE-GUIDE.md
+- [x] 4.1 Прогнать `npm run check` (typecheck + Biome lint + vitest)
+- [x] 4.2 Проверить вручную на `sync/tochka/*.json`: при наличии записи с отсутствующей категорией `apply tochka` падает со списком и ничего не отправляет
+- [x] 4.3 Свериться со STYLE-GUIDE.md
+- [x] 4.4 Провести ревью через `/opsx:review`, результат — в `openspec/changes/apply-block-unresolved/review.md`

@@ -439,6 +439,15 @@ export function getDescription(record: TochkaSyncRecord): string | undefined {
   return undefined;
 }
 
+export function describeSourceRecord(sourceRecord: TochkaSyncRecord): { id: string; description: string } {
+  const id = getTransactionId(sourceRecord);
+  const description = getDescription(sourceRecord);
+  return {
+    id: id ? String(id) : '(unknown id)',
+    description: description ?? '(no description)'
+  };
+}
+
 function getNormalizedType(
   sourceRecord: TochkaSyncRecord,
   registry: AccountRegistry

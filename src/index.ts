@@ -3,17 +3,11 @@ import { createInterface } from 'node:readline';
 import { Command } from 'commander';
 import { TochkaAdapter } from 'src/adapters/tochka.js';
 import type { SourceAdapter } from 'src/adapters/types.js';
-import {
-  dispatchTransaction,
-  filterApplyRecords,
-  findProblematicRecords,
-  parseOnlyIdsOption,
-  promptSend,
-  type ReadyApplyRecord
-} from 'src/apply/index.js';
+import { dispatchTransaction, parseOnlyIdsOption, promptSend, selectRecordsForApply } from 'src/apply/index.js';
 import { loadSyncFiles } from 'src/apply/preview/loader.js';
-import { normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
-import type { HoneyMoneyTransaction, PreviewRecord } from 'src/apply/preview/types.js';
+import type { TochkaSyncRecord } from 'src/apply/preview/tochka.js';
+import { describeSourceRecord, normalizeTochkaRecord } from 'src/apply/preview/tochka.js';
+import type { HoneyMoneyTransaction } from 'src/apply/preview/types.js';
 import { createAccountRegistry, loadConfig } from 'src/config.js';
 import { loadEnv, validateHoneyMoneyEnv, validateTochkaEnv } from 'src/env.js';
 import { CACHE_PATH, trimEntries, writeCache } from 'src/hmbee/cache.js';
@@ -30,10 +24,6 @@ const program = new Command();
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
-}
-
-function isReadyForApply(record: PreviewRecord): record is ReadyApplyRecord {
-  return record.identified && record.save && record.normalized !== undefined && record.hmbee !== undefined;
 }
 
 program
@@ -212,22 +202,23 @@ program
         return;
       }
 
-      const problematicRecords = findProblematicRecords(previewRecords);
-      if (problematicRecords.length > 0) {
+      const onlyIds = parseOnlyIdsOption(options.onlyId);
+      const selection = selectRecordsForApply(previewRecords, onlyIds);
+
+      if (selection.blocked) {
         console.error(
-          `Apply aborted: ${problematicRecords.length} problematic record(s) found. Resolve them before applying (use --preview --only-errors to inspect):`
+          `Apply aborted: ${selection.problematicRecords.length} problematic record(s) found. Resolve them before applying (use --preview --only-errors to inspect):`
         );
-        for (const record of problematicRecords) {
-          const id = record.normalized?.transactionId ?? '(unknown id)';
-          const description = record.normalized?.description ?? '(no description)';
+        for (const record of selection.problematicRecords) {
+          const { id, description } = record.normalized
+            ? { id: record.normalized.transactionId, description: record.normalized.description }
+            : describeSourceRecord(record.sourceRecord as TochkaSyncRecord);
           console.error(`  - ${id}: ${description} — ${record.reason ?? '(no reason)'}`);
         }
         process.exit(1);
       }
 
-      const readyRecords = previewRecords.filter(isReadyForApply);
-      const onlyIds = parseOnlyIdsOption(options.onlyId);
-      const selectedRecords = filterApplyRecords(readyRecords, onlyIds);
+      const selectedRecords = selection.records;
       const missingAccountMappings = selectedRecords.filter((record) => record.hmbee.account_id === null);
 
       if (missingAccountMappings.length > 0) {

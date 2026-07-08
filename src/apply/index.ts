@@ -65,3 +65,21 @@ export function findProblematicRecords(records: PreviewRecord[]): PreviewRecord[
     (record) => !record.identified || (!record.save && !EXPECTED_SKIP_REASONS.has(record.reason ?? ''))
   );
 }
+
+function isReadyForApply(record: PreviewRecord): record is ReadyApplyRecord {
+  return record.identified && record.save && record.normalized !== undefined && record.hmbee !== undefined;
+}
+
+export type ApplySelection =
+  | { blocked: true; problematicRecords: PreviewRecord[] }
+  | { blocked: false; records: ReadyApplyRecord[] };
+
+export function selectRecordsForApply(previewRecords: PreviewRecord[], onlyIds: Set<string> | null): ApplySelection {
+  const problematicRecords = findProblematicRecords(previewRecords);
+  if (problematicRecords.length > 0) {
+    return { blocked: true, problematicRecords };
+  }
+
+  const readyRecords = previewRecords.filter(isReadyForApply);
+  return { blocked: false, records: filterApplyRecords(readyRecords, onlyIds) };
+}
