@@ -1,4 +1,6 @@
+import { EXCLUDED_REASON } from 'src/apply/preview/tochka.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
+import { MANUALLY_ENTERED_REASON } from 'src/hmbee/skipIndex.js';
 
 type TransactionDispatcher = {
   createTransaction(t: HoneyMoneyTransaction): Promise<number>;
@@ -54,4 +56,12 @@ export function filterApplyRecords(records: ReadyApplyRecord[], onlyIds: Set<str
   }
 
   return records.filter((record) => onlyIds.has(record.normalized.transactionId));
+}
+
+const EXPECTED_SKIP_REASONS = new Set<string>([EXCLUDED_REASON, MANUALLY_ENTERED_REASON]);
+
+export function findProblematicRecords(records: PreviewRecord[]): PreviewRecord[] {
+  return records.filter(
+    (record) => !record.identified || (!record.save && !EXPECTED_SKIP_REASONS.has(record.reason ?? ''))
+  );
 }

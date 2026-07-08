@@ -6,6 +6,7 @@ import type { SourceAdapter } from 'src/adapters/types.js';
 import {
   dispatchTransaction,
   filterApplyRecords,
+  findProblematicRecords,
   parseOnlyIdsOption,
   promptSend,
   type ReadyApplyRecord
@@ -209,6 +210,19 @@ program
           }
         }
         return;
+      }
+
+      const problematicRecords = findProblematicRecords(previewRecords);
+      if (problematicRecords.length > 0) {
+        console.error(
+          `Apply aborted: ${problematicRecords.length} problematic record(s) found. Resolve them before applying (use --preview --only-errors to inspect):`
+        );
+        for (const record of problematicRecords) {
+          const id = record.normalized?.transactionId ?? '(unknown id)';
+          const description = record.normalized?.description ?? '(no description)';
+          console.error(`  - ${id}: ${description} — ${record.reason ?? '(no reason)'}`);
+        }
+        process.exit(1);
       }
 
       const readyRecords = previewRecords.filter(isReadyForApply);

@@ -1,11 +1,14 @@
 import {
   dispatchTransaction,
   filterApplyRecords,
+  findProblematicRecords,
   parseOnlyIdsOption,
   promptSend,
   type ReadyApplyRecord
 } from 'src/apply/index.js';
-import type { HoneyMoneyTransaction } from 'src/apply/preview/types.js';
+import { MISSING_CATEGORY_REASON } from 'src/apply/preview/tochka.js';
+import type { HoneyMoneyTransaction, PreviewRecord } from 'src/apply/preview/types.js';
+import { MANUALLY_ENTERED_REASON } from 'src/hmbee/skipIndex.js';
 import { describe, expect, it, vi } from 'vitest';
 
 function createRecord(transactionId: string): ReadyApplyRecord {
@@ -165,5 +168,93 @@ describe('dispatchTransaction', () => {
     expect(result).toBe(202);
     expect(client.confirmPlannedTransaction).toHaveBeenCalledWith(confirmDraft);
     expect(client.createTransaction).not.toHaveBeenCalled();
+  });
+});
+
+function makePreviewRecord(overrides: Partial<PreviewRecord>): PreviewRecord {
+  return {
+    identified: true,
+    save: true,
+    reason: null,
+    sourceRecord: {},
+    ...overrides
+  };
+}
+
+describe('findProblematicRecords', () => {
+  it('identified=false (parse error / unsupported type_code / missing field) → problematic', () => {
+    const record = makePreviewRecord({ identified: false, save: false, reason: 'Missing source amount field' });
+
+    expect(findProblematicRecords([record])).toEqual([record]);
+  });
+
+  it('save=false with Category missing reason → problematic', () => {
+    const record = makePreviewRecord({ identified: true, save: false, reason: MISSING_CATEGORY_REASON });
+
+    expect(findProblematicRecords([record])).toEqual([record]);
+  });
+
+  it('save=false with reason="excluded" → not problematic', () => {
+    const record = makePreviewRecord({ identified: true, save: false, reason: 'excluded' });
+
+    expect(findProblematicRecords([record])).toEqual([]);
+  });
+
+  it('save=false with reason="Внесена вручную" → not problematic', () => {
+    const record = makePreviewRecord({ identified: true, save: false, reason: MANUALLY_ENTERED_REASON });
+
+    expect(findProblematicRecords([record])).toEqual([]);
+  });
+
+  it('save-ready record (identified=true, save=true) → not problematic', () => {
+    const record = makePreviewRecord({ identified: true, save: true, reason: null });
+
+    expect(findProblematicRecords([record])).toEqual([]);
+  });
+});
+
+describe('apply gate — problematic records block dispatch', () => {
+  it('when a problematic record is present, the ready records are not dispatched', async () => {
+    const readyRecord = createRecord('1');
+    const problematicRecord = makePreviewRecord({
+      identified: true,
+      save: false,
+      reason: MISSING_CATEGORY_REASON
+    });
+    const previewRecords: PreviewRecord[] = [readyRecord, problematicRecord];
+
+    const client = {
+      createTransaction: vi.fn().mockResolvedValue(101),
+      confirmPlannedTransaction: vi.fn().mockResolvedValue(202)
+    };
+
+    const problematic = findProblematicRecords(previewRecords);
+    expect(problematic).toEqual([problematicRecord]);
+
+    if (problematic.length === 0) {
+      await dispatchTransaction(readyRecord.hmbee, client);
+    }
+
+    expect(client.createTransaction).not.toHaveBeenCalled();
+    expect(client.confirmPlannedTransaction).not.toHaveBeenCalled();
+  });
+
+  it('when there are no problematic records, apply dispatches the save-ready records as before', async () => {
+    const readyRecord = createRecord('1');
+    const previewRecords: PreviewRecord[] = [readyRecord];
+
+    const client = {
+      createTransaction: vi.fn().mockResolvedValue(101),
+      confirmPlannedTransaction: vi.fn().mockResolvedValue(202)
+    };
+
+    const problematic = findProblematicRecords(previewRecords);
+    expect(problematic).toEqual([]);
+
+    if (problematic.length === 0) {
+      await dispatchTransaction(readyRecord.hmbee, client);
+    }
+
+    expect(client.createTransaction).toHaveBeenCalledWith(readyRecord.hmbee);
   });
 });

@@ -23,7 +23,8 @@ function toDateInTimezone(isoString: string, tz: string): string {
   return `${localDt.replace(' ', 'T')}.${ms}${offset}`;
 }
 
-const MISSING_CATEGORY_REASON = 'Category is missing for income or expense transaction';
+export const MISSING_CATEGORY_REASON = 'Category is missing for income or expense transaction';
+export const EXCLUDED_REASON = 'excluded';
 
 export interface TochkaNormalizationOptions {
   accountMappings: Record<string, number>;
@@ -524,7 +525,7 @@ function classifyByRule(
     return {
       identified: true,
       save: false,
-      reason: 'excluded'
+      reason: EXCLUDED_REASON
     };
   }
 
