@@ -17,6 +17,7 @@ import { applyMatchPass } from 'src/hmbee/plannedMatcher.js';
 import { buildPreviewPlannedOutput } from 'src/hmbee/previewPlanned.js';
 import { applySkipPass, buildMatchIndex, loadCache } from 'src/hmbee/skipIndex.js';
 import { writeOutput } from 'src/output.js';
+import { writeSyncOutput } from 'src/sync/cleanup.js';
 
 loadEnv();
 
@@ -72,7 +73,7 @@ program
 
       const outputData = options.format === 'raw' ? result.raw : result.records;
       const outputPath = writeToStdout ? undefined : `sync/${source}/${options.from}_${options.to}.json`;
-      writeOutput(outputData, outputPath);
+      writeSyncOutput(source, outputData, outputPath);
 
       if (isVerbose) console.log(`✓ Sync complete. Fetched ${result.records.length} records.`);
     } catch (error: unknown) {
