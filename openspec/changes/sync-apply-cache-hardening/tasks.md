@@ -7,8 +7,8 @@
 
 ## 2. Печать проблемных записей через describeSourceRecord
 
-- [ ] 2.1 В `src/index.ts` убрать ветвление на `record.normalized`, всегда использовать `describeSourceRecord(record.sourceRecord as TochkaSyncRecord)` для id/описания проблемных записей
-- [ ] 2.2 Проверить, что вывод (id, описание, reason) не изменился для записей с и без `normalized`
+- [x] 2.1 В `src/index.ts` убрать ветвление на `record.normalized`, всегда использовать `describeSourceRecord(record.sourceRecord as TochkaSyncRecord)` для id/описания проблемных записей
+- [x] 2.2 Проверить, что вывод (id, описание, reason) не изменился для записей с и без `normalized`
 
 ## 3. Sync удаляет предыдущий sync-файл
 

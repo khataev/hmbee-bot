@@ -210,9 +210,7 @@ program
           `Apply aborted: ${selection.problematicRecords.length} problematic record(s) found. Resolve them before applying (use --preview --only-errors to inspect):`
         );
         for (const record of selection.problematicRecords) {
-          const { id, description } = record.normalized
-            ? { id: record.normalized.transactionId, description: record.normalized.description }
-            : describeSourceRecord(record.sourceRecord as TochkaSyncRecord);
+          const { id, description } = describeSourceRecord(record.sourceRecord as TochkaSyncRecord);
           console.error(`  - ${id}: ${description} — ${record.reason ?? '(no reason)'}`);
         }
         process.exit(1);
