@@ -17,7 +17,9 @@ function isMatchable(entry: HoneyMoneyCacheEntry): entry is MatchableEntry {
 export function loadCache(): HoneyMoneyCacheEntry[] {
   const path = CACHE_PATH;
   if (!existsSync(path)) {
-    throw new Error(`Honey Money cache not found at ${path}. Run 'sync <source> --update-hmbee-cache' first.`);
+    throw new Error(
+      `Honey Money cache not found at ${path}. Run 'apply <source>' (without --skip-hmbee-cache-update) to create it.`
+    );
   }
   return z.array(HoneyMoneyCacheEntrySchema).parse(JSON.parse(readFileSync(path, 'utf8')));
 }
