@@ -8,13 +8,13 @@
 
 ## 2. Классификация снятия наличных
 
-- [ ] 2.1 В `src/apply/preview/tochka.ts` добавить module-private type guard `isCashOutAtmRecord(record): record is CardTransactionInfoRecord` = `isCardTransactionInfoRecord(record) && record.data.tranCode === 'CashOutAtm'`; поставить рядом с остальными `isXxxRecord`
-- [ ] 2.2 В `getNormalizedType` добавить для карточных записей ветку `isCashOutAtmRecord` → `transfer`, выше существующей `ReverseByCard`/`expense` строки
-- [ ] 2.3 В `getCounterpartyAccount` вернуть для `isCashOutAtmRecord` синтетический ключ `cash:${record.data.currency.toLowerCase()}`; для остальных карточных записей поведение не менять
-- [ ] 2.4 Расширить guard transfer-ветки: `if (!isBankPaymentRecord(sourceRecord) && !isCashOutAtmRecord(sourceRecord)) throw`, текст сообщения обновить на «bank payment record or an ATM cash withdrawal»
-- [ ] 2.5 Заменить два `getHmAccountId(...)` на тернарники по `isBankPaymentRecord`: банковская запись → `payerAccountId`/`payeeAccountId` **дословно как сейчас**, иначе → `normalized.account` / `counterpartyAccountId` (снятие всегда исходящее). Сообщения об ошибке обобщить с `payer`/`payee` на `from`/`to`
-- [ ] 2.6 Захватить `normalized.counterpartyAccountId` в локальную константу до проверки инварианта — TypeScript не сужает тип свойства после `throw`, а `as string` использовать нельзя
-- [ ] 2.7 Запустить `npm run check`; существующие transfer-тесты (`preview-PaymentAccepted`, `preview-PaymentIncome`, `preview-PaymentWrittenOff`, `preview-SbpB2CPayment`, `preview-SbpC2CPayment`) должны быть зелёными **без единой правки** — если правка понадобилась, банковская ветка поехала
+- [x] 2.1 В `src/apply/preview/tochka.ts` добавить module-private type guard `isCashOutAtmRecord(record): record is CardTransactionInfoRecord` = `isCardTransactionInfoRecord(record) && record.data.tranCode === 'CashOutAtm'`; поставить рядом с остальными `isXxxRecord`
+- [x] 2.2 В `getNormalizedType` добавить для карточных записей ветку `isCashOutAtmRecord` → `transfer`, выше существующей `ReverseByCard`/`expense` строки
+- [x] 2.3 В `getCounterpartyAccount` вернуть для `isCashOutAtmRecord` синтетический ключ `cash:${record.data.currency.toLowerCase()}`; для остальных карточных записей поведение не менять
+- [x] 2.4 Расширить guard transfer-ветки: `if (!isBankPaymentRecord(sourceRecord) && !isCashOutAtmRecord(sourceRecord)) throw`, текст сообщения обновить на «bank payment record or an ATM cash withdrawal»
+- [x] 2.5 Заменить два `getHmAccountId(...)` на тернарники по `isBankPaymentRecord`: банковская запись → `payerAccountId`/`payeeAccountId` **дословно как сейчас**, иначе → `normalized.account` / `counterpartyAccountId` (снятие всегда исходящее). Сообщения об ошибке обобщить с `payer`/`payee` на `from`/`to`
+- [x] 2.6 Захватить `normalized.counterpartyAccountId` в локальную константу до проверки инварианта — TypeScript не сужает тип свойства после `throw`, а `as string` использовать нельзя
+- [x] 2.7 Запустить `npm run check`; существующие transfer-тесты (`preview-PaymentAccepted`, `preview-PaymentIncome`, `preview-PaymentWrittenOff`, `preview-SbpB2CPayment`, `preview-SbpC2CPayment`) должны быть зелёными **без единой правки** — если правка понадобилась, банковская ветка поехала
 
 ## 3. Фикстура и тесты
 
