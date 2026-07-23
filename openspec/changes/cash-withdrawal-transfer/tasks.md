@@ -18,12 +18,12 @@
 
 ## 3. Фикстура и тесты
 
-- [ ] 3.1 Создать фикстуру `src/apply/preview/fixtures/card-transaction-cash-out-atm.json` на основе реальной записи из `sync/tochka/2026-07-09_2026-07-23.json` (`tranId 4483988400`, `sum 9000`, `mcc 6011`) с маскировкой чувствительных полей по принятому в фикстурах образцу
-- [ ] 3.2 Добавить в `src/apply/preview-CardTransactionInfo.test.ts` кейс: `CashOutAtm + Withdraw` → `identified = true`, `save = true`, `reason = null`, `normalized.type = 'transfer'`, `counterpartyAccountId = 'cash:rub'`
-- [ ] 3.3 Добавить кейс на HM-транзакцию: `subtype = 't'`, `transfer_from_id` = HM-счёт карточного счёта, `transfer_to_id` = HM-счёт кошелька, `real_amount = 9000`, `transfer_to_amount = 9000`, `category = null`
-- [ ] 3.4 Добавить кейс: `CashOutAtm` со статусом, отличным от `Withdraw` → `identified = false`, `reason = 'no matching included/excluded condition'`
-- [ ] 3.5 Добавить кейс: `CashOutAtm` в валюте без настроенного кошелька → `identified = false`, `save = false`, `reason` называет неразрешённую ногу перевода
-- [ ] 3.6 Запустить `npm run check` — typecheck, Biome и весь vitest-прогон должны быть зелёными
+- [x] 3.1 Создать фикстуру `src/apply/preview/fixtures/card-transaction-cash-out-atm.json` на основе реальной записи из `sync/tochka/2026-07-09_2026-07-23.json` (`tranId 4483988400`, `sum 9000`, `mcc 6011`) с маскировкой чувствительных полей по принятому в фикстурах образцу
+- [x] 3.2 Добавить в `src/apply/preview-CardTransactionInfo.test.ts` кейс: `CashOutAtm + Withdraw` → `identified = true`, `save = true`, `reason = null`, `normalized.type = 'transfer'`, `counterpartyAccountId = 'cash:rub'`
+- [x] 3.3 Добавить кейс на HM-транзакцию: `subtype = 't'`, `transfer_from_id` = HM-счёт карточного счёта, `transfer_to_id` = HM-счёт кошелька, `real_amount = 9000`, `transfer_to_amount = 9000`, `category = null`
+- [x] 3.4 Добавить кейс: `CashOutAtm` со статусом, отличным от `Withdraw` → `identified = false`, `reason = 'no matching included/excluded condition'`
+- [x] 3.5 Добавить кейс: `CashOutAtm` в валюте без настроенного кошелька → `identified = false`, `save = false`, `reason` называет неразрешённую ногу перевода
+- [x] 3.6 Запустить `npm run check` — typecheck, Biome и весь vitest-прогон должны быть зелёными
 
 ## 4. Проверка на реальных данных
 
