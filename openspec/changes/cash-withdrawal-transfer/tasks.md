@@ -1,10 +1,10 @@
 ## 1. Конфигурация счёта кошелька
 
-- [ ] 1.1 Добавить в `config/sources.json` источник `cash` с `hmAccounts.cash-wallet-rub` (`id: 5695`, `name: "Кошелек"`, `currency: "rub"`) и `accountMappings` `{"cash:rub": "cash-wallet-rub"}`
-- [ ] 1.2 Добавить тот же источник в `config/sources.example.json` с обезличенным `id` — файл трекается в git, реальный `id` в него не попадает
-- [ ] 1.3 Добавить в `config/sources.json` ветку `included` для `CardTransactionInfo`: `tranCode = CashOutAtm` И `status = Withdraw`; `excluded` не трогать
-- [ ] 1.4 Зеркально добавить ту же ветку `included` в `config/sources.example.json`
-- [ ] 1.5 Проверить, что `loadConfig()` принимает конфиг без правок схемы: запустить `npm run check` и убедиться, что existing config-тесты (`src/config.test.ts`) зелёные
+- [x] 1.1 Добавить в `config/sources.json` источник `cash` с `hmAccounts.cash-wallet-rub` (`id: 5695`, `name: "Кошелек"`, `currency: "rub"`) и `accountMappings` `{"cash:rub": "cash-wallet-rub"}`
+- [x] 1.2 Добавить тот же источник в `config/sources.example.json` с обезличенным `id` — файл трекается в git, реальный `id` в него не попадает
+- [x] 1.3 Добавить в `config/sources.json` ветку `included` для `CardTransactionInfo`: `tranCode = CashOutAtm` И `status = Withdraw`; `excluded` не трогать
+- [x] 1.4 Зеркально добавить ту же ветку `included` в `config/sources.example.json`
+- [x] 1.5 Проверить, что `loadConfig()` принимает конфиг без правок схемы: запустить `npm run check` и убедиться, что existing config-тесты (`src/config.test.ts`) зелёные
 
 ## 2. Классификация снятия наличных
 
