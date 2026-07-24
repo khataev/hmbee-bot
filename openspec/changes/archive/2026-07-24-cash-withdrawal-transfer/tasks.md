@@ -1,0 +1,38 @@
+## 1. Конфигурация счёта кошелька
+
+- [x] 1.1 Добавить в `config/sources.json` источник `cash` с `hmAccounts.cash-wallet-rub` (`id: 5695`, `name: "Кошелек"`, `currency: "rub"`) и `accountMappings` `{"cash:rub": "cash-wallet-rub"}`
+- [x] 1.2 Добавить тот же источник в `config/sources.example.json` с обезличенным `id` — файл трекается в git, реальный `id` в него не попадает
+- [x] 1.3 Добавить в `config/sources.json` ветку `included` для `CardTransactionInfo`: `tranCode = CashOutAtm` И `status = Withdraw`; `excluded` не трогать
+- [x] 1.4 Зеркально добавить ту же ветку `included` в `config/sources.example.json`
+- [x] 1.5 Проверить, что `loadConfig()` принимает конфиг без правок схемы: запустить `npm run check` и убедиться, что existing config-тесты (`src/config.test.ts`) зелёные
+
+## 2. Классификация снятия наличных
+
+- [x] 2.1 В `src/apply/preview/tochka.ts` добавить module-private type guard `isCashOutAtmRecord(record): record is CardTransactionInfoRecord` = `isCardTransactionInfoRecord(record) && record.data.tranCode === 'CashOutAtm'`; поставить рядом с остальными `isXxxRecord`
+- [x] 2.2 В `getNormalizedType` добавить для карточных записей ветку `isCashOutAtmRecord` → `transfer`, выше существующей `ReverseByCard`/`expense` строки
+- [x] 2.3 В `getCounterpartyAccount` вернуть для `isCashOutAtmRecord` синтетический ключ `cash:${record.data.currency.toLowerCase()}`; для остальных карточных записей поведение не менять
+- [x] 2.4 Расширить guard transfer-ветки: `if (!isBankPaymentRecord(sourceRecord) && !isCashOutAtmRecord(sourceRecord)) throw`, текст сообщения обновить на «bank payment record or an ATM cash withdrawal»
+- [x] 2.5 Заменить два `getHmAccountId(...)` на тернарники по `isBankPaymentRecord`: банковская запись → `payerAccountId`/`payeeAccountId` **дословно как сейчас**, иначе → `normalized.account` / `counterpartyAccountId` (снятие всегда исходящее). Сообщения об ошибке обобщить с `payer`/`payee` на `from`/`to`
+- [x] 2.6 Захватить `normalized.counterpartyAccountId` в локальную константу до проверки инварианта — TypeScript не сужает тип свойства после `throw`, а `as string` использовать нельзя
+- [x] 2.7 Запустить `npm run check`; существующие transfer-тесты (`preview-PaymentAccepted`, `preview-PaymentIncome`, `preview-PaymentWrittenOff`, `preview-SbpB2CPayment`, `preview-SbpC2CPayment`) должны быть зелёными **без единой правки** — если правка понадобилась, банковская ветка поехала
+
+## 3. Фикстура и тесты
+
+- [x] 3.1 Создать фикстуру `src/apply/preview/fixtures/card-transaction-cash-out-atm.json` на основе реальной записи из `sync/tochka/2026-07-09_2026-07-23.json` (`tranId 4483988400`, `sum 9000`, `mcc 6011`) с маскировкой чувствительных полей по принятому в фикстурах образцу
+- [x] 3.2 Добавить в `src/apply/preview-CardTransactionInfo.test.ts` кейс: `CashOutAtm + Withdraw` → `identified = true`, `save = true`, `reason = null`, `normalized.type = 'transfer'`, `counterpartyAccountId = 'cash:rub'`
+- [x] 3.3 Добавить кейс на HM-транзакцию: `subtype = 't'`, `transfer_from_id` = HM-счёт карточного счёта, `transfer_to_id` = HM-счёт кошелька, `real_amount = 9000`, `transfer_to_amount = 9000`, `category = null`
+- [x] 3.4 Добавить кейс: `CashOutAtm` со статусом, отличным от `Withdraw` → `identified = false`, `reason = 'no matching included/excluded condition'`
+- [x] 3.5 Добавить кейс: `CashOutAtm` в валюте без настроенного кошелька → `identified = false`, `save = false`, `reason` называет неразрешённую ногу перевода
+- [x] 3.6 Запустить `npm run check` — typecheck, Biome и весь vitest-прогон должны быть зелёными
+
+## 4. Проверка на реальных данных
+
+- [x] 4.1 Прогнать превью на `sync/tochka/2026-07-09_2026-07-23.json` и убедиться, что снятие 9000 ₽ от 2026-07-21 классифицировано как перевод `Точка ИП. РУБЛИ → Кошелек`
+- [x] 4.2 Сверить остальные записи окна с классификацией до изменения — расхождений быть не должно (в файле 91 запись, то есть 90 не-снятий; выполнено сравнением с прогоном на коммите `48a306b` при временно убранных из конфига источнике `cash` и ветке `CashOutAtm`: 90 из 91 записи побайтово идентичны, различается только целевое снятие)
+
+## 5. Документация
+
+- [x] 5.1 Добавить в `TRANSACTION-RULES.md` строку сценария «Снятие наличных в банкомате» в таблицу Точки: `type_code`, `included`/`excluded`, JSON logic, ссылки на тест и фикстуру
+- [x] 5.2 Дополнить раздел «Что сейчас особенно важно помнить» пунктом про счёт кошелька и синтетический ключ `cash:<валюта>`, включая отмеченные вне скоупа сценарии (внесение наличных, комиссия, СБП-снятие, статус холда)
+- [x] 5.3 Завести в `TECH-DEBT.md` запись: два тернарника по `isBankPaymentRecord` в transfer-ветке свернуть в `getTransferLegs`, когда появится третье семейство переводов (внесение наличных / СБП-снятие)
+- [x] 5.4 Финальный `npm run check` перед завершением изменения

@@ -247,6 +247,10 @@ function isCardTransactionInfoRecord(record: TochkaSyncRecord): record is CardTr
   return record.meta_data.system_data.type_code === 'CardTransactionInfo';
 }
 
+function isCashOutAtmRecord(record: TochkaSyncRecord): record is CardTransactionInfoRecord {
+  return isCardTransactionInfoRecord(record) && record.data.tranCode === 'CashOutAtm';
+}
+
 function isSbpTransactionRecord(record: TochkaSyncRecord): record is SbpTransactionRecord {
   const typeCode = record.meta_data.system_data.type_code;
   return (
@@ -345,6 +349,10 @@ function getSourceAccount(record: TochkaSyncRecord): string | undefined {
 }
 
 function getCounterpartyAccount(record: TochkaSyncRecord): string | undefined {
+  if (isCashOutAtmRecord(record)) {
+    return `cash:${record.data.currency.toLowerCase()}`;
+  }
+
   if (isSbpTransactionRecord(record)) {
     return record.data.incoming ? record.data.payerAccountId : record.data.payeeAccountId;
   }
@@ -453,7 +461,11 @@ function getNormalizedType(
   registry: AccountRegistry
 ): 'income' | 'expense' | 'transfer' {
   if (isCardTransactionInfoRecord(sourceRecord)) {
-    return sourceRecord.data.tranCode === 'ReverseByCard' ? 'income' : 'expense';
+    const { tranCode } = sourceRecord.data;
+    if (isCashOutAtmRecord(sourceRecord)) {
+      return 'transfer';
+    }
+    return tranCode === 'ReverseByCard' ? 'income' : 'expense';
   }
 
   if (isPaymentClaimRecord(sourceRecord)) {
@@ -635,24 +647,32 @@ export function normalizeTochkaRecord(
       counterpartyAccountId: counterpartyAccount
     };
 
-    if (normalized.type === 'transfer' && !normalized.counterpartyAccountId) {
-      throw new Error('Normalized transfer record missing counterpartyAccountId');
-    }
+    // TypeScript does not narrow the property after the invariant throw below, so capture it first.
+    const counterpartyAccountId = normalized.counterpartyAccountId;
 
     if (normalized.type === 'transfer') {
-      if (!isBankPaymentRecord(sourceRecord)) {
-        throw new Error('Transfer must be a bank payment record');
+      if (!counterpartyAccountId) {
+        throw new Error('Normalized transfer record missing counterpartyAccountId');
       }
 
-      const payerHmId = options.accountRegistry.getHmAccountId(sourceRecord.data.payerAccountId);
-      const payeeHmId = options.accountRegistry.getHmAccountId(sourceRecord.data.payeeAccountId);
-
-      if (!payerHmId) {
-        throw new Error(`Unable to resolve payer HM account ID for transfer`);
+      if (!isBankPaymentRecord(sourceRecord) && !isCashOutAtmRecord(sourceRecord)) {
+        throw new Error('Transfer must be a bank payment record or an ATM cash withdrawal');
       }
 
-      if (!payeeHmId) {
-        throw new Error(`Unable to resolve payee HM account ID for transfer`);
+      // A bank payment carries payer/payee accounts verbatim; an ATM cash withdrawal is always
+      // outgoing from the card account (normalized.account) to the cash wallet (counterpartyAccountId).
+      const fromAccount = isBankPaymentRecord(sourceRecord) ? sourceRecord.data.payerAccountId : normalized.account;
+      const toAccount = isBankPaymentRecord(sourceRecord) ? sourceRecord.data.payeeAccountId : counterpartyAccountId;
+
+      const fromHmId = options.accountRegistry.getHmAccountId(fromAccount);
+      const toHmId = options.accountRegistry.getHmAccountId(toAccount);
+
+      if (!fromHmId) {
+        throw new Error(`Unable to resolve source (from) HM account ID for transfer: ${fromAccount}`);
+      }
+
+      if (!toHmId) {
+        throw new Error(`Unable to resolve destination (to) HM account ID for transfer: ${toAccount}`);
       }
 
       return {
@@ -661,7 +681,7 @@ export function normalizeTochkaRecord(
         reason: classification.reason,
         sourceRecord,
         normalized,
-        hmbee: buildHoneyMoneyTransferTransaction(normalized, payerHmId, payeeHmId)
+        hmbee: buildHoneyMoneyTransferTransaction(normalized, fromHmId, toHmId)
       };
     }
 
