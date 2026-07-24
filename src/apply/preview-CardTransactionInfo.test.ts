@@ -64,6 +64,12 @@ describe('CardTransactionInfo classification', () => {
                   { '==': [{ var: 'record.data.tranCode' }, 'ReverseByCard'] },
                   { '==': [{ var: 'record.data.status' }, 'Received'] }
                 ]
+              },
+              {
+                and: [
+                  { '==': [{ var: 'record.data.tranCode' }, 'CashOutAtm'] },
+                  { '==': [{ var: 'record.data.status' }, 'Withdraw'] }
+                ]
               }
             ]
           },
@@ -89,16 +95,12 @@ describe('CardTransactionInfo classification', () => {
     }
   };
 
-  // Cash withdrawal transfers resolve both legs through the account registry: the card account and
-  // the synthetic cash-wallet key `cash:rub`. The included rule additionally accepts CashOutAtm + Withdraw.
   const cardHmId = 67890;
-  const cashWalletHmId = 5695;
-  const cashOutAccountMappings = { '40802810309500012345': cardHmId, 'cash:rub': cashWalletHmId };
+  const cashWalletRubHmId = 1000004;
+  const cashWalletUsdHmId = 1000005;
 
-  const cashOutOptions = {
-    ...options,
-    accountMappings: cashOutAccountMappings,
-    accountRegistry: createAccountRegistry({
+  function makeAccountRegistry(allAccountMappings: Record<string, number>) {
+    return createAccountRegistry({
       time_zone: 'Europe/Moscow',
       hmbee: {
         currenciesMapping: {},
@@ -112,25 +114,16 @@ describe('CardTransactionInfo classification', () => {
           typeCodes: {}
         }
       },
-      allAccountMappings: cashOutAccountMappings
-    } as AppConfig),
-    typeCodeRules: {
-      CardTransactionInfo: {
-        conditions: {
-          included: {
-            or: [
-              {
-                and: [
-                  { '==': [{ var: 'record.data.tranCode' }, 'CashOutAtm'] },
-                  { '==': [{ var: 'record.data.status' }, 'Withdraw'] }
-                ]
-              }
-            ]
-          },
-          excluded: { or: [] }
-        }
-      }
-    }
+      allAccountMappings
+    } as AppConfig);
+  }
+
+  const cashOutAccountMappings = { '40802810309500012345': cardHmId, 'cash:rub': cashWalletRubHmId };
+
+  const cashOutOptions = {
+    ...options,
+    accountMappings: cashOutAccountMappings,
+    accountRegistry: makeAccountRegistry(cashOutAccountMappings)
   };
 
   const mockBaseRecord = {
@@ -228,7 +221,7 @@ describe('CardTransactionInfo classification', () => {
 
     expect(hmbee.subtype).toBe('t');
     expect(hmbee.transfer_from_id).toBe(cardHmId);
-    expect(hmbee.transfer_to_id).toBe(cashWalletHmId);
+    expect(hmbee.transfer_to_id).toBe(cashWalletRubHmId);
     expect(hmbee.real_amount).toBe(9000);
     expect(hmbee.transfer_to_amount).toBe(9000);
     expect(hmbee.category).toBeNull();
@@ -281,7 +274,41 @@ describe('CardTransactionInfo classification', () => {
 
     expect(result.identified).toBe(false);
     expect(result.save).toBe(false);
-    expect(result.reason).toBe('Unable to resolve destination (to) HM account ID for transfer');
+    expect(result.reason).toBe('Unable to resolve destination (to) HM account ID for transfer: cash:usd');
+  });
+
+  it('resolves a cash wallet in another currency through configuration alone', () => {
+    const usdAccountMappings = { ...cashOutAccountMappings, 'cash:usd': cashWalletUsdHmId };
+    const usdOptions = {
+      ...cashOutOptions,
+      accountMappings: usdAccountMappings,
+      accountRegistry: makeAccountRegistry(usdAccountMappings)
+    };
+    const record = {
+      meta_data: {
+        system_data: { type_code: 'CardTransactionInfo' },
+        time_data: { event_date: '2026-07-21T19:46:22.000+05:00' }
+      },
+      data: {
+        tranId: 1000000007,
+        account: '40802810309500012345',
+        currency: 'USD',
+        sum: 100,
+        tranCode: 'CashOutAtm',
+        status: 'Withdraw',
+        title: 'Снятие наличных в банкомате',
+        mcc: '6011'
+      }
+    };
+
+    const result = normalizeTochkaRecord(record, usdOptions) as ReadyApplyRecord;
+    const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
+
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(true);
+    expect(result.normalized.counterpartyAccountId).toBe('cash:usd');
+    expect(hmbee.transfer_from_id).toBe(cardHmId);
+    expect(hmbee.transfer_to_id).toBe(cashWalletUsdHmId);
   });
 
   it('marks CheckCard as identified but excluded', () => {

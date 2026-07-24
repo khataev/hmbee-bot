@@ -668,11 +668,11 @@ export function normalizeTochkaRecord(
       const toHmId = options.accountRegistry.getHmAccountId(toAccount);
 
       if (!fromHmId) {
-        throw new Error(`Unable to resolve source (from) HM account ID for transfer`);
+        throw new Error(`Unable to resolve source (from) HM account ID for transfer: ${fromAccount}`);
       }
 
       if (!toHmId) {
-        throw new Error(`Unable to resolve destination (to) HM account ID for transfer`);
+        throw new Error(`Unable to resolve destination (to) HM account ID for transfer: ${toAccount}`);
       }
 
       return {
