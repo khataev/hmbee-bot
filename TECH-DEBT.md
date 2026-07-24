@@ -77,3 +77,14 @@ Tracking identified technical debt and planned simplifications.
 - **Goal**: После апгрейда на Node.js 26 заменить реализацию на `Temporal.Instant.from(isoString).toZonedDateTimeISO(tz).toPlainDate().toString()` и убрать флаг `--harmony-temporal` из `package.json` и `vitest.config.ts`.
 - **Why**: `Temporal` — семантически точный API для работы с датами/таймзонами; `Intl.DateTimeFormat` с локалью `en-CA` — обходной путь.
 - **Status**: Added 2026-06-20.
+
+### 11. Свернуть резолвинг ног перевода в `getTransferLegs`
+- **Context**: В transfer-ветке `normalizeTochkaRecord` (`src/apply/preview/tochka.ts`) счета плательщика и получателя резолвятся двумя тернарниками с одинаковым условием, а `isBankPaymentRecord` вызывается дважды:
+  ```ts
+  const fromAccount = isBankPaymentRecord(sourceRecord) ? sourceRecord.data.payerAccountId : normalized.account;
+  const toAccount = isBankPaymentRecord(sourceRecord) ? sourceRecord.data.payeeAccountId : counterpartyAccountId;
+  ```
+  Такая форма выбрана осознанно в изменении `cash-withdrawal-transfer`: банковская ветка осталась **дословно прежней**, поэтому регрессия на пяти уже работающих transfer-сценариях (внутренние переводы, депозиты, SBP на свой счёт) структурно невозможна, а не «проверяется тестами». Направление для карточной ноги задано константой — снятие всегда исходящее.
+- **Goal**: При появлении **третьего** семейства переводов свернуть оба тернарника в один хелпер `getTransferLegs(record, normalized) → { from, to }` с веткой на каждое семейство.
+- **Why**: Порог зафиксирован явно: на двух ветках конструкция терпима, на третьей станет нечитаемой. Триггером будет внесение наличных в банкомате или снятие через СБП — там направление уже нельзя считать константой, и допущение «не-банковская запись всегда исходящая» сломается тихо и задом наперёд.
+- **Status**: Added 2026-07-23. (OpenSpec: cash-withdrawal-transfer, design.md — Решение 3)
