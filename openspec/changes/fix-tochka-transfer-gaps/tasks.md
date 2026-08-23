@@ -13,7 +13,7 @@
 - [x] 2.3 Тест `normalizeTochkaRecord` (`src/apply/preview/tochka.ts` / соответствующий test-файл): фикстура `PaymentIncome` с `payerAccountId`/`payerBankBic` стороннего банка (например, Райффайзен), обоими счетами "своими" — ожидается `identified=true`, `save=true`, `normalized.type=transfer`, `counterpartyAccountId` равен счёту-плательщику, `hmbee.transfer_from_id`/`transfer_to_id` разрешены корректно.
 - [x] 2.4 Тест `normalizeTochkaRecord` на регресс существующего сценария: внутренний перевод Точка → Точка (`PaymentIncome`, оба счёта — Точка) по-прежнему даёт `identified=true`, `save=false`, `reason="excluded"`.
 - [x] 2.5 Тест на сценарий "депозит" (`PaymentIncome` от Tochka deposit-like счёта) не задет изменением — остаётся `save=true` как раньше (регресс существующего теста/сценария спеки).
-- [ ] 2.6 `npm run check` проходит.
+- [x] 2.6 `npm run check` проходит.
 
 ## 3. Финальная проверка
 
