@@ -116,12 +116,8 @@ describe('SbpB2CPayment classification', () => {
     expect(hmbee.real_amount).toBeGreaterThan(0);
   });
 
-  it('marks SbpB2CPayment invalid forms as identified but excluded (CANCELED/REJECTED/incoming=true)', () => {
-    const invalidFixtures = [
-      'sbp-b2c-payment-canceled.json',
-      'sbp-b2c-payment-rejected.json',
-      'sbp-b2c-payment-incoming.json'
-    ];
+  it('marks SbpB2CPayment invalid forms as identified but excluded (CANCELED/REJECTED)', () => {
+    const invalidFixtures = ['sbp-b2c-payment-canceled.json', 'sbp-b2c-payment-rejected.json'];
 
     for (const fixtureName of invalidFixtures) {
       const fixture = loadFixture(fixtureName);
@@ -131,6 +127,16 @@ describe('SbpB2CPayment classification', () => {
       expect(result.save).toBe(false);
       expect(result.reason).toBe('excluded');
     }
+  });
+
+  it('leaves incoming SbpB2CPayment from a non-owned payer unclassified', () => {
+    const fixture = loadFixture('sbp-b2c-payment-incoming.json');
+
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+
+    expect(result.identified).toBe(false);
+    expect(result.save).toBe(false);
+    expect(result.reason).toBe('no matching included/excluded condition');
   });
 
   it('transfer records with null category remain save-ready (missing-category rule does not apply)', () => {
