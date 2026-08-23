@@ -158,6 +158,26 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "and": [
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.tranCode"
+                        },
+                        "CashOutAtm"
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.status"
+                        },
+                        "InProgress"
+                      ]
+                    }
+                  ]
                 }
               ]
             },
