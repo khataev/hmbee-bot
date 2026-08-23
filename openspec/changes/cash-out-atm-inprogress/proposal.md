@@ -5,7 +5,7 @@
 ## What Changes
 
 - Расширить `included`-условие `CashOutAtm` в `config/sources.json` (и синхронно в `config/sources.example.json`): матчить `status = Withdraw` ИЛИ `status = InProgress`, по аналогии с тем, как для `Purchase` уже включены оба статуса.
-- Обновить `TRANSACTION-RULES.md`: строку «Снятие наличных в банкомате» в таблице Точка и примечание про «вне скоупа снятия наличных», убрав холд из списка нерешённых кейсов и явно задокументировав остаточный риск дублирования (см. Impact).
+- Обновить `TRANSACTION-RULES.md`: строку «Снятие наличных в банкомате» в таблице Точка и примечание про «вне скоупа снятия наличных», убрав холд из списка нерешённых кейсов.
 - Добавить тест-кейс и фикстуру для `CashOutAtm` со `status = InProgress`, ожидающие `identified = true`, `save = true`, `normalized.type = transfer` (симметрично существующему `Withdraw`-кейсу).
 
 ## Capabilities
@@ -21,5 +21,4 @@
 - Затронутый код: `config/sources.json`, `config/sources.example.json` (данные конфигурации, не логика `src/apply/preview/tochka.ts` — правило выражается через существующий JSON Logic `included`).
 - Затронутые тесты: `src/apply/preview-CardTransactionInfo.test.ts`, новая фикстура в `src/apply/preview/fixtures/`.
 - Затронутая документация: `TRANSACTION-RULES.md`.
-- **Известный остаточный риск (не решается в рамках этого изменения):** дедуп в проекте (`src/hmbee/skipIndex.ts`, `applySkipPass`) сопоставляет записи не по `tranId` банка, а по fuzzy-ключу `(account_id, date, real_amount, subtype, category, currency)`. Если один и тот же `tranId` позже придёт вторым событием со `status = Withdraw`, и при этом `event_date` или сумма разойдутся с уже сохранённой `InProgress`-версией — в Honey Money может появиться дублирующийся перевод. Данных о том, действительно ли Точка присылает повторное событие с тем же `tranId` и как меняется `event_date` между стадиями холда и подтверждения, пока недостаточно; риск фиксируется как известный и требует наблюдения за следующими синками.
 - Качество: `npm run check` (lint, typecheck, тесты) должен проходить; новый тест-кейс — часть Definition of Done.
