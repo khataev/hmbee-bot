@@ -10,7 +10,7 @@
 
 - [x] 2.1 В `config/sources.json` (`sources.tochka.typeCodes.PaymentIncome.conditions.excluded`) добавить условие `payerBankBic == "044525104"` к существующей ветке дедупа (сузить исключение до перевода именно внутри Точки).
 - [x] 2.2 В `config/sources.json` (`sources.tochka.typeCodes.PaymentIncome.conditions.included`) добавить новую ветку: `incoming == true AND isComission == false AND is_owned(payeeAccountId) AND is_owned(payerAccountId) AND payerBankBic != "044525104"`.
-- [ ] 2.3 Тест `normalizeTochkaRecord` (`src/apply/preview/tochka.ts` / соответствующий test-файл): фикстура `PaymentIncome` с `payerAccountId`/`payerBankBic` стороннего банка (например, Райффайзен), обоими счетами "своими" — ожидается `identified=true`, `save=true`, `normalized.type=transfer`, `counterpartyAccountId` равен счёту-плательщику, `hmbee.transfer_from_id`/`transfer_to_id` разрешены корректно.
+- [x] 2.3 Тест `normalizeTochkaRecord` (`src/apply/preview/tochka.ts` / соответствующий test-файл): фикстура `PaymentIncome` с `payerAccountId`/`payerBankBic` стороннего банка (например, Райффайзен), обоими счетами "своими" — ожидается `identified=true`, `save=true`, `normalized.type=transfer`, `counterpartyAccountId` равен счёту-плательщику, `hmbee.transfer_from_id`/`transfer_to_id` разрешены корректно.
 - [ ] 2.4 Тест `normalizeTochkaRecord` на регресс существующего сценария: внутренний перевод Точка → Точка (`PaymentIncome`, оба счёта — Точка) по-прежнему даёт `identified=true`, `save=false`, `reason="excluded"`.
 - [ ] 2.5 Тест на сценарий "депозит" (`PaymentIncome` от Tochka deposit-like счёта) не задет изменением — остаётся `save=true` как раньше (регресс существующего теста/сценария спеки).
 - [ ] 2.6 `npm run check` проходит.
