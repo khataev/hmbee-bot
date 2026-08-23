@@ -116,6 +116,25 @@ describe('SbpB2CPayment classification', () => {
     expect(hmbee.real_amount).toBeGreaterThan(0);
   });
 
+  it('identifies incoming SbpB2CPayment from my own account in another bank as save-ready canonical transfer', () => {
+    const fixture = loadFixture('sbp-b2c-payment-own-transfer-incoming.json');
+
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
+
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(true);
+    expect(result.reason).toBeNull();
+    expect(result.normalized.type).toBe('transfer');
+    expect(result.normalized.counterpartyAccountId).toBe('40817810000000000001');
+    expect(result.hmbee.subtype).toBe('t');
+    expect(result.hmbee.currency).toBe('rub');
+
+    const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
+    expect(hmbee.transfer_from_id).toBe(26755);
+    expect(hmbee.transfer_to_id).toBe(2053036);
+    expect(hmbee.real_amount).toBeGreaterThan(0);
+  });
+
   it('marks SbpB2CPayment invalid forms as identified but excluded (CANCELED/REJECTED)', () => {
     const invalidFixtures = ['sbp-b2c-payment-canceled.json', 'sbp-b2c-payment-rejected.json'];
 
