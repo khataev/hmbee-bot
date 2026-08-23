@@ -10,6 +10,6 @@
 
 ## 3. Тесты
 
-- [ ] 3.1 Добавить фикстуру `src/apply/preview/fixtures/card-transaction-cash-out-atm-inprogress.json` — `CashOutAtm` со `status = InProgress` (по образцу `card-transaction-cash-out-atm.json`).
+- [x] 3.1 Добавить фикстуру `src/apply/preview/fixtures/card-transaction-cash-out-atm-inprogress.json` — `CashOutAtm` со `status = InProgress` (по образцу `card-transaction-cash-out-atm.json`).
 - [ ] 3.2 Добавить тест-кейс в `src/apply/preview-CardTransactionInfo.test.ts`, ожидающий `identified = true`, `save = true`, `reason = null`, `normalized.type = transfer`, корректный `counterpartyAccountId` (cash-кошелёк) — симметрично существующему `Withdraw`-кейсу.
 - [ ] 3.3 Прогнать `npm run check` (lint + typecheck + тесты) и убедиться, что все тесты, включая новый и существующие `CardTransactionInfo`-кейсы, проходят.
