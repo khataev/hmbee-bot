@@ -15,7 +15,7 @@
 - [x] 3.2 В `src/apply/preview-SbpB2CPayment.test.ts` обновить локальный `typeCodeRules.SbpB2CPayment.conditions` в `options`, чтобы он соответствовал новому `included`/`excluded` из задачи 2.2.
 - [x] 3.3 Убрать `sbp-b2c-payment-incoming.json` из списка фикстур теста "invalid forms" (excluded, `reason="excluded"`) и добавить отдельный тест: запись (payer не owned) даёт `identified=false, save=false, reason="no matching included/excluded condition"`.
 - [x] 3.4 Добавить тест для новой фикстуры из 3.1: `identified=true, save=true, normalized.type=transfer`, `counterpartyAccountId` равен payer-счёту, `hmbee.subtype=t`, корректные `transfer_from_id`/`transfer_to_id`.
-- [ ] 3.5 Убедиться, что тест "invalid forms" по-прежнему проверяет `sbp-b2c-payment-canceled.json`/`sbp-b2c-payment-rejected.json` как excluded (без изменений в их ожиданиях).
+- [x] 3.5 Убедиться, что тест "invalid forms" по-прежнему проверяет `sbp-b2c-payment-canceled.json`/`sbp-b2c-payment-rejected.json` как excluded (без изменений в их ожиданиях).
 
 ## 4. Проверка
 
