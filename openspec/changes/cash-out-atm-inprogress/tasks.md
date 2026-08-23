@@ -5,7 +5,7 @@
 
 ## 2. Конфигурация
 
-- [ ] 2.1 В `config/sources.json` расширить `included`-условие `CashOutAtm` (тип `CardTransactionInfo`): матчить `status = Withdraw` ИЛИ `status = InProgress` (по образцу существующей OR-ветки для `Purchase`).
+- [x] 2.1 В `config/sources.json` расширить `included`-условие `CashOutAtm` (тип `CardTransactionInfo`): матчить `status = Withdraw` ИЛИ `status = InProgress` (по образцу существующей OR-ветки для `Purchase`).
 - [ ] 2.2 Синхронно применить то же изменение в `config/sources.example.json`.
 
 ## 3. Тесты
