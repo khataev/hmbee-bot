@@ -2,9 +2,17 @@ import { evaluateRule } from 'src/apply/preview/ruleEngine.js';
 import type { HoneyMoneyTransaction, NormalizedRecord, PreviewRecord } from 'src/apply/preview/types.js';
 import type { AccountRegistry, CategoryMapping, MappingEntry, TypeCodeRule } from 'src/config.js';
 
+// trick to get/derive the datetime in the specified timezone without using any external libraries. Will be refactored to Temporal after upgrade to node 26
+function getOffsetForInstant(instant: Date, tz: string): string {
+  const tzName =
+    new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'longOffset' })
+      .formatToParts(instant)
+      .find((p) => p.type === 'timeZoneName')?.value ?? 'GMT';
+  return tzName === 'GMT' ? '+00:00' : tzName.slice(3);
+}
+
 function toDateInTimezone(isoString: string, tz: string): string {
   const date = new Date(isoString);
-  // trick to get the datetime in the specified timezone without using any external libraries. Will be refactored to Temporal after upgrade to node 26
   const localDt = new Intl.DateTimeFormat('sv-SE', {
     timeZone: tz,
     year: 'numeric',
@@ -14,13 +22,25 @@ function toDateInTimezone(isoString: string, tz: string): string {
     minute: '2-digit',
     second: '2-digit'
   }).format(date);
-  const tzName =
-    new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'longOffset' })
-      .formatToParts(date)
-      .find((p) => p.type === 'timeZoneName')?.value ?? 'GMT';
-  const offset = tzName === 'GMT' ? '+00:00' : tzName.slice(3);
+  const offset = getOffsetForInstant(date, tz);
   const ms = String(date.getUTCMilliseconds()).padStart(3, '0');
   return `${localDt.replace(' ', 'T')}.${ms}${offset}`;
+}
+
+/**
+ * Inverse of toDateInTimezone: given a calendar date (`YYYY-MM-DD`) and a timezone, returns the
+ * UTC ISO instants of the start (`00:00:00.000`) and end (`23:59:59.999`) of that calendar day
+ * in the specified timezone.
+ */
+export function getDayBoundsInTimezone(date: string, tz: string): { start: string; end: string } {
+  const naiveStart = new Date(`${date}T00:00:00.000Z`);
+  const offset = getOffsetForInstant(naiveStart, tz);
+  const sign = offset[0] === '-' ? -1 : 1;
+  const [offsetHours, offsetMinutes] = offset.slice(1).split(':').map(Number);
+  const offsetMs = sign * ((offsetHours ?? 0) * 60 + (offsetMinutes ?? 0)) * 60_000;
+  const start = new Date(naiveStart.getTime() - offsetMs);
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000 - 1);
+  return { start: start.toISOString(), end: end.toISOString() };
 }
 
 export const MISSING_CATEGORY_REASON = 'Category is missing for income or expense transaction';
