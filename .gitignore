@@ -6,4 +6,5 @@ dist/
 .env
 .env.*
 config/sources.json
+config/*.local.md
 !.env.example
