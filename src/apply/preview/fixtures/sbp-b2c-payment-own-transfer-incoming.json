@@ -1,0 +1,32 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "SbpB2CPayment"
+    },
+    "time_data": {
+      "event_date": "2026-08-15T11:56:40.751+05:00"
+    }
+  },
+  "data": {
+    "title": "Test Person P. ИП",
+    "sum": 3500,
+    "sumCurrency": "RUB",
+    "incoming": true,
+    "payerAccountId": "40817810000000000001",
+    "payerBankBic": "044525700",
+    "payerBankName": "Raiffeisen Bank",
+    "payerName": "Test Person P. ИП",
+    "payeeAccountId": "40802810100000000001",
+    "payeeBankBic": "044525104",
+    "payeeBankName": "Tochka Bank",
+    "payeeName": "Test Person P.",
+    "phoneNumber": "",
+    "status": "ACCEPTED",
+    "operationId": "A6227065629548130G10060011830706",
+    "transactionId": "b2c00000000000000000000000000006",
+    "formattedTitle": "Paid 3500 RUB via SBP",
+    "date": "2026-08-15T09:56:40.751+03:00",
+    "sourceName": "opkc",
+    "currency": "RUB"
+  }
+}
