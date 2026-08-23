@@ -21,4 +21,4 @@
 
 - [x] 4.1 Прогнать `npm run check` (typecheck + Biome lint) — без ошибок.
 - [x] 4.2 Прогнать `npm run test` (vitest) — все тесты, включая обновлённые/новые в `preview-SbpB2CPayment.test.ts`, зелёные.
-- [ ] 4.3 Прогнать `apply tochka --preview` на файле `sync/tochka/2026-07-24_2026-08-22.json` и убедиться, что реальная транзакция от 2026-08-15 теперь классифицируется как `identified=true, save=true, type=transfer` (промпт категории в `map:tochka` для неё по-прежнему может появляться — это отдельная задача, вне скоупа этого change).
+- [x] 4.3 Прогнать `apply tochka --preview` на файле `sync/tochka/2026-07-24_2026-08-22.json` и убедиться, что реальная транзакция от 2026-08-15 теперь классифицируется как `identified=true, save=true, type=transfer` (промпт категории в `map:tochka` для неё по-прежнему может появляться — это отдельная задача, вне скоупа этого change).
