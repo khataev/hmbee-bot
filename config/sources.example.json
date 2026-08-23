@@ -849,6 +849,62 @@
                       }
                     }
                   ]
+                },
+                {
+                  "and": [
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.incoming"
+                        },
+                        true
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.isComission"
+                        },
+                        false
+                      ]
+                    },
+                    {
+                      "is_owned": [
+                        {
+                          "var": "record.data.payeeAccountId"
+                        },
+                        {
+                          "var": "record.data.payeeBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
+                      ]
+                    },
+                    {
+                      "is_owned": [
+                        {
+                          "var": "record.data.payerAccountId"
+                        },
+                        {
+                          "var": "record.data.payerBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
+                      ]
+                    },
+                    {
+                      "!": {
+                        "==": [
+                          {
+                            "var": "record.data.payerBankBic"
+                          },
+                          "044525104"
+                        ]
+                      }
+                    }
+                  ]
                 }
               ]
             },
@@ -889,6 +945,14 @@
                       }
                     ]
                   }
+                },
+                {
+                  "==": [
+                    {
+                      "var": "record.data.payerBankBic"
+                    },
+                    "044525104"
+                  ]
                 }
               ]
             }
