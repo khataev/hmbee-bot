@@ -70,6 +70,12 @@ describe('CardTransactionInfo classification', () => {
                   { '==': [{ var: 'record.data.tranCode' }, 'CashOutAtm'] },
                   { '==': [{ var: 'record.data.status' }, 'Withdraw'] }
                 ]
+              },
+              {
+                and: [
+                  { '==': [{ var: 'record.data.tranCode' }, 'CashOutAtm'] },
+                  { '==': [{ var: 'record.data.status' }, 'InProgress'] }
+                ]
               }
             ]
           },
@@ -227,7 +233,25 @@ describe('CardTransactionInfo classification', () => {
     expect(hmbee.category).toBeNull();
   });
 
-  it('does not identify CashOutAtm in a status other than Withdraw', () => {
+  it('classifies CashOutAtm + InProgress as a save-ready transfer to the cash wallet', () => {
+    const fixture = loadFixture('card-transaction-cash-out-atm-inprogress.json');
+
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, cashOutOptions) as ReadyApplyRecord;
+
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(true);
+    expect(result.reason).toBeNull();
+    expect(result.normalized.type).toBe('transfer');
+    expect(result.normalized.counterpartyAccountId).toBe('cash:rub');
+
+    const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
+    expect(hmbee.subtype).toBe('t');
+    expect(hmbee.transfer_from_id).toBe(cardHmId);
+    expect(hmbee.transfer_to_id).toBe(cashWalletRubHmId);
+    expect(hmbee.category).toBeNull();
+  });
+
+  it('does not identify CashOutAtm in a status other than Withdraw or InProgress', () => {
     const record = {
       meta_data: {
         system_data: { type_code: 'CardTransactionInfo' },
@@ -239,7 +263,7 @@ describe('CardTransactionInfo classification', () => {
         currency: 'RUB',
         sum: 9000,
         tranCode: 'CashOutAtm',
-        status: 'InProgress',
+        status: 'Rejected',
         title: 'Снятие наличных в банкомате',
         mcc: '6011'
       }
