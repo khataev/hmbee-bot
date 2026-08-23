@@ -42,27 +42,39 @@ describe('SbpB2CPayment classification', () => {
       SbpB2CPayment: {
         conditions: {
           included: {
-            and: [
-              { '==': [{ var: 'record.data.status' }, 'ACCEPTED'] },
-              { '==': [{ var: 'record.data.incoming' }, false] },
+            or: [
               {
-                is_owned: [
-                  { var: 'record.data.payerAccountId' },
-                  { var: 'record.data.payerBankBic' },
-                  { var: 'accountRegistry' }
+                and: [
+                  { '==': [{ var: 'record.data.status' }, 'ACCEPTED'] },
+                  { '==': [{ var: 'record.data.incoming' }, false] },
+                  {
+                    is_owned: [
+                      { var: 'record.data.payerAccountId' },
+                      { var: 'record.data.payerBankBic' },
+                      { var: 'accountRegistry' }
+                    ]
+                  }
+                ]
+              },
+              {
+                and: [
+                  { '==': [{ var: 'record.data.status' }, 'ACCEPTED'] },
+                  { '==': [{ var: 'record.data.incoming' }, true] },
+                  {
+                    is_owned: [
+                      { var: 'record.data.payerAccountId' },
+                      { var: 'record.data.payerBankBic' },
+                      { var: 'accountRegistry' }
+                    ]
+                  }
                 ]
               }
             ]
           },
           excluded: {
             or: [
-              {
-                or: [
-                  { '==': [{ var: 'record.data.status' }, 'CANCELED'] },
-                  { '==': [{ var: 'record.data.status' }, 'REJECTED'] }
-                ]
-              },
-              { '==': [{ var: 'record.data.incoming' }, true] }
+              { '==': [{ var: 'record.data.status' }, 'CANCELED'] },
+              { '==': [{ var: 'record.data.status' }, 'REJECTED'] }
             ]
           }
         }
