@@ -322,33 +322,70 @@
         "SbpB2CPayment": {
           "conditions": {
             "included": {
-              "and": [
+              "or": [
                 {
-                  "==": [
+                  "and": [
                     {
-                      "var": "record.data.status"
+                      "==": [
+                        {
+                          "var": "record.data.status"
+                        },
+                        "ACCEPTED"
+                      ]
                     },
-                    "ACCEPTED"
+                    {
+                      "==": [
+                        {
+                          "var": "record.data.incoming"
+                        },
+                        false
+                      ]
+                    },
+                    {
+                      "is_owned": [
+                        {
+                          "var": "record.data.payerAccountId"
+                        },
+                        {
+                          "var": "record.data.payerBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
+                      ]
+                    }
                   ]
                 },
                 {
-                  "==": [
+                  "and": [
                     {
-                      "var": "record.data.incoming"
-                    },
-                    false
-                  ]
-                },
-                {
-                  "is_owned": [
-                    {
-                      "var": "record.data.payerAccountId"
+                      "==": [
+                        {
+                          "var": "record.data.status"
+                        },
+                        "ACCEPTED"
+                      ]
                     },
                     {
-                      "var": "record.data.payerBankBic"
+                      "==": [
+                        {
+                          "var": "record.data.incoming"
+                        },
+                        true
+                      ]
                     },
                     {
-                      "var": "accountRegistry"
+                      "is_owned": [
+                        {
+                          "var": "record.data.payerAccountId"
+                        },
+                        {
+                          "var": "record.data.payerBankBic"
+                        },
+                        {
+                          "var": "accountRegistry"
+                        }
+                      ]
                     }
                   ]
                 }
@@ -357,31 +394,19 @@
             "excluded": {
               "or": [
                 {
-                  "or": [
+                  "==": [
                     {
-                      "==": [
-                        {
-                          "var": "record.data.status"
-                        },
-                        "CANCELED"
-                      ]
+                      "var": "record.data.status"
                     },
-                    {
-                      "==": [
-                        {
-                          "var": "record.data.status"
-                        },
-                        "REJECTED"
-                      ]
-                    }
+                    "CANCELED"
                   ]
                 },
                 {
                   "==": [
                     {
-                      "var": "record.data.incoming"
+                      "var": "record.data.status"
                     },
-                    true
+                    "REJECTED"
                   ]
                 }
               ]
@@ -906,6 +931,18 @@
       },
       "accountMappings": {
         "cash:rub": "cash-wallet-rub"
+      }
+    },
+    "raiffeisen": {
+      "hmAccounts": {
+        "raiffeisen-ip-rub": {
+          "id": 1000005,
+          "name": "Райффайзен ИП. РУБЛИ",
+          "currency": "rub"
+        }
+      },
+      "accountMappings": {
+        "40802810800000000099": "raiffeisen-ip-rub"
       }
     }
   },

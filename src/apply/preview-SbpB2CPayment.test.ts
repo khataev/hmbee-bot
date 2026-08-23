@@ -42,27 +42,39 @@ describe('SbpB2CPayment classification', () => {
       SbpB2CPayment: {
         conditions: {
           included: {
-            and: [
-              { '==': [{ var: 'record.data.status' }, 'ACCEPTED'] },
-              { '==': [{ var: 'record.data.incoming' }, false] },
+            or: [
               {
-                is_owned: [
-                  { var: 'record.data.payerAccountId' },
-                  { var: 'record.data.payerBankBic' },
-                  { var: 'accountRegistry' }
+                and: [
+                  { '==': [{ var: 'record.data.status' }, 'ACCEPTED'] },
+                  { '==': [{ var: 'record.data.incoming' }, false] },
+                  {
+                    is_owned: [
+                      { var: 'record.data.payerAccountId' },
+                      { var: 'record.data.payerBankBic' },
+                      { var: 'accountRegistry' }
+                    ]
+                  }
+                ]
+              },
+              {
+                and: [
+                  { '==': [{ var: 'record.data.status' }, 'ACCEPTED'] },
+                  { '==': [{ var: 'record.data.incoming' }, true] },
+                  {
+                    is_owned: [
+                      { var: 'record.data.payerAccountId' },
+                      { var: 'record.data.payerBankBic' },
+                      { var: 'accountRegistry' }
+                    ]
+                  }
                 ]
               }
             ]
           },
           excluded: {
             or: [
-              {
-                or: [
-                  { '==': [{ var: 'record.data.status' }, 'CANCELED'] },
-                  { '==': [{ var: 'record.data.status' }, 'REJECTED'] }
-                ]
-              },
-              { '==': [{ var: 'record.data.incoming' }, true] }
+              { '==': [{ var: 'record.data.status' }, 'CANCELED'] },
+              { '==': [{ var: 'record.data.status' }, 'REJECTED'] }
             ]
           }
         }
@@ -104,12 +116,27 @@ describe('SbpB2CPayment classification', () => {
     expect(hmbee.real_amount).toBeGreaterThan(0);
   });
 
-  it('marks SbpB2CPayment invalid forms as identified but excluded (CANCELED/REJECTED/incoming=true)', () => {
-    const invalidFixtures = [
-      'sbp-b2c-payment-canceled.json',
-      'sbp-b2c-payment-rejected.json',
-      'sbp-b2c-payment-incoming.json'
-    ];
+  it('identifies incoming SbpB2CPayment from my own account in another bank as save-ready canonical transfer', () => {
+    const fixture = loadFixture('sbp-b2c-payment-own-transfer-incoming.json');
+
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
+
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(true);
+    expect(result.reason).toBeNull();
+    expect(result.normalized.type).toBe('transfer');
+    expect(result.normalized.counterpartyAccountId).toBe('40817810000000000001');
+    expect(result.hmbee.subtype).toBe('t');
+    expect(result.hmbee.currency).toBe('rub');
+
+    const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
+    expect(hmbee.transfer_from_id).toBe(26755);
+    expect(hmbee.transfer_to_id).toBe(2053036);
+    expect(hmbee.real_amount).toBeGreaterThan(0);
+  });
+
+  it('marks SbpB2CPayment invalid forms as identified but excluded (CANCELED/REJECTED)', () => {
+    const invalidFixtures = ['sbp-b2c-payment-canceled.json', 'sbp-b2c-payment-rejected.json'];
 
     for (const fixtureName of invalidFixtures) {
       const fixture = loadFixture(fixtureName);
@@ -119,6 +146,16 @@ describe('SbpB2CPayment classification', () => {
       expect(result.save).toBe(false);
       expect(result.reason).toBe('excluded');
     }
+  });
+
+  it('leaves incoming SbpB2CPayment from a non-owned payer unclassified', () => {
+    const fixture = loadFixture('sbp-b2c-payment-incoming.json');
+
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options);
+
+    expect(result.identified).toBe(false);
+    expect(result.save).toBe(false);
+    expect(result.reason).toBe('no matching included/excluded condition');
   });
 
   it('transfer records with null category remain save-ready (missing-category rule does not apply)', () => {
