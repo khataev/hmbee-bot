@@ -7,7 +7,7 @@
 
 - [x] 2.1 В `config/sources.json` добавить источник `raiffeisen`: `hmAccounts` с HM-счётом id `<см. config/raiffeisen-account.local.md>` ("Райффайзен ИП. РУБЛИ", currency `rub`) и `accountMappings: {"<см. config/raiffeisen-account.local.md>": "<ключ>"}`.
 - [x] 2.2 В `config/sources.json` изменить `typeCodes.SbpB2CPayment.conditions`: `included` — добавить через `or` к существующей исходящей ветке новую ветку `incoming=true AND payerAccountId is owned` (owned-проверка через `is_owned`, тот же стиль, что и в исходящей ветке); `excluded` — оставить только `status in {CANCELED, REJECTED}`. Не-owned `incoming=true` сознательно не матчит ни одну ветку.
-- [ ] 2.3 Аналогично п. 2.1–2.2 обновить `config/sources.example.json` (источник `raiffeisen` с обезличенными тестовыми данными по аналогии с уже имеющимся `tinkoff`, те же изменения `included`/`excluded` для `SbpB2CPayment`).
+- [x] 2.3 Аналогично п. 2.1–2.2 обновить `config/sources.example.json` (источник `raiffeisen` с обезличенными тестовыми данными по аналогии с уже имеющимся `tinkoff`, те же изменения `included`/`excluded` для `SbpB2CPayment`).
 
 ## 3. Тесты
 
