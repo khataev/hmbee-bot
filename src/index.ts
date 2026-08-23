@@ -68,7 +68,8 @@ program
 
     if (isVerbose) console.log(`Syncing from ${source}...`);
     try {
-      const result = await adapter.sync({ from: options.from, to: options.to });
+      const config = loadConfig();
+      const result = await adapter.sync({ from: options.from, to: options.to, timeZone: config.time_zone });
 
       const outputData = options.format === 'raw' ? result.raw : result.records;
       const outputPath = writeToStdout ? undefined : `sync/${source}/${options.from}_${options.to}.json`;
