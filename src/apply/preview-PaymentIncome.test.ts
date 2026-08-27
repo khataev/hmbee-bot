@@ -12,7 +12,8 @@ describe('PaymentIncome classification', () => {
     '40802810000000000011': 2053036,
     '40802810901500303852': 2053036,
     '40802810100000000002': 2053036,
-    '40802810100000000001': 2053036
+    '40802810100000000001': 2053036,
+    '40802810800000148595': 8747639
   };
 
   const options = {
@@ -122,6 +123,28 @@ describe('PaymentIncome classification', () => {
                   },
                   { '!': { '==': [{ var: 'record.data.payerBankBic' }, '044525104'] } }
                 ]
+              },
+              // Row 52: own account in another bank (no adapter for it) — the incoming leg is the only signal, becomes transfer
+              {
+                and: [
+                  { '==': [{ var: 'record.data.incoming' }, true] },
+                  { '==': [{ var: 'record.data.isComission' }, false] },
+                  {
+                    is_owned: [
+                      { var: 'record.data.payeeAccountId' },
+                      { var: 'record.data.payeeBankBic' },
+                      { var: 'accountRegistry' }
+                    ]
+                  },
+                  {
+                    is_owned: [
+                      { var: 'record.data.payerAccountId' },
+                      { var: 'record.data.payerBankBic' },
+                      { var: 'accountRegistry' }
+                    ]
+                  },
+                  { '!': { '==': [{ var: 'record.data.payerBankBic' }, '044525104'] } }
+                ]
               }
             ]
           },
@@ -143,7 +166,8 @@ describe('PaymentIncome classification', () => {
                     { var: 'accountRegistry' }
                   ]
                 }
-              }
+              },
+              { '==': [{ var: 'record.data.payerBankBic' }, '044525104'] }
             ]
           }
         }
@@ -210,5 +234,22 @@ describe('PaymentIncome classification', () => {
     expect(result.hmbee.subtype).toBe('i');
     expect(result.hmbee.currency).toBe('rub');
     expect(result.hmbee.real_amount).toBe(1391100);
+  });
+
+  it('classifies incoming payment from my own account in another bank as save-ready transfer', () => {
+    const fixture = loadFixture('payment-income-external-owned.json');
+
+    const result = normalizeTochkaRecord(fixture as TochkaSyncRecord, options) as ReadyApplyRecord;
+
+    expect(result.identified).toBe(true);
+    expect(result.save).toBe(true);
+    expect(result.reason).toBeNull();
+    expect(result.normalized.type).toBe('transfer');
+    expect(result.normalized.counterpartyAccountId).toBe('40802810800000148595');
+
+    const hmbee = result.hmbee as HoneyMoneyTransferTransaction;
+    expect(hmbee.transfer_from_id).toBe(8747639);
+    expect(hmbee.transfer_to_id).toBe(2053036);
+    expect(hmbee.real_amount).toBe(23000);
   });
 });

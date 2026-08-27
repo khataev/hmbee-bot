@@ -1,0 +1,24 @@
+{
+  "meta_data": {
+    "system_data": {
+      "type_code": "PaymentIncome"
+    },
+    "time_data": {
+      "event_date": "2026-08-17T02:00:00.000+05:00"
+    }
+  },
+  "data": {
+    "incoming": true,
+    "objectState": "Processed",
+    "failed": false,
+    "isComission": false,
+    "sum": 23000,
+    "currency": "RUB",
+    "title": "АО \"РАЙФФАЙЗЕНБАНК\" (ИП Тестов Иван Иванович)",
+    "corebankingId": "92;0000000008",
+    "payerAccountId": "40802810800000148595",
+    "payerBankBic": "044525700",
+    "payeeAccountId": "40802810100000000001",
+    "payeeBankBic": "044525104"
+  }
+}

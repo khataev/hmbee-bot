@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { SourceAdapter, SyncOptions, SyncResult } from 'src/adapters/types.js';
+import { getDayBoundsInTimezone } from 'src/apply/preview/tochka.js';
 import { credentialProvider } from 'src/credentials/credentialProvider.js';
 import { validateTochkaEnv } from 'src/env.js';
 import { z } from 'zod';
@@ -234,8 +235,10 @@ export class TochkaAdapter implements SourceAdapter {
               }
             ],
             exclude_tags: ['биллинговый', 'legacy_card', 'legacy_inkass'],
-            start_date: options.from.includes('T') ? options.from : `${options.from}T00:00:00.000Z`,
-            end_date: options.to.includes('T') ? options.to : `${options.to}T23:59:59.999Z`,
+            start_date: options.from.includes('T')
+              ? options.from
+              : getDayBoundsInTimezone(options.from, options.timeZone).start,
+            end_date: options.to.includes('T') ? options.to : getDayBoundsInTimezone(options.to, options.timeZone).end,
             page_count: TOCHKA_PAGE_SIZE,
             last_date: lastDate
           }

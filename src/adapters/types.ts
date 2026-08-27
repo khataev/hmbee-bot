@@ -1,6 +1,7 @@
 export interface SyncOptions {
   from: string;
   to: string;
+  timeZone: string;
 }
 
 export interface SyncResult {
